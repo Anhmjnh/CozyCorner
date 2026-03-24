@@ -1,0 +1,410 @@
+<?php
+// models/AdminModel.php
+
+class AdminModel
+{
+    private $conn;
+
+    public function __construct()
+    {
+        $this->conn = connectDB();
+    }
+
+    // --- QUẢN LÝ ADMIN ---
+    public function getAdminById($id)
+    {
+        $stmt = $this->conn->prepare("SELECT id, username, email, ho_ten, avatar, so_dien_thoai, dia_chi, gioi_tinh, ngay_sinh, password, vai_tro, trang_thai, created_at FROM admins WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+
+    public function updateAdminProfile($id, $ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $avatar = null)
+    {
+        if ($avatar) {
+            $sql = "UPDATE admins SET ho_ten = ?, email = ?, so_dien_thoai = ?, dia_chi = ?, gioi_tinh = ?, ngay_sinh = ?, avatar = ? WHERE id = ?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("sssssssi", $ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $avatar, $id);
+        } else {
+            $sql = "UPDATE admins SET ho_ten = ?, email = ?, so_dien_thoai = ?, dia_chi = ?, gioi_tinh = ?, ngay_sinh = ? WHERE id = ?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("ssssssi", $ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $id);
+        }
+        return $stmt->execute();
+    }
+
+    public function updateAdminPassword($id, $password)
+    {
+        $sql = "UPDATE admins SET password = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("si", $password, $id);
+        return $stmt->execute();
+    }
+
+    // --- QUẢN LÝ NHÂN SỰ (ADMIN/STAFF) ---
+    public function getStaffsList($limit = 10, $offset = 0, $search = '', $vai_tro = '', $trang_thai = '')
+    {
+        $sql = "SELECT id, username, ho_ten, email, so_dien_thoai, vai_tro, trang_thai, created_at FROM admins WHERE 1=1";
+
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (ho_ten LIKE '%$search_esc%' OR email LIKE '%$search_esc%' OR so_dien_thoai LIKE '%$search_esc%')";
+        }
+        if (!empty($vai_tro)) {
+            $vt_esc = $this->conn->real_escape_string($vai_tro);
+            $sql .= " AND vai_tro = '$vt_esc'";
+        }
+        if (!empty($trang_thai)) {
+            $tt_esc = $this->conn->real_escape_string($trang_thai);
+            $sql .= " AND trang_thai = '$tt_esc'";
+        }
+
+        $sql .= " ORDER BY id DESC LIMIT ? OFFSET ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $limit, $offset);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getTotalStaffsCount($search = '', $vai_tro = '', $trang_thai = '')
+    {
+        $sql = "SELECT COUNT(id) as total FROM admins WHERE 1=1";
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (ho_ten LIKE '%$search_esc%' OR email LIKE '%$search_esc%' OR so_dien_thoai LIKE '%$search_esc%')";
+        }
+        if (!empty($vai_tro)) {
+            $vt_esc = $this->conn->real_escape_string($vai_tro);
+            $sql .= " AND vai_tro = '$vt_esc'";
+        }
+        if (!empty($trang_thai)) {
+            $tt_esc = $this->conn->real_escape_string($trang_thai);
+            $sql .= " AND trang_thai = '$tt_esc'";
+        }
+        return $this->conn->query($sql)->fetch_assoc()['total'];
+    }
+
+    public function addStaff($username, $email, $ho_ten, $so_dien_thoai, $vai_tro, $trang_thai, $password)
+    {
+        $sql = "INSERT INTO admins (username, email, ho_ten, so_dien_thoai, vai_tro, trang_thai, password) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("sssssss", $username, $email, $ho_ten, $so_dien_thoai, $vai_tro, $trang_thai, $password);
+        return $stmt->execute();
+    }
+
+    public function updateStaffManager($id, $ho_ten, $email, $so_dien_thoai, $vai_tro, $trang_thai)
+    {
+        $sql = "UPDATE admins SET ho_ten = ?, email = ?, so_dien_thoai = ?, vai_tro = ?, trang_thai = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("sssssi", $ho_ten, $email, $so_dien_thoai, $vai_tro, $trang_thai, $id);
+        return $stmt->execute();
+    }
+
+    public function deleteStaff($id)
+    {
+        $stmt = $this->conn->prepare("DELETE FROM admins WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+
+    // --- THỐNG KÊ DASHBOARD ---
+    public function getDashboardStats()
+    {
+        $stats = [];
+
+        // Tổng sản phẩm
+        $res = $this->conn->query("SELECT COUNT(id) as total FROM products");
+        $stats['total_products'] = $res->fetch_assoc()['total'];
+
+        // Tổng đơn hàng
+        $res = $this->conn->query("SELECT COUNT(id) as total FROM orders");
+        $stats['total_orders'] = $res->fetch_assoc()['total'];
+
+        // Tổng doanh thu (Các đơn đã hoàn thành)
+        $res = $this->conn->query("SELECT SUM(tong_tien) as total FROM orders WHERE trang_thai = 'HoanThanh'");
+        $stats['total_revenue'] = $res->fetch_assoc()['total'] ?? 0;
+
+        // Tổng khách hàng
+        $res = $this->conn->query("SELECT COUNT(id) as total FROM users");
+        $stats['total_users'] = $res->fetch_assoc()['total'];
+
+        return $stats;
+    }
+
+    // Lấy dữ liệu biểu đồ (Doanh thu 7 ngày gần nhất)
+    public function getRevenueChartData()
+    {
+        $sql = "SELECT DATE(created_at) as date, SUM(tong_tien) as revenue 
+                FROM orders 
+                WHERE trang_thai = 'HoanThanh' AND created_at >= DATE(NOW()) - INTERVAL 7 DAY
+                GROUP BY DATE(created_at) ORDER BY date ASC";
+        $result = $this->conn->query($sql);
+        $data = ['labels' => [], 'revenues' => []];
+        while ($row = $result->fetch_assoc()) {
+            $data['labels'][] = date('d/m', strtotime($row['date']));
+            $data['revenues'][] = $row['revenue'];
+        }
+        return $data;
+    }
+
+    // --- QUẢN LÝ SẢN PHẨM ---
+    public function getProducts($limit = 10, $offset = 0, $search = '', $category = '')
+    {
+        $sql = "SELECT * FROM products WHERE 1=1";
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND ten_sp LIKE '%$search_esc%'";
+        }
+        if (!empty($category)) {
+            $cat_esc = $this->conn->real_escape_string($category);
+            $sql .= " AND danh_muc = '$cat_esc'";
+        }
+        $sql .= " ORDER BY id DESC LIMIT ? OFFSET ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $limit, $offset);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getTotalProductsCount($search = '', $category = '')
+    {
+        $sql = "SELECT COUNT(id) as total FROM products WHERE 1=1";
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND ten_sp LIKE '%$search_esc%'";
+        }
+        if (!empty($category)) {
+            $cat_esc = $this->conn->real_escape_string($category);
+            $sql .= " AND danh_muc = '$cat_esc'";
+        }
+        $res = $this->conn->query($sql);
+        return $res->fetch_assoc()['total'];
+    }
+
+    public function addProduct($ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh)
+    {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $ten_sp)));
+        $sql = "INSERT INTO products (ten_sp, slug, gia, gia_cu, danh_muc, so_luong_ton, trang_thai, anh) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        // 8 biến: ten(s), slug(s), gia(d), gia_cu(d), danh_muc(s), so_luong(i), trang_thai(s), anh(s)
+        $stmt->bind_param("ssddsiss", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh);
+        return $stmt->execute();
+    }
+
+    public function deleteProduct($id)
+    {
+        $stmt = $this->conn->prepare("DELETE FROM products WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+
+    public function getProductById($id)
+    {
+        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+
+    public function updateProduct($id, $ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh = null)
+    {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $ten_sp)));
+        $sql = "UPDATE products SET ten_sp = ?, slug = ?, gia = ?, gia_cu = ?, danh_muc = ?, so_luong_ton = ?, trang_thai = ?" . ($anh ? ", anh = ?" : "") . " WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        // Có ảnh (9 biến): ten(s), slug(s), gia(d), gia_cu(d), danh_muc(s), so_luong(i), trang_thai(s), anh(s), id(i)
+        if ($anh)
+            $stmt->bind_param("ssddsissi", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh, $id);
+        // Không ảnh (8 biến): ten(s), slug(s), gia(d), gia_cu(d), danh_muc(s), so_luong(i), trang_thai(s), id(i)
+        else
+            $stmt->bind_param("ssddsisi", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $id);
+        return $stmt->execute();
+    }
+
+    // --- QUẢN LÝ DANH MỤC ---
+    public function getCategories()
+    {
+        $result = $this->conn->query("SELECT * FROM categories ORDER BY id DESC");
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getCategoriesList($limit = 10, $offset = 0, $search = '', $trang_thai = '')
+    {
+        $sql = "SELECT * FROM categories WHERE 1=1";
+
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (ten_danh_muc LIKE '%$search_esc%' OR slug LIKE '%$search_esc%')";
+        }
+        if (!empty($trang_thai)) {
+            $tt_esc = $this->conn->real_escape_string($trang_thai);
+            $sql .= " AND trang_thai = '$tt_esc'";
+        }
+
+        $sql .= " ORDER BY id DESC LIMIT ? OFFSET ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $limit, $offset);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getTotalCategoriesCount($search = '', $trang_thai = '')
+    {
+        $sql = "SELECT COUNT(id) as total FROM categories WHERE 1=1";
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (ten_danh_muc LIKE '%$search_esc%' OR slug LIKE '%$search_esc%')";
+        }
+        if (!empty($trang_thai)) {
+            $tt_esc = $this->conn->real_escape_string($trang_thai);
+            $sql .= " AND trang_thai = '$tt_esc'";
+        }
+        return $this->conn->query($sql)->fetch_assoc()['total'];
+    }
+
+    public function addCategory($ten_danh_muc, $trang_thai)
+    {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $ten_danh_muc)));
+        $sql = "INSERT INTO categories (ten_danh_muc, slug, trang_thai) VALUES (?, ?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("sss", $ten_danh_muc, $slug, $trang_thai);
+        return $stmt->execute();
+    }
+
+    public function getCategoryById($id)
+    {
+        $stmt = $this->conn->prepare("SELECT * FROM categories WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+
+    public function updateCategory($id, $ten_danh_muc, $trang_thai)
+    {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $ten_danh_muc)));
+        $sql = "UPDATE categories SET ten_danh_muc = ?, slug = ?, trang_thai = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("sssi", $ten_danh_muc, $slug, $trang_thai, $id);
+        return $stmt->execute();
+    }
+
+    public function deleteCategory($id)
+    {
+        $stmt = $this->conn->prepare("DELETE FROM categories WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+
+    // --- QUẢN LÝ ĐƠN HÀNG ---
+    public function getOrders()
+    {
+        $sql = "SELECT o.*, u.ho_ten as user_name 
+                FROM orders o 
+                JOIN users u ON o.user_id = u.id 
+                ORDER BY o.created_at DESC";
+        $result = $this->conn->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // --- QUẢN LÝ NGƯỜI DÙNG ---
+    public function getUsersList($limit = 10, $offset = 0, $search = '', $hang = '', $trang_thai = '')
+    {
+        $sql = "SELECT id, ho_ten, email, so_dien_thoai, hang, trang_thai, created_at FROM users WHERE 1=1";
+
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (ho_ten LIKE '%$search_esc%' OR email LIKE '%$search_esc%' OR so_dien_thoai LIKE '%$search_esc%')";
+        }
+        if (!empty($hang)) {
+            $hang_esc = $this->conn->real_escape_string($hang);
+            $sql .= " AND hang = '$hang_esc'";
+        }
+        if (!empty($trang_thai)) {
+            $tt_esc = $this->conn->real_escape_string($trang_thai);
+            $sql .= " AND trang_thai = '$tt_esc'";
+        }
+
+        $sql .= " ORDER BY id DESC LIMIT ? OFFSET ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $limit, $offset);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getTotalUsersCount($search = '', $hang = '', $trang_thai = '')
+    {
+        $sql = "SELECT COUNT(id) as total FROM users WHERE 1=1";
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (ho_ten LIKE '%$search_esc%' OR email LIKE '%$search_esc%' OR so_dien_thoai LIKE '%$search_esc%')";
+        }
+        if (!empty($hang)) {
+            $hang_esc = $this->conn->real_escape_string($hang);
+            $sql .= " AND hang = '$hang_esc'";
+        }
+        if (!empty($trang_thai)) {
+            $tt_esc = $this->conn->real_escape_string($trang_thai);
+            $sql .= " AND trang_thai = '$tt_esc'";
+        }
+        $res = $this->conn->query($sql);
+        return $res->fetch_assoc()['total'];
+    }
+
+    public function getUserById($id)
+    {
+        $stmt = $this->conn->prepare("SELECT id, ho_ten, email, so_dien_thoai, dia_chi, gioi_tinh, ngay_sinh, hang, trang_thai FROM users WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+
+    public function addUser($ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $hang, $trang_thai, $mat_khau)
+    {
+        $sql = "INSERT INTO users (ho_ten, email, so_dien_thoai, dia_chi, gioi_tinh, ngay_sinh, hang, trang_thai, mat_khau) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("sssssssss", $ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $hang, $trang_thai, $mat_khau);
+        return $stmt->execute();
+    }
+
+    public function updateUserPassword($id, $mat_khau)
+    {
+        $sql = "UPDATE users SET mat_khau = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("si", $mat_khau, $id);
+        return $stmt->execute();
+    }
+
+    public function updateUserAdmin($id, $ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $hang, $trang_thai)
+    {
+        $sql = "UPDATE users SET ho_ten=?, email=?, so_dien_thoai=?, dia_chi=?, gioi_tinh=?, ngay_sinh=?, hang=?, trang_thai=? WHERE id=?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ssssssssi", $ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $hang, $trang_thai, $id);
+        return $stmt->execute();
+    }
+
+    public function toggleUserStatus($id)
+    {
+        $sql = "UPDATE users SET trang_thai = IF(trang_thai = 'HoatDong', 'Khoa', 'HoatDong') WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+
+    public function deleteUser($id)
+    {
+        try {
+            $stmt = $this->conn->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->bind_param("i", $id);
+            return $stmt->execute();
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    // --- QUẢN LÝ TIN TỨC (Chưa triển khai) ---
+
+    public function close()
+    {
+        $this->conn->close();
+    }
+}

@@ -1,0 +1,775 @@
+* {
+    box-sizing: inherit;
+    color: #212121;
+    line-height: 100%;
+    font-weight: 400;
+}
+
+html {
+    line-height: 1.6rem; 
+    box-sizing: border-box;
+    font-family: Open Sans;
+}
+
+ul {
+    list-style-type: none;
+}
+
+a {
+    text-decoration: none;
+}
+
+body {
+    margin-top: 96px ;
+    padding: 0;
+}
+
+/* Flash message */
+.alert {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 12px 16px;
+    margin: 16px 72px 0;
+    border-radius: 8px;
+}
+
+.alert-success {
+    background: #E6FFEA;
+    color: #2E7D32;
+    border-left: 4px solid #2E7D32;
+}
+
+.alert-danger {
+    background: #FFEBEE;
+    color: #C62828;
+    border-left: 4px solid #C62828;
+}
+
+
+.font600 {
+    font-weight: 600;
+}
+
+.font400 {
+    font-weight: 400;
+}
+
+/* NAVBAR */
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    height: 96px;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 72px;
+    background-color: white;
+    border-bottom: 1px solid #F5F5F5;
+}
+.navbar__logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #355F2E;
+}
+.navbar__menu {
+    flex-grow: 1;
+    text-align: center;
+}
+.navbar__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+}
+
+.navbar__item {
+    position: relative;
+    height: 96px;
+    top: 40px;
+}
+
+.navbar__link {
+    text-decoration: none;
+    font-size: 16px;
+}
+.navbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.navbar__search {
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    background-color: #F2FBEB;
+    padding: 5px;
+    border-radius: 20px;
+}
+.navbar__search-input {
+    border: none;
+    background: transparent;
+    outline: none;  
+    padding: 5px;
+}
+
+.navbar__search-input::-webkit-input-placeholder {
+    color: #355F2E;
+}
+
+.navbar__search-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.navbar__icons {
+    display: flex;
+    gap: 16px;
+}
+.navbar__icon { 
+    position: relative;
+    cursor: pointer;
+    border-radius: 24px;
+    border: none;
+    background-color: #F2FBEB;
+}
+
+.navbar__icon--cart {
+    padding: 7px 8px;
+}
+
+.navbar__icon--user {
+    padding: 7px 11px;
+}
+
+.navbar__cart-count {
+    width: 18px;
+    height: 18px;
+    position: absolute;
+    top: -2px;
+    right: -8px;
+    background-color: #2d4827;
+    color: white;
+    font-size: 12px;
+    line-height: 150%;
+    text-align: center;
+    border-radius: 9px;
+}
+
+.nav__item--has-dropdown:hover .navbar__dropdown {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* DROPDOWN */
+.navbar__dropdown {
+    visibility: hidden;
+    opacity: 0;
+    display: flex;
+    flex-direction: row;
+    position: absolute;
+    background: #ffffff;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 12px 16px;
+    min-width: 420px;
+    max-width: min(860px, 100vw);
+    width: min(860px, 100vw);
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.navbar__dropdown-column {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 8px;
+    text-align: center;
+    min-width: 120px;
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.navbar__dropdown-column:last-child {
+    border-right: none;
+}
+
+.navbar__dropdown-title {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 130%;
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.navbar__dropdown-title:hover {
+    color: #2d4827;
+    transform: translateY(-1px);
+}
+
+.navbar__dropdown-list {
+    padding: 0;
+}
+
+.navbar__dropdown-item {
+    margin-bottom: 12px;
+}
+
+.navbar__dropdown-item:last-child {
+    margin-bottom: 0;
+}
+
+.navbar__dropdown-link {
+    font-size: 16px;
+    transition: color 0.3s;
+    line-height: 150%;
+    cursor: pointer;
+}
+
+/* LABEL__BOT */
+
+.benefits {
+    padding: 48px 72px;
+    text-align: center;
+    background-color: #FAFAFA;
+}
+
+.benefits__list {
+    display: flex;
+    align-items: center;
+    margin: auto;
+    justify-content: space-between;
+}
+
+.benefits__item {
+    display: flex;
+    align-items: center;
+    width: 16vw;
+    height: 64px;
+    text-align: left;
+    gap: 16px;
+}
+
+.benefits__text {
+    font-size: 16px;
+    line-height: 150%;
+    font-weight: 600;
+    color: #212121;
+}
+
+
+/* FOOTER */
+.footer {
+    padding: 48px 72px;
+    line-height: 150%;
+}
+
+.footer__container {
+    display: flex;
+    justify-content: space-between;
+    margin: auto;
+    gap: 72px;
+}
+
+.footer__column {
+    flex: 1;
+}
+
+.footer__company {
+    max-width: 526px;
+}
+
+.footer__logo {
+    padding-bottom: 16px;
+}
+
+.footer__name {
+    font-size: 16px;
+    padding-bottom: 24px;
+}
+
+.footer__contact {
+    padding-bottom: 24px;
+}
+
+
+.footer__text {
+    font-size: 16px;
+    line-height: 150%;
+}
+
+.footer__social {
+    padding-top: 24px;
+    display: flex;
+    gap: 16px;
+}
+
+.footer__social-icon img {
+    font-size: 16px;
+    transition: transform 0.2s;
+}
+
+.footer__social-icon:hover img {
+    transform: scale(1.1);
+}
+
+.footer__title {
+    font-size: 16px;
+    padding-bottom: 12px;
+}
+
+.footer__about {
+    max-width: 120px;
+}
+
+.footer__policy {
+    max-width: 321px;
+}
+
+.footer__list {
+    list-style: none;
+    padding: 0;
+}
+
+.footer__item {
+    padding-bottom: 12px;
+    line-height: 150%;
+}
+
+.footer__link {
+    text-decoration: none;
+    font-size: 16px;
+    color: #212121;
+}
+
+.footer__link:hover {
+    color: #2f5617;
+}
+
+.footer__bottom {
+    text-align: center;
+    font-size: 16px;
+    color: #212121;
+    font-weight: 400;
+}
+
+.footer__copyright {
+    margin: 0;
+    padding: 12px 0;
+}
+
+/* GIO HANG */
+.cart__modal {
+    display: none;
+    position: fixed; 
+    top: 0; 
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    z-index: 1000; 
+    margin: auto;
+    justify-content: right;
+}
+
+.cart__content {
+    position: relative;
+    width: 708px;
+    background-color: white;    
+}
+
+.cart__header {
+    display: flex;
+    align-items: center;
+    padding: 24px 0;
+    border-bottom: 1px solid #EEEEEE;
+    justify-content: space-between;
+}
+
+.cart__title {
+    font-size: 32px;
+    font-weight: 700;
+    margin: auto;
+}
+
+.cart__close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-right: 26px;
+}
+
+.cart__items {
+    list-style: none;
+    padding: 24px;
+    margin: 0;
+}
+
+.cart__item {
+    display: flex;
+    align-items: center;
+    border: 1px solid #EEEEEE;
+    border-radius: 16px;
+}
+
+.cart__item:last-child {
+    margin-top: 24px;
+}
+
+.cart__item-image-wrapper {
+    padding: 16px;
+}
+
+.cart__item-image {
+    width: 196px;
+}
+
+.cart__item-details {
+    flex-grow: 1;
+}
+
+.cart__item-name {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 140%;
+    margin-bottom: 8px;
+}
+
+.cart__item-option {
+    font-size: 12px;
+    color: #9E9E9E;
+    line-height: 150%;
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.cart__item-price {
+    margin-bottom: 8px;
+}
+
+.cart__item-price--old {
+    text-decoration: line-through;
+    font-size: 12px;
+    color: #9E9E9E;
+    line-height: 150%;
+    margin-right: 8px;
+}
+
+.cart__item-price--current {
+    font-size: 16px;
+    line-height: 150%;
+}
+
+.cart__quantity-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #F5F5F5;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+    border-radius: 4px;
+}
+
+.cart__quantity-value {
+    border: 1px solid #E0E0E0;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 8px 15px;
+    margin:0 8px;
+}
+
+.cart__item-remove-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 20px;
+}
+
+.cart__footer {
+    display: flex;
+    border-top: 1px solid #EEEEEE;
+    margin: 12px 24px;
+    gap: 8px;
+    position: absolute;
+    bottom: 0; 
+    right: 0; 
+}
+
+.cart__checkout-button {
+    display: flex;
+    padding: 12px 24px;
+    background-color: #355F2E;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 463px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart__checkout-button:hover {
+    background-color: #B4D499;
+    transition: background 0.5s ease;
+}
+
+.cart__continue-shopping-button {
+    display: flex;
+    background-color: white;
+    color: #355F2E;
+    border: 1px solid #355F2E;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    width: 189px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart__continue-shopping-button:hover {
+    background-color: #355F2E;
+    color: white;
+    transition: background 0.5s ease;
+}
+
+.cart__modal.open {
+    display: flex;
+}
+
+/* RESPONSIVE */
+
+/* mobile nav */
+
+.navbar__bars-btn {
+    width: 24px;
+    height: 24px;
+    display: none;
+    margin-left: 5px;
+}
+
+/* làm mờ */
+.navbar__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    display: none;
+}
+
+.navbar__mobile {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 320px;
+    max-width: 100%;
+    background-color: white;
+    transform: translateX(100%);
+}
+
+.navbar__mobile-logo {
+    margin: 32px 24px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.navbar__mobile-close {
+    width: 18px;
+    height: 18px;
+}
+
+.navbar__mobile-list {
+    margin-top: 24px;
+    border-top: 1px solid #EEEE;
+}
+
+.navbar__mobile-item {
+    display: block;
+    margin-top: 24px;
+}
+
+.navbar__mobile-link {
+    font-size: 16px;
+
+}
+
+.navbar__mobile-input:checked ~ .navbar__overlay {
+    display: block;
+}
+
+.navbar__mobile-input:checked ~ .navbar__mobile {
+    transform: translateX(0%);
+}
+
+.navbar__dropdown-mobile {
+    display: none;
+    position: absolute;
+    background: #F5F5F5;
+    border-radius: 24px;
+    padding: 24px;
+}
+
+.navbar__dropdown-mobile-list {
+    padding: 0;
+    border-bottom: 1px solid #BDBDBD;
+    margin-bottom: 24px;
+}
+
+.nav__mobile--has-dropdown:checked ~ .navbar__dropdown-mobile {
+    display: block;
+}
+
+
+/* mobile width < 740px */
+@media (max-width: 480px){
+    .breadcrumb {
+        padding: 16px 12px;
+      }
+    /* navbar */
+    .navbar {
+        padding: 0 12px;
+        flex-wrap: wrap;
+    }
+
+    .navbar__search-button {
+        padding: 2px 3px;
+    }
+
+    .navbar__actions {
+        margin: 0 auto;
+    }
+
+    .navbar__search-input  {
+        width: 35vw;
+    }
+    
+    .navbar__dropdown-item {
+        margin-bottom: 0;
+    }
+
+    /* footer */
+    .footer__container{
+        display: block;
+    }
+
+    .footer__column {
+        display: block;
+        margin: 0 auto;
+        text-align: center;
+        padding: 24px 0;
+        border-bottom: 1px solid #BDBDBD;
+    }
+
+    .footer__social {
+        justify-content: center;
+    }
+
+    /* label */
+    .benefits__list {
+        display: block; 
+    }
+
+    .benefits__item {
+        width: 70vw;
+        margin: 24px auto;
+        justify-content: center;
+    }
+
+    /* gio hang */
+    .cart__content {
+        width: 100vw;
+    }
+    .cart__item-image {
+        width: 30vw;
+    }
+
+    .cart__checkout-button, .cart__continue-shopping-button {
+        width: 40vw;
+    }
+
+    .cart__item-quantity {
+        width: 70vw;
+    }
+
+    .cart__item {
+        height: 25vh;
+    }
+
+    /* ngoai le */
+    .login__title, .order__title  {
+        font-size: 32px;
+    }
+}
+
+/* tablet */
+@media (min-width: 481px) and (max-width: 1024px) {
+
+    /* label */
+    .benefits__list {
+        flex-wrap: wrap;
+    }
+
+    .benefits__item {
+        width: 30vw;
+        margin: 24px 0;
+    }    
+
+    /* footer */
+    .footer__container{
+        display: block;
+    }
+
+    .footer__column {
+        display: block;
+        margin: 0 auto;
+        text-align: center;
+        padding: 24px 0;
+        border-bottom: 1px solid #BDBDBD;
+    }
+
+    .footer__social {
+        justify-content: center;
+    }
+
+    /* gio hang */
+    .cart__content {
+        width: 70vw;
+    }
+
+}
+
+
+/* chung*/
+@media only screen and (max-width: 1024px) {
+    /* navbar */
+    .navbar__bars-btn{
+        display: block;
+    }
+
+    .navbar__list {
+        display: none;
+    }
+
+}

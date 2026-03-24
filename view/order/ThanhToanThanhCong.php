@@ -1,0 +1,394 @@
+<?php
+// view/order/ThanhToanThanhCong.php
+require_once __DIR__ . '/../../includes/header.php';
+
+// Kiểm tra phương thức thanh toán từ ghi chú
+$isQR = (strpos($order['ghi_chu'] ?? '', 'ChuyenKhoan') !== false);
+$phuong_thuc_text = $isQR ? 'Chuyển khoản qua Ngân hàng (VietQR)' : 'Thanh toán khi nhận hàng (COD)';
+
+// Trạng thái thanh toán (Nếu là QR và trạng thái là ChoXacNhan -> Chưa thanh toán)
+$isPendingPayment = ($isQR && $order['trang_thai'] === 'ChoXacNhan');
+
+// Tính lại tiền ship hiển thị
+$tong_san_pham = 0;
+foreach ($order['items'] as $item) {
+    $tong_san_pham += $item['gia'] * $item['so_luong'];
+}
+$phi_ship = $order['tong_tien'] - $tong_san_pham;
+?>
+<style>
+    /* Layout Container */
+    .success-wrapper {
+        max-width: 1200px;
+        margin: 40px auto 80px auto;
+        padding: 0 20px;
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    /* Cột trái: Thông tin đơn hàng */
+    .success-main {
+        flex: 1 1 60%;
+        background: #fff;
+        padding: 35px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid #eaeaea;
+    }
+
+    /* Nếu không phải QR, cho cột trái căn giữa và giới hạn độ rộng */
+    .success-main--center {
+        max-width: 850px;
+        margin: 0 auto;
+        flex: 1 1 100%;
+    }
+
+    /* Cột phải: Mã QR */
+    .success-sidebar {
+        width: 380px;
+        flex-shrink: 0;
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 2px solid #2e5932;
+        position: sticky;
+        top: 20px;
+        text-align: center;
+    }
+
+    /* Thành phần bên trong */
+    .success-header {
+        text-align: center;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 25px;
+        margin-bottom: 25px;
+    }
+
+    .success-icon {
+        font-size: 60px;
+        color: #28a745;
+        margin-bottom: 15px;
+    }
+
+    .success-title {
+        font-size: 26px;
+        font-weight: bold;
+        color: #2e5932;
+        margin: 0 0 10px 0;
+        text-transform: uppercase;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .info-box {
+        background: #f8fbf9;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #eef6f0;
+    }
+
+    .info-box h4 {
+        margin: 0 0 10px 0;
+        color: #333;
+        font-size: 16px;
+        border-bottom: 1px dashed #ccc;
+        padding-bottom: 8px;
+    }
+
+    .info-box p {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        color: #555;
+        line-height: 1.5;
+    }
+
+    .product-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 25px;
+    }
+
+    .product-table th,
+    .product-table td {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .product-table th {
+        background: #fafafa;
+        color: #555;
+        text-align: left;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+
+    .totals-box {
+        text-align: right;
+        font-size: 15px;
+        background: #fafafa;
+        padding: 20px;
+        border-radius: 8px;
+    }
+
+    .totals-box p {
+        margin: 5px 0;
+        color: #555;
+    }
+
+    .totals-final {
+        font-size: 22px;
+        font-weight: bold;
+        color: #e74c3c;
+        margin-top: 15px !important;
+        padding-top: 15px;
+        border-top: 1px dashed #ccc;
+    }
+
+    .actions-box {
+        text-align: center;
+        margin-top: 30px;
+    }
+
+    .btn {
+        padding: 12px 25px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: bold;
+        transition: 0.3s;
+        display: inline-block;
+        margin: 0 10px;
+        font-size: 15px;
+    }
+
+    .btn-primary {
+        background: #2e5932;
+        color: #fff;
+        border: 1px solid #2e5932;
+    }
+
+    .btn-primary:hover {
+        background: #1f4023;
+    }
+
+    .btn-outline {
+        background: #fff;
+        color: #2e5932;
+        border: 1px solid #2e5932;
+    }
+
+    .btn-outline:hover {
+        background: #f8fbf9;
+    }
+
+    /* Style riêng cho QR Box */
+    .qr-title {
+        color: #333;
+        margin-top: 0;
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .qr-subtitle {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .qr-img-wrapper {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 10px;
+        display: inline-block;
+        margin-bottom: 20px;
+    }
+
+    .qr-img {
+        width: 250px;
+        height: 250px;
+        display: block;
+        border-radius: 8px;
+    }
+
+    .qr-amount {
+        font-size: 24px;
+        font-weight: bold;
+        color: #e74c3c;
+        margin-bottom: 15px;
+    }
+
+    .qr-bank-info {
+        text-align: left;
+        background: #f0f8ff;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #333;
+        line-height: 1.6;
+        border: 1px solid #cce5ff;
+    }
+
+    .qr-bank-info span {
+        font-weight: bold;
+        color: #0056b3;
+    }
+
+    @media (max-width: 900px) {
+        .success-sidebar {
+            width: 100%;
+            position: static;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="success-wrapper">
+
+    <!-- CỘT TRÁI: THÔNG TIN ĐƠN HÀNG -->
+    <div class="success-main <?= !$isPendingPayment ? 'success-main--center' : '' ?>">
+        <div class="success-header">
+            <?php if ($isPendingPayment): ?>
+                <i class="fas fa-clock success-icon" style="color: #f39c12;"></i>
+                <h1 class="success-title" style="color: #f39c12;">Chờ Thanh Toán!</h1>
+                <p style="color: #666;">Đơn hàng của bạn đã được tạo. Vui lòng quét mã QR bên phải để hoàn tất thanh toán.
+                </p>
+            <?php else: ?>
+                <i class="fas fa-check-circle success-icon"></i>
+                <h1 class="success-title">Đặt Hàng Thành Công!</h1>
+                <p style="color: #666;">Cảm ơn bạn đã mua sắm tại Cozy Corner. Đơn hàng của bạn đã được ghi nhận.</p>
+            <?php endif; ?>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <h4>Thông tin đơn hàng</h4>
+                <p><strong>Mã đơn hàng:</strong> <span
+                        style="color:#2e5932; font-weight:bold;">#ORD<?= str_pad($order['id'], 5, '0', STR_PAD_LEFT) ?></span>
+                </p>
+                <p><strong>Ngày đặt:</strong> <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></p>
+                <p><strong>Phương thức:</strong> <?= $phuong_thuc_text ?></p>
+                <p><strong>Trạng thái:</strong> <span
+                        style="color: #d35400; font-weight: bold;"><?= htmlspecialchars($order['trang_thai']) ?></span>
+                </p>
+            </div>
+            <div class="info-box">
+                <h4>Thông tin nhận hàng</h4>
+                <p><?= str_replace(' | ', '<br>', htmlspecialchars($order['dia_chi_giao'])) ?></p>
+                <?php if (!empty($order['ghi_chu'])): ?>
+                    <p style="margin-top: 10px; color: #d35400; font-style: italic;"><i class="fas fa-comment-dots"></i> Ghi
+                        chú: <?= htmlspecialchars($order['ghi_chu']) ?></p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <h3 style="color: #333; margin-bottom: 15px;">Sản Phẩm Đã Mua</h3>
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th style="text-align: center; width: 100px;">SL</th>
+                    <th style="text-align: right;">Đơn giá</th>
+                    <th style="text-align: right;">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($order['items'] as $item): ?>
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['anh']) ?>"
+                                    style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
+                                <span style="font-weight: 600; color: #444;"><?= htmlspecialchars($item['ten_sp']) ?></span>
+                            </div>
+                        </td>
+                        <td style="text-align: center; font-weight: bold;"><?= $item['so_luong'] ?></td>
+                        <td style="text-align: right; color: #666;"><?= number_format($item['gia']) ?>đ</td>
+                        <td style="text-align: right; font-weight: bold; color: #333;">
+                            <?= number_format($item['gia'] * $item['so_luong']) ?>đ
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <div class="totals-box">
+            <p>Tổng tiền hàng: &nbsp;&nbsp;&nbsp;<strong><?= number_format($tong_san_pham) ?>đ</strong></p>
+            <p>Phí vận chuyển:
+                &nbsp;&nbsp;&nbsp;<strong><?= $phi_ship == 0 ? 'Miễn phí' : number_format($phi_ship) . 'đ' ?></strong>
+            </p>
+            <p class="totals-final">Tổng thanh toán: <?= number_format($order['tong_tien']) ?>đ</p>
+        </div>
+
+        <div class="actions-box">
+            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php" class="btn btn-outline"><i
+                    class="fas fa-shopping-bag"></i> Tiếp Tục Mua Sắm</a>
+            <a href="<?= BASE_URL ?>view/user/TaiKhoan.php?tab=orders" class="btn btn-primary"><i
+                    class="fas fa-file-invoice"></i> Quản Lý Đơn Hàng</a>
+        </div>
+    </div>
+
+    <!-- CỘT PHẢI: MÃ QR THANH TOÁN (Chỉ hiện khi chọn Chuyển khoản) -->
+    <?php if ($isPendingPayment): ?>
+        <div class="success-sidebar">
+            <h2 class="qr-title">Thanh Toán Bằng QR Code</h2>
+            <p class="qr-subtitle">Mở ứng dụng ngân hàng và quét mã để thanh toán tự động.</p>
+
+            <div class="qr-img-wrapper">
+                <?php
+                // Lấy thông tin ngân hàng từ file config.php (Chuẩn hệ thống lớn)
+                $bank = SEPAY_BANK_ID;
+                $acc = SEPAY_BANK_ACC;
+                $accName = SEPAY_BANK_NAME;
+
+                $des = 'ORD' . $order['id']; // Nội dung chuyển khoản (Càng ngắn QR càng dễ quét)
+                $qr_sepay_url = "https://qr.sepay.vn/img?acc={$acc}&bank={$bank}&amount=" . intval($order['tong_tien']) . "&des={$des}&accountName=" . urlencode($accName);
+                ?>
+                <img class="qr-img" src="<?= $qr_sepay_url ?>" alt="QR Code Thanh Toán SePay">
+            </div>
+
+            <div class="qr-amount"><?= number_format($order['tong_tien']) ?>đ</div>
+
+            <div class="qr-bank-info">
+                <p style="margin: 0 0 5px 0;">Ngân hàng: <span><?= htmlspecialchars($bank) ?></span></p>
+                <p style="margin: 0 0 5px 0;">Chủ tài khoản: <span><?= htmlspecialchars($accName) ?></span></p>
+                <p style="margin: 0 0 5px 0;">Số tài khoản: <span><?= htmlspecialchars($acc) ?></span></p>
+                <p style="margin: 0; padding-top: 5px; border-top: 1px solid #b8daff;">
+                    Nội dung CK: <span style="color: #e74c3c; font-size: 16px;"><?= $des ?></span>
+                </p>
+            </div>
+            <p style="font-size: 13px; color: #888; margin-top: 15px; font-style: italic;">Đơn hàng sẽ được xử lý ngay sau
+                khi hệ thống nhận được thanh toán.</p>
+        </div>
+    <?php endif; ?>
+
+</div>
+
+<?php if ($isPendingPayment): ?>
+    <script>
+        // JS Tự động kiểm tra trạng thái đơn hàng (Polling) mỗi 3 giây
+        setInterval(() => {
+            fetch('<?= BASE_URL ?>index.php?url=order/check_status&id=<?= $order['id'] ?>')
+                .then(res => res.json())
+                .then(data => {
+                    // Nếu webhook cập nhật trạng thái khác 'ChoXacNhan' (ví dụ: 'DangGiao')
+                    if (data.status === 'success' && data.trang_thai !== 'ChoXacNhan') {
+                        window.location.reload(); // Tự động load lại để hiện "Thanh toán thành công"
+                    }
+                });
+        }, 3000);
+    </script>
+<?php endif; ?>
+
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>

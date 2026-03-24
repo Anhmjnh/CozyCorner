@@ -1,0 +1,231 @@
+/* BREADCRUMB */
+
+.breadcrumb {
+  color: #9E9E9E;
+  font-size: 16px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 16px 72px;
+  margin: 0;
+  gap: 25px; 
+}   
+
+.breadcrumb li {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb li a {
+  text-decoration: none;
+  color: #9E9E9E;
+}
+
+.breadcrumb li:last-child a {
+  font-weight: 600;
+  color: #355F2E;
+}
+/* content */
+
+.account {
+    display: flex;
+    margin: 24px 72px 96px;
+    gap: 24px;
+  }
+  
+  .account__sidebar {
+    width: 20vw;
+  }
+  
+  .account__user {
+    display: flex;
+    text-align: center;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #EEEEEE;
+  }
+
+  .account__user img {
+    background-color: #F5F5F5;
+    padding: 12px 13px;
+    border-radius: 24px;
+  }
+  
+  .account__name {
+    font-size: 24px;
+    font-weight: 700;
+  }
+  
+  .account__menu {
+    margin-top: 16px;
+  }
+  
+  .account__item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    cursor: pointer;
+  }
+
+  .account__item:last-child {
+    border-top: 1px solid #EEEEEE;
+    margin: 0;
+    padding-top: 32px;
+  }
+
+  .account__item-name {
+    color: #757575;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 150%;
+  }
+
+  .account__item-active {
+    background-color: #F2FBEB;
+    border-radius: 4px;
+  }
+
+  .account__item-name--location {
+    color: #355F2E;
+  }
+
+  .account__item-name--logout {
+    color: #E57373;
+  }
+
+/* right */
+
+.address-form {
+  width: 100%;
+  margin: auto;
+}
+
+.address-form__title {
+  font-size: 40px;
+  font-weight: 700;
+  height: 48px;
+  margin-bottom: 24px;
+  text-align: center;
+  margin: 0;
+  margin-bottom: 24px
+}
+
+.address-form__content {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #EEEEEE;
+}
+
+.address-form__row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.address-form__group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.address-form__group--half {
+  flex: 0 0 49.22%;
+}
+
+.address-form__label {
+  font-size: 16px;
+  line-height: 150%;
+  margin-top: 24px;
+  margin-bottom: 8px;
+}
+
+.address-form__input{
+  color: #BDBDBD;
+  width: 100%;
+  height: 48px;
+  padding: 12px 16px;
+  border: 1px solid #EEEEEE;
+  border-radius: 4px;
+  background-color: #FAFAFA
+}
+
+.address-form__select {
+  width: 100%;
+  height: 48px;
+  padding: 12px 16px;
+  border: 1px solid #EEEEEE;
+  border-radius: 4px;
+  background-color: #FAFAFA
+}
+
+.address-form__select {
+  appearance: none;
+  background-image: url("/TT_WebGiaDung/asset/icon/icon-down-black.svg");
+  background-repeat: no-repeat;
+  background-position: right 21px center;
+  background-size: 16px;
+}
+
+.address-form__button {
+  display: flex;
+  margin: 24px auto 0;
+  padding: 12px 24px;
+  background-color: #355F2E;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+.address-form__button:hover {
+  background-color: #B4D499;
+  cursor: pointer;
+  transition: all 0.5s ease
+}
+
+/* -----------mobile------------ */
+@media (max-width: 480px) {
+  .account {
+      display: block;
+      margin: 24px 12px 96px;
+  }
+  .address-form__row {
+      display: block;
+  }
+
+  .account__menu, .account__user {
+      width: 95vw;
+      margin-bottom: 32px;
+      border-bottom: 1px solid #EEEE;
+  }
+
+  .order__recipient-left, .order__recipient-right {
+      width: 50vw;
+  }
+
+  .order__summary-totals span {
+      text-align: right;
+  }
+ 
+}
+
+/*------------TABLET------------ */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .address-form, .account__content, .order-form, .order   {
+      width: 60vw;
+  }
+  .address-form__row {
+      display: block;
+  }
+
+  .order__recipient-left, .order__recipient-right {
+      width: 50vw;
+  }
+
+  .order__summary-totals span {
+      text-align: right;
+  }
+}

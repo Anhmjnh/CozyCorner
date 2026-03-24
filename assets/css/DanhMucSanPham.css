@@ -1,0 +1,441 @@
+/* BANNER */
+
+.banner__product {
+    position: relative;
+    margin: 0 72px;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border-radius: 24px;
+}
+
+.banner__img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* BREADCRUMB */
+
+.breadcrumb {
+    color: #9E9E9E;
+    font-size: 16px;
+    font-weight: 400;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    list-style: none;
+    padding: 16px 72px;
+    margin: 0;
+    gap: 25px;
+}
+
+.breadcrumb li {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb li a {
+    text-decoration: none;
+    color: #9E9E9E;
+}
+
+.breadcrumb li:last-child a {
+   box-sizing: inherit;
+    color: #212121;
+    line-height: 100%;
+    font-weight: 400;
+}
+
+/* CONTENT */
+.content {
+    padding: 24px 72px 96px;
+    display: flex;
+    gap: 24px;
+}
+
+.filter {
+    max-width: 306px;
+    height: 653px;
+    flex: 1;
+}
+
+.filter__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 32px;
+}
+
+.filter__title {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.filter__section {
+    padding-bottom: 32px;
+}
+
+.filter__label {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+/* Thanh kéo giá */
+.filter__price {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter__range {
+    width: 100%;
+    height: 4px;
+    accent-color: #355F2E;
+    cursor: pointer;
+}
+
+.filter__price-values span {
+    padding-right: 16px;
+    font-size: 16px;
+    font-weight: 400;
+    color: #757575;
+}
+
+/* bộ lọc */
+.filter__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.filter__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 11px;
+}
+
+.filter__checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    accent-color: #355F2E;
+    transition: background 0.3s ease;
+    cursor: pointer;
+}
+
+
+.filter__label-text {
+    font-size: 16px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+/* sản phẩm */
+.product {
+    flex: 1;
+}
+
+.product__header {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 400;
+    justify-content: flex-end;
+    padding-bottom: 24px;
+}
+
+.product__header-count {
+    color: #9E9E9E;
+    padding-right: 16px;
+}
+
+.product__header-sort-text {
+    color: #757575;
+    font-size: 14px;
+    font-weight: 600;
+    padding-left: 13px;
+}
+
+.product__header-sort-btn {
+    background-color: #FAFAFA;
+    display: flex;
+    align-items: center;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+/* ---- */
+
+.product__list-items {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.product__list-item {
+    background-color: #fff;
+    text-align: center;
+    display: inline;
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+
+}
+
+.product__list-image {
+    height: 230px;
+}
+
+.product__list-item-title {
+    margin-bottom: 5px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: left;
+    margin: 0;
+    padding-right: 54px;
+    line-height: 150%;
+}
+
+.product__list-price {
+    margin-bottom: 10px;
+    font-size: 20px;
+    color: #355F2E;
+    font-weight: 600;
+    text-align: left;
+    margin: 0;
+    line-height: 150%;
+}
+
+.product__list-old-price {
+    font-size: 12px;
+    color: #BDBDBD;
+    text-decoration: line-through;
+    font-weight: 400;
+    margin-left: 5px;
+}
+
+.product__list-cart-button {
+    padding: 12px 24px;
+    border: 1px solid #355F2E;
+    border-radius: 5px;
+    background-color: white;
+    flex-shrink: 0;
+
+}
+
+.product__list-cart-button:hover {
+    background: #355F2E;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.product__list-cart-button:hover img {
+    filter: brightness(0) invert(1);
+}
+
+.product__list-text {
+    padding: 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.more__btn {
+    display: flex;
+    margin: auto;
+    margin-top: 24px;
+    gap: 8px;
+    background-color: #355F2E;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 24px;
+}
+
+.more__btn:hover {
+    background-color: #B4D499;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.more__btn-text {
+    display: grid;
+    align-items: center;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.more__btn-img {
+    font-size: 14px;
+}
+
+.filter__mobile-header {
+    display: none;
+    padding: 0 16px;
+}
+
+.filter__mobile-overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
+    display: none;
+}
+
+.filter__mobile {
+    position: fixed;
+    display: none;
+    z-index: 1;
+    background: #FAFAFA;
+    padding: 24px;
+    right: 72px;
+}
+
+.filter__mobile img {
+    top: 12px;
+    right: 12px;
+    position: absolute;
+}
+
+.filter__mobile-checked:checked~.filter__mobile {
+    display: block;
+}
+
+.filter__mobile-checked:checked~.filter__mobile-overlay {
+    display: block;
+}
+
+/*-----------mobile-------------*/
+@media (max-width: 480px) {
+    .banner {
+        margin: 0;
+    }
+
+    .breadcrumb {
+        padding: 16px 12px;
+    }
+
+    .content {
+        padding: 24px 0 96px;
+        gap: 0;
+    }
+
+    /* filter */
+    .filter {
+        display: none;
+    }
+
+    .filter__mobile-header {
+        display: block;
+    }
+
+    .filter__mobile {
+        top: 96px;
+        right: 0px;
+    }
+
+    /* SAN PHAM */
+    .product__list {
+        padding: 48px 0px;
+    }
+
+    .product__list-item-title {
+        padding-right: 0;
+        font-size: 14px;
+    }
+
+    .product__list-price {
+        font-size: 14px;
+    }
+
+    .product__list-image {
+        height: 120px;
+    }
+
+    .product__list-items {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .product__list-item {
+        width: 45vw;
+    }
+
+    .product__list-text {
+        display: block;
+        padding: 8px;
+    }
+
+    .product__list-cart-button {
+        padding: 1px 15vw;
+    }
+
+    .product__list-cart-button img {
+        transform: translateY(6px);
+    }
+
+}
+
+
+/* RESPONSIVE */
+/*------------TABLET------------ */
+@media (min-width: 481px) and (max-width: 1024px) {
+    .content {
+        gap: 0;
+    }
+
+    /* filter */
+    .filter {
+        display: none;
+    }
+
+    .filter__mobile-header {
+        display: block;
+    }
+
+    /* SAN PHAM */
+    .product__list {
+        padding: 48px 24px;
+    }
+
+    .product__list-item-title {
+        padding-right: 0;
+    }
+
+    .product__list-image {
+        height: 150px;
+    }
+
+    .product__list-items {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .product__list-item {
+        width: 25vw;
+    }
+
+    .product__list-text {
+        display: block;
+    }
+
+    .product__list-cart-button {
+        padding: 4px 9vw;
+    }
+
+    .product__list-cart-button img {
+        transform: translateY(6px);
+    }
+
+}

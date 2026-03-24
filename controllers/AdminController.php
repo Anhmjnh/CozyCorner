@@ -1,0 +1,383 @@
+<?php
+// controllers/AdminController.php
+require_once __DIR__ . '/../models/AdminModel.php';
+
+class AdminController {
+    private $model;
+
+    public function __construct() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $this->model = new AdminModel();
+        
+        // Middleware Check Login: Bắt buộc phải có session admin mới được gọi các action bên dưới
+        if (!isset($_SESSION['admin_id'])) {
+            header("Location: " . BASE_URL . "view/user/DangNhap.php");
+            exit;
+        }
+    }
+
+    // --- VIEWS ---
+    public function index() {
+        $stats = $this->model->getDashboardStats();
+        require_once __DIR__ . '/../view/admin/dashboard.php';
+    }
+
+    public function products() {
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
+        $search = trim($_GET['search'] ?? '');
+        $category = trim($_GET['category'] ?? '');
+
+        $products = $this->model->getProducts($limit, $offset, $search, $category);
+        $total = $this->model->getTotalProductsCount($search, $category);
+        $totalPages = ceil($total / $limit);
+        $all_categories = $this->model->getCategories();
+
+        require_once __DIR__ . '/../admin/products.php';
+    }
+
+    public function users() {
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
+        $search = trim($_GET['search'] ?? '');
+        $hang = trim($_GET['hang'] ?? '');
+        $trang_thai = trim($_GET['trang_thai'] ?? '');
+
+        $users = $this->model->getUsersList($limit, $offset, $search, $hang, $trang_thai);
+        $total = $this->model->getTotalUsersCount($search, $hang, $trang_thai);
+        $totalPages = ceil($total / $limit);
+
+        require_once __DIR__ . '/../admin/users.php';
+    }
+
+    public function categories() {
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
+        $search = trim($_GET['search'] ?? '');
+        $trang_thai = trim($_GET['trang_thai'] ?? '');
+
+        $categories = $this->model->getCategoriesList($limit, $offset, $search, $trang_thai);
+        $total = $this->model->getTotalCategoriesCount($search, $trang_thai);
+        $totalPages = ceil($total / $limit);
+
+        require_once __DIR__ . '/../admin/categories.php';
+    }
+
+    public function staffs() {
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
+        $search = trim($_GET['search'] ?? '');
+        $vai_tro = trim($_GET['vai_tro'] ?? '');
+        $trang_thai = trim($_GET['trang_thai'] ?? '');
+
+        $staffs = $this->model->getStaffsList($limit, $offset, $search, $vai_tro, $trang_thai);
+        $total = $this->model->getTotalStaffsCount($search, $vai_tro, $trang_thai);
+        $totalPages = ceil($total / $limit);
+
+        require_once __DIR__ . '/../admin/staffs.php';
+    }
+
+    // --- AJAX APIs ---
+    public function api_get_admin_profile() {
+        header('Content-Type: application/json');
+        $admin = $this->model->getAdminById($_SESSION['admin_id']);
+        if ($admin) {
+            unset($admin['password']); // Xóa password khỏi response để bảo mật
+            echo json_encode(['status' => 'success', 'data' => $admin]);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy thông tin admin.']);
+        }
+        exit;
+    }
+
+    public function api_update_admin_profile() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $admin_id = $_SESSION['admin_id'];
+            $ho_ten = trim($_POST['ho_ten'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            $so_dien_thoai = trim($_POST['so_dien_thoai'] ?? '');
+            $dia_chi = trim($_POST['dia_chi'] ?? '');
+            $gioi_tinh = $_POST['gioi_tinh'] ?? 'Nam';
+            $ngay_sinh = trim($_POST['ngay_sinh'] ?? '');
+            
+            $current_password = trim($_POST['current_password'] ?? '');
+            $new_password = trim($_POST['new_password'] ?? '');
+            $confirm_password = trim($_POST['confirm_password'] ?? '');
+
+            if (empty($ho_ten) || empty($email)) {
+                echo json_encode(['status' => 'error', 'msg' => 'Họ tên và email không được để trống.']);
+                exit;
+            }
+
+            // Kiểm tra đổi mật khẩu
+            $changePassword = ($current_password !== '' || $new_password !== '' || $confirm_password !== '');
+            if ($changePassword) {
+                if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Vui lòng điền đủ thông tin đổi mật khẩu.']);
+                    exit;
+                }
+                if ($new_password !== $confirm_password) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Mật khẩu xác nhận không khớp.']);
+                    exit;
+                }
+                if (strlen($new_password) < 6) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Mật khẩu mới phải có ít nhất 6 ký tự.']);
+                    exit;
+                }
+                $admin = $this->model->getAdminById($admin_id);
+                if (!password_verify($current_password, $admin['password']) && $current_password !== $admin['password']) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Mật khẩu hiện tại không đúng.']);
+                    exit;
+                }
+            }
+
+            // Xử lý Avatar
+            $avatar = null;
+            if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] == 0) {
+                $target_dir = __DIR__ . "/../uploads/";
+                $filename = time() . "_admin_" . basename($_FILES["avatar"]["name"]);
+                $target_file = $target_dir . $filename;
+                if (move_uploaded_file($_FILES["avatar"]["tmp_name"], $target_file)) {
+                    $avatar = $filename;
+                }
+            }
+
+            // Lưu CSDL
+            if ($this->model->updateAdminProfile($admin_id, $ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $avatar)) {
+                if ($changePassword) {
+                    $newHash = password_hash($new_password, PASSWORD_DEFAULT);
+                    $this->model->updateAdminPassword($admin_id, $newHash);
+                }
+                
+                $_SESSION['admin_name'] = $ho_ten;
+                if ($avatar) $_SESSION['admin_avatar'] = $avatar;
+                
+                echo json_encode([
+                    'status' => 'success', 
+                    'msg' => 'Cập nhật thông tin thành công!', 
+                    'name' => $ho_ten, 
+                    'avatar' => $_SESSION['admin_avatar'] ?? null
+                ]);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Cập nhật thất bại.']);
+            }
+        }
+        exit;
+    }
+
+    public function api_chart_data() {
+        header('Content-Type: application/json');
+        echo json_encode($this->model->getRevenueChartData());
+        exit;
+    }
+
+    public function api_add_product() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $ten_sp = $_POST['ten_sp'] ?? '';
+            $gia = $_POST['gia'] ?? 0;
+            $gia_cu = $_POST['gia_cu'] ?? 0;
+            $danh_muc = $_POST['danh_muc'] ?? 'Khac';
+            $so_luong = $_POST['so_luong'] ?? 0;
+            $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
+            
+            // Xử lý upload ảnh
+            $anh = '';
+            if (isset($_FILES['anh']) && $_FILES['anh']['error'] == 0) {
+                $target_dir = __DIR__ . "/../uploads/";
+                $filename = time() . "_" . basename($_FILES["anh"]["name"]);
+                $target_file = $target_dir . $filename;
+                if (move_uploaded_file($_FILES["anh"]["tmp_name"], $target_file)) {
+                    $anh = $filename;
+                }
+            }
+
+            if ($this->model->addProduct($ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh)) {
+                echo json_encode(['status' => 'success', 'msg' => 'Thêm sản phẩm thành công!']);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Lỗi khi thêm vào CSDL.']);
+            }
+        }
+        exit;
+    }
+
+    public function api_delete_product() {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (isset($data['id'])) {
+            if ($this->model->deleteProduct($data['id'])) {
+                echo json_encode(['status' => 'success', 'msg' => 'Xóa thành công!']);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa.']);
+            }
+        }
+        exit;
+    }
+
+    public function api_get_user() {
+        header('Content-Type: application/json');
+        $id = $_GET['id'] ?? 0;
+        $user = $this->model->getUserById($id);
+        if ($user) {
+            echo json_encode(['status' => 'success', 'data' => $user]);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy người dùng.']);
+        }
+        exit;
+    }
+
+    public function api_save_user() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'] ?? '';
+            $ho_ten = $_POST['ho_ten'] ?? '';
+            $email = $_POST['email'] ?? '';
+            $so_dien_thoai = $_POST['so_dien_thoai'] ?? '';
+            $dia_chi = $_POST['dia_chi'] ?? '';
+            $gioi_tinh = $_POST['gioi_tinh'] ?? 'Nam';
+            $ngay_sinh = !empty($_POST['ngay_sinh']) ? $_POST['ngay_sinh'] : null;
+            $hang = $_POST['hang'] ?? 'Đồng';
+            $trang_thai = $_POST['trang_thai'] ?? 'HoatDong';
+            $mat_khau = $_POST['mat_khau'] ?? '';
+
+            if (!empty($ho_ten) && !empty($email)) {
+                if (empty($id)) { // Logic Thêm Mới
+                    if (empty($mat_khau)) {
+                        echo json_encode(['status' => 'error', 'msg' => 'Vui lòng nhập mật khẩu cho người dùng mới.']); exit;
+                    }
+                    $hash = password_hash($mat_khau, PASSWORD_DEFAULT);
+                    if ($this->model->addUser($ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $hang, $trang_thai, $hash)) {
+                        echo json_encode(['status' => 'success', 'msg' => 'Thêm người dùng thành công!']);
+                    } else { echo json_encode(['status' => 'error', 'msg' => 'Email này có thể đã tồn tại trong hệ thống.']); }
+                } else {
+                    // Logic Cập Nhật
+                    if ($this->model->updateUserAdmin($id, $ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $hang, $trang_thai)) {
+                        if (!empty($mat_khau)) { $this->model->updateUserPassword($id, password_hash($mat_khau, PASSWORD_DEFAULT)); }
+                        echo json_encode(['status' => 'success', 'msg' => 'Cập nhật người dùng thành công!']);
+                    } else { echo json_encode(['status' => 'error', 'msg' => 'Lỗi khi cập nhật.']); }
+                }
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Họ tên và Email không được để trống.']);
+            }
+        }
+        exit;
+    }
+
+    public function api_delete_user() {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (isset($data['id'])) {
+            if ($this->model->deleteUser($data['id'])) {
+                echo json_encode(['status' => 'success', 'msg' => 'Xóa người dùng thành công!']);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa! Người dùng này có thể đang liên kết với các dữ liệu khác (như giỏ hàng, đơn hàng).']);
+            }
+        }
+        exit;
+    }
+
+    public function api_toggle_user_status() {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (isset($data['id'])) {
+            if ($this->model->toggleUserStatus($data['id'])) {
+                echo json_encode(['status' => 'success', 'msg' => 'Cập nhật trạng thái thành công!']);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Không thể cập nhật.']);
+            }
+        }
+        exit;
+    }
+
+    // --- API QUẢN LÝ NHÂN SỰ ---
+    public function api_get_staff() {
+        header('Content-Type: application/json');
+        $id = $_GET['id'] ?? 0;
+        $staff = $this->model->getAdminById($id);
+        if ($staff) {
+            unset($staff['password']);
+            echo json_encode(['status' => 'success', 'data' => $staff]);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy tài khoản.']);
+        }
+        exit;
+    }
+
+    public function api_save_staff() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'] ?? '';
+            $ho_ten = $_POST['ho_ten'] ?? '';
+            $email = $_POST['email'] ?? '';
+            $so_dien_thoai = $_POST['so_dien_thoai'] ?? '';
+            $vai_tro = $_POST['vai_tro'] ?? 'Staff';
+            $trang_thai = $_POST['trang_thai'] ?? 'HoatDong';
+
+            // Kiểm tra phân quyền: Staff không được tạo mới, không được sửa Admin
+            if ($_SESSION['admin_role'] !== 'Admin') {
+                if (empty($id)) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Bạn không có quyền thêm nhân viên mới.']); exit;
+                }
+                $targetStaff = $this->model->getAdminById($id);
+                if ($targetStaff['vai_tro'] === 'Admin' && $id != $_SESSION['admin_id']) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Bạn không có quyền chỉnh sửa thông tin của Admin.']); exit;
+                }
+                $vai_tro = 'Staff'; // Ép kiểu, staff không thể tự thăng cấp lên Admin
+            }
+
+            if (empty($id)) { // THÊM MỚI
+                $username = $_POST['username'] ?? '';
+                $password = $_POST['password'] ?? '';
+                if (empty($username) || empty($password) || empty($ho_ten)) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Vui lòng điền đủ thông tin bắt buộc.']); exit;
+                }
+                $hash = password_hash($password, PASSWORD_DEFAULT);
+                if ($this->model->addStaff($username, $email, $ho_ten, $so_dien_thoai, $vai_tro, $trang_thai, $hash)) {
+                    echo json_encode(['status' => 'success', 'msg' => 'Thêm nhân sự thành công!']);
+                } else {
+                    echo json_encode(['status' => 'error', 'msg' => 'Username hoặc Email có thể đã tồn tại.']);
+                }
+            } else { // CHỈNH SỬA
+                if ($this->model->updateStaffManager($id, $ho_ten, $email, $so_dien_thoai, $vai_tro, $trang_thai)) {
+                    if (!empty($_POST['password'])) {
+                        $this->model->updateAdminPassword($id, password_hash($_POST['password'], PASSWORD_DEFAULT));
+                    }
+                    echo json_encode(['status' => 'success', 'msg' => 'Cập nhật thành công!']);
+                } else {
+                    echo json_encode(['status' => 'error', 'msg' => 'Lỗi cập nhật.']);
+                }
+            }
+        }
+        exit;
+    }
+
+    public function api_delete_staff() {
+        header('Content-Type: application/json');
+        if ($_SESSION['admin_role'] !== 'Admin') {
+            echo json_encode(['status' => 'error', 'msg' => 'Chỉ Admin mới có quyền xóa.']); exit;
+        }
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (isset($data['id'])) {
+            if ($data['id'] == $_SESSION['admin_id']) {
+                echo json_encode(['status' => 'error', 'msg' => 'Bạn không thể tự xóa chính mình!']); exit;
+            }
+            if ($this->model->deleteStaff($data['id'])) {
+                echo json_encode(['status' => 'success', 'msg' => 'Xóa tài khoản thành công!']);
+            } else { echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa.']); }
+        }
+        exit;
+    }
+
+    public function __destruct() {
+        $this->model->close();
+    }
+}
