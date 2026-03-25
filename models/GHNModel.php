@@ -4,7 +4,8 @@ require_once __DIR__ . '/../config.php';
 
 class GHNModel
 {
-    private $api_url = "https://online-gateway.ghn.vn/shiip/public-api";
+    // Chuyển sang môi trường DEV của GHN
+    private $api_url = "https://dev-online-gateway.ghn.vn/shiip/public-api";
 
     private function request($endpoint, $data = [], $method = 'GET', $is_v2 = false)
     {
