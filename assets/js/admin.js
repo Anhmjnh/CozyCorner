@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", function() {
         formUser.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(formUser);
-            fetch(BASE_URL + 'admin/api_save_user', {
+            fetch(BASE_URL + 'index.php?url=admin/api_save_user', {
                 method: 'POST',
                 body: formData
             })
@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             })
             .catch(err => {
-                showToast('Lỗi hệ thống hoặc mạng khi lưu tin tức.', 'error');
+                showToast('Lỗi hệ thống hoặc mạng khi lưu người dùng.', 'error');
                 console.error('Fetch error:', err);
             });
         });
@@ -549,12 +549,5 @@ function openStaffModal(id = null) {
     } else {
         title.innerText = 'Thêm Nhân Sự Mới';
         modal.style.display = 'flex';
-    }
-}
-
-function deleteStaff(id) {
-    if(confirm('Chắc chắn muốn xóa nhân sự này?')) {
-        fetch(BASE_URL+'admin/api_delete_staff',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})})
-        .then(res=>res.json()).then(res=>{if(res.status==='success'){document.getElementById('row-staff-'+id).remove();showToast(res.msg,'success');}else showToast(res.msg,'error');});
     }
 }

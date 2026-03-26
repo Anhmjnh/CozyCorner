@@ -2,8 +2,8 @@
 // view/order/ThanhToanThanhCong.php
 require_once __DIR__ . '/../../includes/header.php';
 
-// Kiểm tra phương thức thanh toán từ ghi chú
-$isQR = (strpos($order['ghi_chu'] ?? '', 'ChuyenKhoan') !== false);
+// Kiểm tra phương thức thanh toán từ cột `phuong_thuc_thanh_toan`
+$isQR = (($order['phuong_thuc_thanh_toan'] ?? 'COD') === 'ChuyenKhoan');
 $phuong_thuc_text = $isQR ? 'Chuyển khoản qua Ngân hàng (VietQR)' : 'Thanh toán khi nhận hàng (COD)';
 
 // Trạng thái thanh toán (Nếu là QR và trạng thái là ChoXacNhan -> Chưa thanh toán)

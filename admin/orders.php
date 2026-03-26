@@ -58,8 +58,8 @@ $total = $stmt_count->get_result()->fetch_assoc()['total'] ?? 0;
 $stmt_count->close();
 $totalPages = ceil($total / $limit);
 
-// Tính tổng tiền đã hoàn thành theo bộ lọc hiện tại
-$sum_sql = "SELECT SUM(o.tong_tien) as total_revenue FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE $where_clause AND o.trang_thai = 'HoanThanh'";
+// Tính tổng tiền đã thanh toán (Hoàn Thành hoặc Chuyển Khoản Đang Giao) theo bộ lọc hiện tại
+$sum_sql = "SELECT SUM(o.tong_tien) as total_revenue FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE $where_clause AND (o.trang_thai = 'HoanThanh' OR (o.trang_thai = 'DangGiao' AND o.phuong_thuc_thanh_toan = 'ChuyenKhoan'))";
 $stmt_sum = $conn->prepare($sum_sql);
 if ($types) {
     $stmt_sum->bind_param($types, ...$params);
@@ -86,12 +86,12 @@ require_once __DIR__ . '/includes/admin_header.php';
 <div class="page-header"
     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <div>
-        <h2 style="margin: 0; color: #2c3e50;">Quản lý Đơn Hàng</h2>
-        <p style="margin: 5px 0 0; color: #7f8c8d; font-size: 14px;">
+        <h2 style="margin: 0; color: #333;">Quản lý Đơn Hàng</h2>
+        <p style="margin: 5px 0 0; color: #333; font-size: 14px;">
             Tìm thấy: <strong><?= number_format($total) ?></strong> đơn hàng
             <span style="margin: 0 10px;">|</span>
-            Tổng giá trị đơn hàng đã hoàn tất:: <strong
-                style="color: #e74c3c;"><?= number_format($total_revenue) ?>đ</strong>
+            Tổng giá trị đơn hàng đã thanh toán: <strong
+                style="color: #333;"><?= number_format($total_revenue) ?>đ</strong>
         </p>
     </div>
 </div>
@@ -162,7 +162,7 @@ require_once __DIR__ . '/includes/admin_header.php';
                     <tr>
                         <td>#<?= $order['id'] ?></td>
                         <td><?= htmlspecialchars($order['user_name']) ?></td>
-                        <td style="font-weight: bold; color: #e74c3c;"><?= number_format($order['tong_tien']) ?>đ</td>
+                        <td><?= number_format($order['tong_tien']) ?>đ</td>
                         <td><?= htmlspecialchars(explode(' | ', $order['dia_chi_giao'] ?? '')[0] ?? '') ?>...</td>
                         <td><span class="badge 
                     <?php
@@ -175,9 +175,9 @@ require_once __DIR__ . '/includes/admin_header.php';
                     ?>"><?= $order['trang_thai'] ?></span></td>
                         <td><?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></td>
                         <td>
-                            <button class="btn-icon text-blue" onclick="viewOrder(<?= $order['id'] ?>)" title="Xem chi tiết"><i
+                            <button class="btn-icon text-green" onclick="viewOrder(<?= $order['id'] ?>)" title="Xem chi tiết"><i
                                     class="fas fa-eye"></i></button>
-                            <button class="btn-icon text-green"
+                            <button class="btn-icon text-blue"
                                 onclick="openUpdateStatus(<?= $order['id'] ?>, '<?= $order['trang_thai'] ?>')"
                                 title="Cập nhật trạng thái"><i class="fas fa-edit"></i></button>
                         </td>
@@ -322,8 +322,10 @@ require_once __DIR__ . '/includes/admin_header.php';
                     }
                     document.getElementById('detail_items').innerHTML = tbody;
 
-                    document.getElementById('viewOrderModal').style.display = 'flex';
-                } else { alert(res.msg); }
+                    document.getElementById('viewOrderModal').style.display = 'flex'; // Modal chi tiết đơn hàng vẫn dùng style cũ
+                } else {
+                    showToast(res.msg, 'error');
+                }
             });
     }
 
@@ -349,9 +351,12 @@ require_once __DIR__ . '/includes/admin_header.php';
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
-                    alert('Cập nhật trạng thái thành công!');
-                    location.reload();
-                } else { alert(res.msg); }
+                    document.getElementById('statusModal').style.display = 'none';
+                    showToast('Cập nhật trạng thái thành công!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(res.msg, 'error');
+                }
             });
     }
 </script>

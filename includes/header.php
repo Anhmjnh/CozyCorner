@@ -87,10 +87,10 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
                     </div>
                 </li>
                 <li class="navbar__item">
-                    <a href="<?= BASE_URL ?>view/news/DanhMucTinTuc.php" class="navbar__link">Tin Tức</a>
+                    <a href="<?= BASE_URL ?>index.php?url=news" class="navbar__link">Tin Tức</a>
                 </li>
                 <li class="navbar__item">
-                    <a href="<?= BASE_URL ?>LienHe.php" class="navbar__link">Liên Hệ</a>
+                    <a href="<?= BASE_URL ?>index.php?url=contact" class="navbar__link">Liên Hệ</a>
                 </li>
             </ul>
         </nav>
@@ -237,10 +237,10 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
                     </div>
                 </li>
                 <li class="navbar__mobile-item">
-                    <a href="<?= BASE_URL ?>view/news/DanhMucTinTuc.php" class="navbar__mobile-link">Tin Tức</a>
+                    <a href="<?= BASE_URL ?>index.php?url=news" class="navbar__mobile-link">Tin Tức</a>
                 </li>
                 <li class="navbar__mobile-item">
-                    <a href="<?= BASE_URL ?>LienHe.php" class="navbar__mobile-link">Liên Hệ</a>
+                    <a href="<?= BASE_URL ?>index.php?url=contact" class="navbar__mobile-link">Liên Hệ</a>
                 </li>
 
                 <!-- Thêm mục Tài khoản / Đăng nhập ở mobile nav -->

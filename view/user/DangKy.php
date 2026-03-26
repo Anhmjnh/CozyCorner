@@ -70,32 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$page_css = ['assets/css/DangKy.css'];
 require_once __DIR__ . '/../../includes/header.php';
 ?>
-
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Ký - COZY CORNER</title>
-
-    <!-- Reset CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-
-    <!-- Font Open Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-
-    <!-- CSS chính (chung cho toàn site) -->
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/DangKy.css">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-</head>
-<body>
 
 <!-- BREADCRUMB -->
 <ul class="breadcrumb">
@@ -195,7 +172,4 @@ document.getElementById('toggle-confirm-password').addEventListener('click', fun
     togglePassword('confirm_mat_khau', 'toggle-confirm-password');
 });
 </script>
-
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
-</body>
-</html>

@@ -30,8 +30,8 @@ class UserModel {
     public function updateUserRank($user_id) {
         $conn = connectDB();
         
-        // Tính tổng tiền các đơn hàng đã HoanThanh
-        $stmt = $conn->prepare("SELECT SUM(tong_tien) as total_spent FROM orders WHERE user_id = ? AND trang_thai = 'HoanThanh'");
+        // Tính tổng tiền các đơn hàng đã thanh toán (Hoàn Thành hoặc Đang Giao & Chuyển khoản)
+        $stmt = $conn->prepare("SELECT SUM(tong_tien) as total_spent FROM orders WHERE user_id = ? AND (trang_thai = 'HoanThanh' OR (trang_thai = 'DangGiao' AND phuong_thuc_thanh_toan = 'ChuyenKhoan'))");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $res = $stmt->get_result()->fetch_assoc();

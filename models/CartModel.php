@@ -40,7 +40,7 @@ class CartModel {
 
     public function getCartItems($cart_id) {
         $stmt = $this->conn->prepare("
-            SELECT ci.id as cart_item_id, ci.quantity, p.id as product_id, p.ten_sp as name, p.gia as price, p.gia_cu as old_price, p.anh as image 
+            SELECT ci.id as cart_item_id, ci.quantity, p.id as product_id, p.ten_sp as name, p.gia as price, p.gia_cu as old_price, p.anh as image, p.weight 
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
             WHERE ci.cart_id = ?

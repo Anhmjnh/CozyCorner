@@ -1,35 +1,8 @@
 <?php
-// views/contact/LienHe.php
+// view/LienHe.php
+
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../config.php';
-// Chỉ chứa nội dung chính của trang Liên Hệ
 ?>
-
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COZY CORNER</title>
-
-    <!-- Reset CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-
-    <!-- Font Open Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-
-    <!-- CSS chính (chung cho toàn site) -->
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/LienHe.css">
-
-    <!-- CSS riêng cho từng trang - chỉ include ở view cụ thể, không nên include hết ở header -->
-    <!-- Ví dụ: nếu trang chủ cần CSS riêng, include ở TrangChu.php thay vì ở đây -->
-
-    <!-- Font Awesome (cho icon save, user, v.v. nếu cần sau này) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-</head>
 
 <!-- BREADCRUMB -->
 <ul class="breadcrumb">
@@ -48,31 +21,91 @@ require_once __DIR__ . '/../config.php';
                 Hoặc bạn có thể để lại thông tin trong biểu mẫu liên hệ, chúng tôi sẽ phản hồi trong vòng 24h.
             </p>
 
+            <style>
+                .contact-toast {
+                    position: fixed;
+                    top: 30px;
+                    right: 30px;
+                    padding: 16px 24px;
+                    border-radius: 8px;
+                    color: #fff !important;
+                    font-weight: 500;
+                    font-size: 15px;
+                    z-index: 9999;
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+                    opacity: 1;
+                    transition: opacity 0.5s ease, transform 0.5s ease;
+                    transform: translateY(0);
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .contact-toast.success {
+                    background-color: #355f2e;
+                    /* Nền xanh lá chuẩn admin */
+                }
+
+                .contact-toast.error {
+                    background-color: #e74c3c;
+                    /* Nền đỏ báo lỗi */
+                }
+
+                .contact-toast.hide {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+            </style>
+
             <?php if (!empty($success)): ?>
-                <p style="color: green; font-weight: bold; margin-bottom: 20px;"><?= htmlspecialchars($success) ?></p>
+                <div id="contactToast" class="contact-toast success">
+
+                    <span style="color: #fff !important;"><?= htmlspecialchars($success) ?></span>
+                </div>
             <?php endif; ?>
 
             <?php if (!empty($errors)): ?>
-                <div style="color: red; margin-bottom: 20px;">
-                    <?php foreach ($errors as $err): ?>
-                        <p><?= htmlspecialchars($err) ?></p>
-                    <?php endforeach; ?>
+                <div id="contactToast" class="contact-toast error">
+                    <i class="fas fa-exclamation-circle" style="font-size: 24px;"></i>
+                    <div>
+                        <?php foreach ($errors as $err): ?>
+                            <p style="margin: 0 0 5px 0; color: #fff !important;"><?= htmlspecialchars($err) ?></p>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             <?php endif; ?>
 
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const toast = document.getElementById('contactToast');
+                    if (toast) {
+                        setTimeout(() => {
+                            toast.classList.add('hide'); // Thêm class để chạy hiệu ứng mờ dần
+                            setTimeout(() => toast.remove(), 500); // Xóa hẳn phần tử sau khi mờ xong
+                        }, 4000); // Hiển thị trong 4 giây
+                    }
+                });
+            </script>
+
             <form class="form" method="POST" action="">
-                <input type="text" name="ho_ten" class="form__input" placeholder="Họ và tên" required value="<?= htmlspecialchars($old_data['ho_ten'] ?? '') ?>">
+                <input type="text" name="ho_ten" class="form__input" placeholder="Họ và tên" required
+                    value="<?= htmlspecialchars($old_data['ho_ten'] ?? '') ?>">
                 <div class="form__group">
-                    <input type="text" name="so_dien_thoai" class="form__input" placeholder="Số điện thoại" required value="<?= htmlspecialchars($old_data['so_dien_thoai'] ?? '') ?>">
-                    <input type="email" name="email" class="form__input" placeholder="Email" required value="<?= htmlspecialchars($old_data['email'] ?? '') ?>">
+                    <input type="text" name="so_dien_thoai" class="form__input" placeholder="Số điện thoại" required
+                        value="<?= htmlspecialchars($old_data['so_dien_thoai'] ?? '') ?>">
+                    <input type="email" name="email" class="form__input" placeholder="Email" required
+                        value="<?= htmlspecialchars($old_data['email'] ?? '') ?>">
                 </div>
-                <input type="text" name="tieu_de" class="form__input" placeholder="Tiêu đề" required value="<?= htmlspecialchars($old_data['tieu_de'] ?? '') ?>">
-                <textarea name="noi_dung" class="form__textarea" placeholder="Nội dung" required><?= htmlspecialchars($old_data['noi_dung'] ?? '') ?></textarea>
+                <input type="text" name="tieu_de" class="form__input" placeholder="Tiêu đề" required
+                    value="<?= htmlspecialchars($old_data['tieu_de'] ?? '') ?>">
+                <textarea name="noi_dung" class="form__textarea" placeholder="Nội dung"
+                    required><?= htmlspecialchars($old_data['noi_dung'] ?? '') ?></textarea>
                 <button type="submit" class="form__button">GỬI</button>
             </form>
 
             <div class="contact__info">
-                <p><span class="contact__info-bold">Địa chỉ:</span>  Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. Hồ Chí Minh</p>
+                <p><span class="contact__info-bold">Địa chỉ:</span> Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. Hồ Chí Minh
+                </p>
                 <p><span class="contact__info-bold">Số điện thoại:</span> 0888 888 888</p>
                 <p><span class="contact__info-bold">Email:</span> Cozy@cv.com.vn</p> <br>
                 <p>Tư vấn hỗ trợ (8:00 - 17:30)</p>
@@ -81,7 +114,10 @@ require_once __DIR__ . '/../config.php';
             </div>
         </div>
         <div class="contact__map">
-            <iframe src="https://maps.google.com/maps?q=Hoàng%20Hoa%20Thám,%20P.%207,%20Q.%20Bình%20Thạnh,%20TP.%20Hồ%20Chí%20Minh&t=&z=15&ie=UTF8&iwloc=&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <iframe
+                src="https://maps.google.com/maps?q=Hoàng%20Hoa%20Thám,%20P.%207,%20Q.%20Bình%20Thạnh,%20TP.%20Hồ%20Chí%20Minh&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
     </div>
 </section>
@@ -108,6 +144,6 @@ require_once __DIR__ . '/../config.php';
     </div>
 </div>
 
-<?php 
-require_once __DIR__ . '/../includes/footer.php'; 
+<?php
+require_once __DIR__ . '/../includes/footer.php';
 ?>

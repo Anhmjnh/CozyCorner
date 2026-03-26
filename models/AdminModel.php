@@ -120,8 +120,8 @@ class AdminModel
         $res = $this->conn->query("SELECT COUNT(id) as total FROM orders");
         $stats['total_orders'] = $res->fetch_assoc()['total'];
 
-        // Tổng doanh thu (Các đơn đã hoàn thành)
-        $res = $this->conn->query("SELECT SUM(tong_tien) as total FROM orders WHERE trang_thai = 'HoanThanh'");
+        // Tổng doanh thu (Các đơn đã hoàn thành hoặc đã chuyển khoản)
+        $res = $this->conn->query("SELECT SUM(tong_tien) as total FROM orders WHERE trang_thai = 'HoanThanh' OR (trang_thai = 'DangGiao' AND phuong_thuc_thanh_toan = 'ChuyenKhoan')");
         $stats['total_revenue'] = $res->fetch_assoc()['total'] ?? 0;
 
         // Tổng khách hàng
@@ -136,7 +136,7 @@ class AdminModel
     {
         $sql = "SELECT DATE(created_at) as date, SUM(tong_tien) as revenue 
                 FROM orders 
-                WHERE trang_thai = 'HoanThanh' AND created_at >= DATE(NOW()) - INTERVAL 7 DAY
+                WHERE (trang_thai = 'HoanThanh' OR (trang_thai = 'DangGiao' AND phuong_thuc_thanh_toan = 'ChuyenKhoan')) AND created_at >= DATE(NOW()) - INTERVAL 7 DAY
                 GROUP BY DATE(created_at) ORDER BY date ASC";
         $result = $this->conn->query($sql);
         $data = ['labels' => [], 'revenues' => []];

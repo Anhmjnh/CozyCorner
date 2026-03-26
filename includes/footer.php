@@ -67,10 +67,10 @@ require_once __DIR__ . '/../config.php';  // Include config để lấy BASE_URL
                     <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php" class="footer__link">Sản Phẩm</a>
                 </li>
                 <li class="footer__item">
-                    <a href="<?= BASE_URL ?>view/news/DanhMucTinTuc.php" class="footer__link">Tin Tức</a>
+                    <a href="<?= BASE_URL ?>index.php?url=news" class="footer__link">Tin Tức</a>
                 </li>
                 <li class="footer__item">
-                    <a href="<?= BASE_URL ?>LienHe.php" class="footer__link">Liên Hệ</a>
+                    <a href="<?= BASE_URL ?>index.php?url=contact" class="footer__link">Liên Hệ</a>
                 </li>
             </ul>
         </div>

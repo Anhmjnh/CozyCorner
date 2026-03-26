@@ -21,7 +21,9 @@ class NewsController {
         $conn->close();
 
         // Render view danh mục
-        require_once __DIR__ . '/../views/news/DanhMucTinTuc.php';
+        // Chuẩn bị CSS và dữ liệu cho view
+        $page_css = ['assets/css/DanhMucTinTuc.css'];
+        require_once __DIR__ . '/../view/news/DanhMucTinTuc.php';
     }
 
     // Chi tiết một bài tin tức (load theo id)

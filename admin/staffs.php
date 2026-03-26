@@ -11,11 +11,93 @@ require_once __DIR__ . '/includes/admin_header.php';
 $current_role = $_SESSION['admin_role'] ?? 'Staff';
 ?>
 
+<style>
+    /* --- STYLES CHO MODAL XÁC NHẬN XÓA (Chuẩn hóa) --- */
+    .custom-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.6);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .custom-modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 25px;
+        border: 1px solid #888;
+        width: 95%;
+        max-width: 450px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        animation-name: animatetop;
+        animation-duration: 0.4s;
+    }
+
+    .custom-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+    }
+
+    .custom-modal-title {
+        margin: 5px 0 0 0;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .custom-modal-close {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .custom-modal-body p {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #555;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .custom-modal-body i {
+        display: block;
+        text-align: center;
+        font-size: 50px;
+        color: #f39c12;
+        /* Màu vàng cảnh báo */
+        margin-bottom: 20px;
+    }
+
+    @keyframes animatetop {
+        from {
+            top: -300px;
+            opacity: 0
+        }
+
+        to {
+            top: 0;
+            opacity: 1
+        }
+    }
+</style>
+
 <div class="page-header"
     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <div>
-        <h2 style="margin: 0; color: #2c3e50;">Quản lý Admin & Staff</h2>
-        <p style="margin: 5px 0 0; color: #7f8c8d; font-size: 14px;">Tổng số:
+        <h2 style="margin: 0; color: #333;">Quản lý Admin & Staff</h2>
+        <p style="margin: 5px 0 0; color: #333; font-size: 14px;">Tổng số:
             <strong><?= number_format($total) ?></strong> tài khoản</p>
     </div>
     <?php if ($current_role === 'Admin'): ?>
@@ -104,8 +186,8 @@ $current_role = $_SESSION['admin_role'] ?? 'Staff';
                                         class="fas fa-edit"></i></button>
                             <?php endif; ?>
                             <?php if ($current_role === 'Admin' && $nv['id'] != $_SESSION['admin_id']): ?>
-                                <button class="btn-icon text-red" onclick="deleteStaff(<?= $nv['id'] ?>)" title="Xóa"><i
-                                        class="fas fa-trash"></i></button>
+                                <button class="btn-icon text-red"
+                                    onclick="showDeleteConfirm(<?= $nv['id'] ?>, '<?= htmlspecialchars(addslashes($nv['ho_ten'])) ?>')" title="Xóa"><i class="fas fa-trash"></i></button>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -177,5 +259,75 @@ $current_role = $_SESSION['admin_role'] ?? 'Staff';
         </form>
     </div>
 </div>
+
+<!-- Custom Modal Xác nhận Xóa Nhân Sự -->
+<div id="deleteConfirmModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h3 class="custom-modal-title">Xác Nhận Xóa Nhân Sự</h3>
+            <span class="custom-modal-close" onclick="closeDeleteConfirmModal()">&times;</span>
+        </div>
+        <div class="custom-modal-body">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>
+                Bạn có chắc chắn muốn xóa tài khoản <strong id="delete_staff_display_name"></strong> không?
+                <br><small style="color: #777;">Hành động này không thể hoàn tác.</small>
+            </p>
+            <input type="hidden" id="delete_staff_id_input">
+        </div>
+        <div class="modal-footer"
+            style="border-top: 1px solid #eee; padding-top: 15px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button type="button" class="btn btn-light" onclick="closeDeleteConfirmModal()">Không</button>
+            <button type="button" class="btn btn-primary" style="background-color: #355f2e; border-color: #355f2e;"
+                id="confirmDeleteBtn">Đồng ý</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showDeleteConfirm(id, name) {
+        document.getElementById('delete_staff_display_name').innerText = `"${name}"`;
+        document.getElementById('delete_staff_id_input').value = id;
+        document.getElementById('deleteConfirmModal').style.display = 'flex';
+    }
+
+    function closeDeleteConfirmModal() {
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+    }
+
+    // Thực hiện gọi API Xóa
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+        const id = document.getElementById('delete_staff_id_input').value;
+
+        fetch('<?= BASE_URL ?>index.php?url=admin/api_delete_staff', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        })
+            .then(res => res.json())
+            .then(res => {
+                closeDeleteConfirmModal();
+                if (res.status === 'success') {
+                    showToast(res.msg, 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(res.msg, 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                closeDeleteConfirmModal();
+                showToast('Lỗi kết nối đến máy chủ.', 'error');
+            });
+    });
+
+    // Đóng Modal khi bấm ra bên ngoài
+    window.addEventListener('click', function (event) {
+        let modal = document.getElementById('deleteConfirmModal');
+        if (event.target === modal) {
+            closeDeleteConfirmModal();
+        }
+    });
+</script>
 
 <?php require_once __DIR__ . '/includes/admin_footer.php'; ?>

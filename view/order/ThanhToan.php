@@ -11,7 +11,6 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../../includes/header.php';
-require_once __DIR__ . '/../../models/Address.php';
 
 // 2. Truy vấn dữ liệu người dùng để điền sẵn vào Form
 $conn = connectDB();
@@ -23,24 +22,10 @@ $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-// Lấy danh sách sổ địa chỉ bằng Model (Chuẩn MVC)
-$addresses = Address::getAllByUserId($userId);
-
 // Xác định địa chỉ mặc định để hiển thị sẵn vào form lúc load trang
 $defaultName = $user['ho_ten'] ?? '';
 $defaultPhone = $user['so_dien_thoai'] ?? '';
 $defaultAddress = $user['dia_chi'] ?? '';
-
-$has_default_in_addresses = false;
-foreach ($addresses as $addr) {
-    if ($addr['is_default']) {
-        $defaultName = $addr['ten_nguoi_nhan'];
-        $defaultPhone = $addr['so_dien_thoai'];
-        $defaultAddress = $addr['dia_chi'];
-        $has_default_in_addresses = true;
-        break;
-    }
-}
 
 // 3. Truy vấn Giỏ hàng của người dùng (Giả định bảng carts và cart_items)
 // Nếu hệ thống của bạn dùng CartModel, bạn có thể gọi CartModel::getCartItems() tại đây
@@ -298,6 +283,89 @@ $finalTotal = $totalPrice + $shippingFee;
         box-shadow: 0 4px 15px rgba(46, 89, 50, 0.4);
     }
 
+    /* --- STYLES CHO MODAL THÔNG BÁO LỖI --- */
+    .checkout-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.6);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .checkout-modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 25px;
+        border: 1px solid #888;
+        width: 95%;
+        max-width: 480px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        animation-name: animatetop;
+        animation-duration: 0.4s;
+        text-align: center;
+    }
+
+    .checkout-modal-icon {
+        font-size: 50px;
+        color: #e74c3c;
+        /* Màu đỏ lỗi */
+        margin-bottom: 20px;
+    }
+
+    .checkout-modal-title {
+        margin: 0 0 10px 0;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .checkout-modal-body {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #555;
+        margin-bottom: 25px;
+    }
+
+    .checkout-modal-footer {
+        display: flex;
+        justify-content: center;
+    }
+
+    .checkout-modal-button {
+        padding: 12px 30px;
+        background: #355f2e;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .checkout-modal-button:hover {
+        background: #1f4023;
+    }
+
+    @keyframes animatetop {
+        from {
+            top: -300px;
+            opacity: 0
+        }
+
+        to {
+            top: 0;
+            opacity: 1
+        }
+    }
+
     @media (max-width: 900px) {
         .checkout__container {
             flex-direction: column;
@@ -358,24 +426,33 @@ $finalTotal = $totalPrice + $shippingFee;
 
                 <div class="checkout__group">
                     <label class="checkout__label">Tỉnh/Thành phố *</label>
-                    <select id="province" class="checkout__input" required><option value="">Chọn Tỉnh/Thành</option></select>
+                    <select id="province" class="checkout__input" required>
+                        <option value="">Chọn Tỉnh/Thành</option>
+                    </select>
                 </div>
                 <div class="checkout__group">
                     <label class="checkout__label">Quận/Huyện *</label>
-                    <select id="district" class="checkout__input" required><option value="">Chọn Quận/Huyện</option></select>
+                    <select id="district" class="checkout__input" required>
+                        <option value="">Chọn Quận/Huyện</option>
+                    </select>
                 </div>
                 <div class="checkout__group">
                     <label class="checkout__label">Phường/Xã *</label>
-                    <select id="ward" class="checkout__input" required><option value="">Chọn Phường/Xã</option></select>
+                    <select id="ward" class="checkout__input" required>
+                        <option value="">Chọn Phường/Xã</option>
+                    </select>
                 </div>
                 <div class="checkout__group">
                     <label class="checkout__label">Số nhà, Tên đường *</label>
-                    <input type="text" id="dia_chi_chi_tiet" class="checkout__input" placeholder="Nhập số nhà, tên đường..." required>
+                    <input type="text" id="dia_chi_chi_tiet" class="checkout__input"
+                        placeholder="Nhập số nhà, tên đường..." required>
                 </div>
 
                 <!-- Input ẩn dùng để tự động nối địa chỉ dài và gửi phí ship -->
                 <input type="hidden" name="dia_chi" id="dia_chi_day_du" value="">
                 <input type="hidden" name="phi_ship" id="phi_ship_input" value="0">
+                <input type="hidden" name="to_district_id" id="to_district_id_input" value="">
+                <input type="hidden" name="to_ward_code" id="to_ward_code_input" value="">
 
                 <div class="checkout__group">
                     <label for="ghi_chu" class="checkout__label">Ghi chú đơn hàng (Tùy chọn)</label>
@@ -444,6 +521,25 @@ $finalTotal = $totalPrice + $shippingFee;
     </div>
 </div>
 
+<!-- MODAL THÔNG BÁO LỖI GHN -->
+<div id="ghnErrorModal" class="checkout-modal">
+    <div class="checkout-modal-content">
+        <i class="fas fa-exclamation-circle checkout-modal-icon"></i>
+        <h3 class="checkout-modal-title">Lỗi Hệ Thống</h3>
+        <div class="checkout-modal-body">
+            <p id="ghnErrorAction"></p>
+            <p style="margin-top: 10px; font-size: 14px; color: #777;">Chi tiết từ GHN: <strong id="ghnErrorMessage"
+                    style="color: #c0392b;"></strong></p>
+            <p style="margin-top: 15px; font-size: 14px;">Vui lòng kiểm tra lại Token API trong file config.php hoặc
+                liên hệ quản trị viên.</p>
+        </div>
+        <div class="checkout-modal-footer">
+            <button type="button" class="checkout-modal-button"
+                onclick="document.getElementById('ghnErrorModal').style.display='none'">Đã hiểu</button>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const provinceEl = document.getElementById('province');
@@ -452,13 +548,21 @@ $finalTotal = $totalPrice + $shippingFee;
         const phiShipInput = document.getElementById('phi_ship_input');
         const addressInput = document.getElementById('dia_chi_day_du');
         const addressDetail = document.getElementById('dia_chi_chi_tiet');
+        const districtIdInput = document.getElementById('to_district_id_input');
+        const wardCodeInput = document.getElementById('to_ward_code_input');
 
         const ghnApiUrl = '<?= BASE_URL ?>index.php?url=ghn/';
 
         function handleGhnError(action, response) {
             console.error(`Lỗi khi ${action}:`, response);
+            const errorModal = document.getElementById('ghnErrorModal');
+            const errorActionEl = document.getElementById('ghnErrorAction');
+            const errorMessageEl = document.getElementById('ghnErrorMessage');
+
             const ghnMessage = response?.ghn_response?.message || response?.message || 'Không có phản hồi từ GHN.';
-            alert(`Lỗi hệ thống: ${action} thất bại. Vui lòng kiểm tra lại Token API trong config.php.\n\nChi tiết từ GHN: ${ghnMessage}`);
+            errorActionEl.innerText = `Thao tác "${action}" đã thất bại.`;
+            errorMessageEl.innerText = ghnMessage;
+            errorModal.style.display = 'flex';
         }
 
         // 1. Load Tỉnh/Thành
@@ -478,6 +582,7 @@ $finalTotal = $totalPrice + $shippingFee;
             wardEl.innerHTML = '<option value="">Chọn Phường/Xã</option>';
             updateFullAddress();
             if (!this.value) return;
+            districtIdInput.value = ''; // Reset
             fetch(`${ghnApiUrl}get_districts&province_id=${this.value}`).then(res => res.json()).then(res => {
                 if (res.code === 200) {
                     res.data.forEach(d => districtEl.innerHTML += `<option value="${d.DistrictID}" data-name="${d.DistrictName}">${d.DistrictName}</option>`);
@@ -492,6 +597,8 @@ $finalTotal = $totalPrice + $shippingFee;
             wardEl.innerHTML = '<option value="">Chọn Phường/Xã</option>';
             updateFullAddress();
             if (!this.value) return;
+            districtIdInput.value = this.value; // Gán district_id vào input ẩn
+            wardCodeInput.value = ''; // Reset
             fetch(`${ghnApiUrl}get_wards&district_id=${this.value}`).then(res => res.json()).then(res => {
                 if (res.code === 200) {
                     res.data.forEach(w => wardEl.innerHTML += `<option value="${w.WardCode}" data-name="${w.WardName}">${w.WardName}</option>`);
@@ -505,23 +612,24 @@ $finalTotal = $totalPrice + $shippingFee;
         wardEl.addEventListener('change', function () {
             updateFullAddress();
             if (!this.value) return;
+            wardCodeInput.value = this.value; // Gán ward_code vào input ẩn
             fetch(`${ghnApiUrl}calculate_fee&district_id=${districtEl.value}&ward_code=${this.value}&weight=1000`)
                 .then(res => res.json())
                 .then(res => {
                     if (res.code === 200) {
-                    const calculatedFee = res.data.total;
-                    phiShipInput.value = calculatedFee; // Gán phí ship vào input ẩn
+                        const calculatedFee = res.data.total;
+                        phiShipInput.value = calculatedFee; // Gán phí ship vào input ẩn
 
                         // Tự động hiển thị phí ship ra giao diện thay vì alert
                         const feeDisplay = document.querySelector('.checkout__total-line:nth-child(2) span:last-child');
-                    if (feeDisplay) {
-                        feeDisplay.innerText = calculatedFee.toLocaleString('vi-VN') + 'đ';
-                    }
+                        if (feeDisplay) {
+                            feeDisplay.innerText = calculatedFee.toLocaleString('vi-VN') + 'đ';
+                        }
 
                         // Cập nhật tổng tiền
-                    const tempTotal = <?= $totalPrice ?>;
+                        const tempTotal = <?= $totalPrice ?>;
                         const finalDisplay = document.querySelector('.checkout__final-price');
-                    if (finalDisplay) finalDisplay.innerText = (tempTotal + calculatedFee).toLocaleString('vi-VN') + 'đ';
+                        if (finalDisplay) finalDisplay.innerText = (tempTotal + calculatedFee).toLocaleString('vi-VN') + 'đ';
                     } else {
                         handleGhnError('tính phí vận chuyển', res);
                     }
@@ -541,47 +649,48 @@ $finalTotal = $totalPrice + $shippingFee;
     });
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
-            .then(res => res.json())
-            .then(res => {
-                if(res.code === 200 && res.data) {
-                    res.data.forEach(w => ward.innerHTML += `<option value="${w.WardCode}" data-name="${w.WardName}">${w.WardName}</option>`);
-                }
-            })
-            .catch(err => console.error("Lỗi parse JSON Phường/Xã:", err));
-    });
+.then(res => res.json())
+.then(res => {
+if(res.code === 200 && res.data) {
+res.data.forEach(w => ward.innerHTML += `<option value="${w.WardCode}" data-name="${w.WardName}">${w.WardName}</option>
+`);
+}
+})
+.catch(err => console.error("Lỗi parse JSON Phường/Xã:", err));
+});
 
-    // 4. Tính phí ship
-    ward.addEventListener('change', function() {
-        updateFullAddress();
-        if(!this.value) return;
-        fetch(`<?= BASE_URL ?>index.php?url=ghn/calculate_fee&district_id=${district.value}&ward_code=${this.value}&weight=1000`)
-            .then(res => res.json())
-            .then(res => {
-                if(res.code === 200 && res.data) {
-                    phiShipInput.value = res.data.total;
-                    // Tự động hiển thị phí ship ra giao diện thay vì alert
-                    const feeDisplay = document.querySelector('.checkout__total-line:nth-child(2) span:last-child');
-                    if(feeDisplay) feeDisplay.innerText = res.data.total.toLocaleString('vi-VN') + 'đ';
-                    
-                    // Cập nhật tổng tiền
-                    const tempTotal = <?= $totalPrice ?>;
-                    const finalDisplay = document.querySelector('.checkout__final-price');
-                    if(finalDisplay) finalDisplay.innerText = (tempTotal + res.data.total).toLocaleString('vi-VN') + 'đ';
-                }
-            })
-            .catch(err => console.error("Lỗi parse JSON Phí Ship:", err));
-    });
+// 4. Tính phí ship
+ward.addEventListener('change', function() {
+updateFullAddress();
+if(!this.value) return;
+fetch(`<?= BASE_URL ?>index.php?url=ghn/calculate_fee&district_id=${district.value}&ward_code=${this.value}&weight=1000`)
+.then(res => res.json())
+.then(res => {
+if(res.code === 200 && res.data) {
+phiShipInput.value = res.data.total;
+// Tự động hiển thị phí ship ra giao diện thay vì alert
+const feeDisplay = document.querySelector('.checkout__total-line:nth-child(2) span:last-child');
+if(feeDisplay) feeDisplay.innerText = res.data.total.toLocaleString('vi-VN') + 'đ';
 
-    // Cập nhật chuỗi địa chỉ
-    function updateFullAddress() {
-        const pName = province.options[province.selectedIndex]?.getAttribute('data-name') || '';
-        const dName = district.options[district.selectedIndex]?.getAttribute('data-name') || '';
-        const wName = ward.options[ward.selectedIndex]?.getAttribute('data-name') || '';
-        const detail = addressDetail ? addressDetail.value : '';
-        addressInput.value = `${detail}, ${wName}, ${dName}, ${pName}`.replace(/^,\s*/, '').replace(/,\s*,\s*/g, ', ');
-    }
+// Cập nhật tổng tiền
+const tempTotal = <?= $totalPrice ?>;
+const finalDisplay = document.querySelector('.checkout__final-price');
+if(finalDisplay) finalDisplay.innerText = (tempTotal + res.data.total).toLocaleString('vi-VN') + 'đ';
+}
+})
+.catch(err => console.error("Lỗi parse JSON Phí Ship:", err));
+});
 
-    if(addressDetail) addressDetail.addEventListener('input', updateFullAddress);
+// Cập nhật chuỗi địa chỉ
+function updateFullAddress() {
+const pName = province.options[province.selectedIndex]?.getAttribute('data-name') || '';
+const dName = district.options[district.selectedIndex]?.getAttribute('data-name') || '';
+const wName = ward.options[ward.selectedIndex]?.getAttribute('data-name') || '';
+const detail = addressDetail ? addressDetail.value : '';
+addressInput.value = `${detail}, ${wName}, ${dName}, ${pName}`.replace(/^,\s*/, '').replace(/,\s*,\s*/g, ', ');
+}
+
+if(addressDetail) addressDetail.addEventListener('input', updateFullAddress);
 });
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

@@ -73,4 +73,10 @@ class GHNModel
         ];
         return $this->request('/v2/shipping-order/fee', $data, 'POST', true);
     }
+
+    public function createOrder($orderData)
+    {
+        // Endpoint để tạo đơn hàng
+        return $this->request('/v2/shipping-order/create', $orderData, 'POST', true);
+    }
 }
