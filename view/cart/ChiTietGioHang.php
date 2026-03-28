@@ -1,7 +1,13 @@
 <?php
 // view/cart/ChiTietGioHang.php
+// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect về Router chuẩn
+if (!defined('BASE_URL')) {
+    require_once __DIR__ . '/../../config.php';
+    header("Location: " . BASE_URL . "index.php?url=cart");
+    exit;
+}
+
 require_once __DIR__ . '/../../includes/header.php';
-require_once __DIR__ . '/../../config.php';
 ?>
 
 <style>
@@ -135,14 +141,14 @@ require_once __DIR__ . '/../../config.php';
     <div class="cart-page__container">
         <ul class="cart__items js__cart-items-list" style="list-style: none; padding: 0; margin: 0;">
             </ul>
-
+        
         <div class="cart-page__footer">
             <div class="cart__total-wrapper">
                 Tổng tiền: <span class="js__cart-total-price cart__total-price">0đ</span>
             </div>
             <div class="cart__action-buttons">
                 <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php" class="btn-continue">TIẾP TỤC MUA HÀNG</a>
-                <a href="<?= BASE_URL ?>view/order/ThanhToan.php" class="btn-checkout">THANH TOÁN</a>
+                <a href="<?= BASE_URL ?>index.php?url=order/checkout" class="btn-checkout">THANH TOÁN</a>
             </div>
         </div>
     </div>

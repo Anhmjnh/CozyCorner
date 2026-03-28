@@ -1,84 +1,9 @@
 <?php
-session_start();
-if (!isset($_SESSION['admin_id'])) {
-    header("Location: login.php");
+if (!isset($orders)) {
+    require_once __DIR__ . '/../config.php';
+    header("Location: " . BASE_URL . "index.php?url=admin/orders");
     exit;
 }
-
-require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../models/AdminModel.php';
-
-// --- XỬ LÝ LỌC & TÌM KIẾM ĐƠN HÀNG ---
-$conn = connectDB();
-$search = trim($_GET['search'] ?? '');
-$trang_thai = trim($_GET['trang_thai'] ?? '');
-$from_date = trim($_GET['from_date'] ?? '');
-$to_date = trim($_GET['to_date'] ?? '');
-
-$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-$limit = 15; // Hiển thị 15 đơn trên 1 trang
-$offset = ($page - 1) * $limit;
-
-$where = ["1=1"];
-$params = [];
-$types = "";
-
-if ($search !== '') {
-    $where[] = "(o.id LIKE ? OR u.ho_ten LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $types .= "ss";
-}
-if ($trang_thai !== '') {
-    $where[] = "o.trang_thai = ?";
-    $params[] = $trang_thai;
-    $types .= "s";
-}
-if ($from_date !== '') {
-    $where[] = "DATE(o.created_at) >= ?";
-    $params[] = $from_date;
-    $types .= "s";
-}
-if ($to_date !== '') {
-    $where[] = "DATE(o.created_at) <= ?";
-    $params[] = $to_date;
-    $types .= "s";
-}
-
-$where_clause = implode(" AND ", $where);
-
-// Đếm tổng số đơn hàng để phân trang
-$count_sql = "SELECT COUNT(o.id) as total FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE $where_clause";
-$stmt_count = $conn->prepare($count_sql);
-if ($types) {
-    $stmt_count->bind_param($types, ...$params);
-}
-$stmt_count->execute();
-$total = $stmt_count->get_result()->fetch_assoc()['total'] ?? 0;
-$stmt_count->close();
-$totalPages = ceil($total / $limit);
-
-// Tính tổng tiền đã thanh toán (Hoàn Thành hoặc Chuyển Khoản Đang Giao) theo bộ lọc hiện tại
-$sum_sql = "SELECT SUM(o.tong_tien) as total_revenue FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE $where_clause AND (o.trang_thai = 'HoanThanh' OR (o.trang_thai = 'DangGiao' AND o.phuong_thuc_thanh_toan = 'ChuyenKhoan'))";
-$stmt_sum = $conn->prepare($sum_sql);
-if ($types) {
-    $stmt_sum->bind_param($types, ...$params);
-}
-$stmt_sum->execute();
-$total_revenue = $stmt_sum->get_result()->fetch_assoc()['total_revenue'] ?? 0;
-$stmt_sum->close();
-
-// Truy vấn dữ liệu thực tế
-$sql = "SELECT o.*, u.ho_ten as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE $where_clause ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
-$stmt = $conn->prepare($sql);
-$types .= "ii";
-$params[] = $limit;
-$params[] = $offset;
-$stmt->bind_param($types, ...$params);
-$stmt->execute();
-$orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
-$conn->close();
 
 require_once __DIR__ . '/includes/admin_header.php';
 ?>
@@ -99,7 +24,8 @@ require_once __DIR__ . '/includes/admin_header.php';
 <!-- THANH TÌM KIẾM VÀ LỌC -->
 <div class="filter-container"
     style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
-    <form method="GET" action="orders.php" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+    <form method="GET" action="<?= BASE_URL ?>index.php" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <input type="hidden" name="url" value="admin/orders">
         <div class="search-box" style="flex: 1; min-width: 200px; position: relative;">
             <i class="fas fa-search"
                 style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
@@ -131,7 +57,7 @@ require_once __DIR__ . '/includes/admin_header.php';
             style="padding: 10px 20px; background: #34495e; color: #fff; border: none; border-radius: 5px; cursor: pointer;"><i
                 class="fas fa-filter"></i> Lọc</button>
         <?php if ($search !== '' || $trang_thai !== '' || $from_date !== '' || $to_date !== ''): ?>
-            <a href="orders.php" class="btn btn-light"
+            <a href="<?= BASE_URL ?>index.php?url=admin/orders" class="btn btn-light"
                 style="padding: 10px 20px; text-decoration: none; border-radius: 5px; background: #ecf0f1; color: #333;"><i
                     class="fas fa-times"></i> Hủy lọc</a>
         <?php endif; ?>
@@ -202,7 +128,7 @@ require_once __DIR__ . '/includes/admin_header.php';
     <?php if ($totalPages > 1): ?>
         <div class="pagination">
             <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                <a href="orders.php?page=<?= $i ?><?= $qs ?>" class="<?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
+                <a href="<?= BASE_URL ?>index.php?url=admin/orders&page=<?= $i ?><?= $qs ?>" class="<?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
             <?php endfor; ?>
         </div>
     <?php endif; ?>
@@ -282,7 +208,7 @@ require_once __DIR__ . '/includes/admin_header.php';
 
 <script>
     function viewOrder(id) {
-        fetch('<?= BASE_URL ?>admin/api.php?action=get_order&id=' + id)
+        fetch('<?= BASE_URL ?>index.php?url=admin/api_get_order&id=' + id)
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
@@ -344,7 +270,7 @@ require_once __DIR__ . '/includes/admin_header.php';
         formData.append('id', id);
         formData.append('trang_thai', status);
 
-        fetch('<?= BASE_URL ?>admin/api.php?action=update_order_status', {
+        fetch('<?= BASE_URL ?>index.php?url=admin/api_update_order_status', {
             method: 'POST',
             body: formData
         })

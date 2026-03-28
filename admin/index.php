@@ -1,16 +1,10 @@
 <?php
 // admin/index.php
-session_start();
-if (!isset($_SESSION['admin_id'])) {
-    header("Location: login.php");
+if (!isset($stats)) {
+    require_once __DIR__ . '/../config.php';
+    header("Location: " . BASE_URL . "index.php?url=admin/index");
     exit;
 }
-
-require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../models/AdminModel.php';
-
-$model = new AdminModel();
-$stats = $model->getDashboardStats();
 
 require_once __DIR__ . '/includes/admin_header.php';
 ?>

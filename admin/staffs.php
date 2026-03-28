@@ -108,8 +108,9 @@ $current_role = $_SESSION['admin_role'] ?? 'Staff';
 <!-- THANH TÌM KIẾM VÀ LỌC -->
 <div class="filter-container"
     style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
-    <form method="GET" action="<?= BASE_URL ?>admin/staffs"
+    <form method="GET" action="<?= BASE_URL ?>index.php"
         style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <input type="hidden" name="url" value="admin/staffs">
         <div class="search-box" style="flex: 1; min-width: 250px; position: relative;">
             <i class="fas fa-search"
                 style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
@@ -137,7 +138,7 @@ $current_role = $_SESSION['admin_role'] ?? 'Staff';
             style="padding: 10px 20px; background: #34495e; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;"><i
                 class="fas fa-filter"></i> Lọc</button>
         <?php if (!empty($search) || !empty($vai_tro) || !empty($trang_thai)): ?>
-            <a href="<?= BASE_URL ?>admin/staffs" class="btn btn-light"
+            <a href="<?= BASE_URL ?>index.php?url=admin/staffs" class="btn btn-light"
                 style="padding: 10px 20px; text-decoration: none; border-radius: 5px;"><i class="fas fa-times"></i> Xóa
                 lọc</a>
         <?php endif; ?>
@@ -206,7 +207,7 @@ $current_role = $_SESSION['admin_role'] ?? 'Staff';
     ?>
     <div class="pagination">
         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-            <a href="<?= BASE_URL ?>admin/staffs?page=<?= $i ?><?= $qs ?>"
+            <a href="<?= BASE_URL ?>index.php?url=admin/staffs&page=<?= $i ?><?= $qs ?>"
                 class="<?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
         <?php endfor; ?>
     </div>

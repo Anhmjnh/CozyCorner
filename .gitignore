@@ -1,16 +1,16 @@
-# Dependencies (Thư viện bên thứ ba)
+# Dependencies 
 /vendor/
 /libs/
 
 # Các file log sinh ra trong quá trình chạy
 *.log
 
-# Thư mục chứa ảnh/file do người dùng tải lên (chỉ giữ lại thư mục, bỏ qua các file bên trong)
+# Thư mục chứa ảnh/file do người dùng tải lên
 uploads/*
 !uploads/.gitkeep
 !uploads/index.php
 
-# Các file tạm và cấu hình của các IDE (VS Code, PHPStorm,...)
+# Các file tạm và cấu hình của các IDE 
 .vscode/
 .idea/
 *.swp
@@ -20,10 +20,10 @@ uploads/*
 .DS_Store
 Thumbs.db
 
-# File cấu hình chứa thông tin nhạy cảm (DB, API Keys)
+# File cấu hình chứa thông tin bảo mật
 config.php
 
-# Environment variables file (File biến môi trường)
+# File biến môi trường
 .env
 .env.*
 !.env.example

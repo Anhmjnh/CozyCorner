@@ -1,12 +1,8 @@
 <?php
 // models/CartModel.php
+require_once __DIR__ . '/../core/Model.php';
 
-class CartModel {
-    private $conn;
-
-    public function __construct() {
-        $this->conn = connectDB();
-    }
+class CartModel extends Model {
 
     public function getCartId($user_id, $session_id) {
         if ($user_id) {

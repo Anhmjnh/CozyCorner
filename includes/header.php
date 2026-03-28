@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config.php';  // Include config để lấy BASE_URL
 
 // Kiểm tra trạng thái đăng nhập
 $is_logged_in = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
-$profile_link = $is_logged_in ? BASE_URL . 'view/user/TaiKhoan.php' : BASE_URL . 'view/user/DangNhap.php';
+$profile_link = $is_logged_in ? BASE_URL . 'index.php?url=user/account' : BASE_URL . 'view/user/DangNhap.php';
 $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăng ký';
 ?>
 
@@ -58,30 +58,30 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
                     <a href="<?= BASE_URL ?>" class="navbar__link">Trang Chủ</a>
                 </li>
                 <li class="navbar__item nav__item--has-dropdown">
-                    <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php" class="navbar__link">Sản Phẩm</a>
+                    <a href="<?= BASE_URL ?>index.php?url=product" class="navbar__link">Sản Phẩm</a>
                     <div class="navbar__dropdown">
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=n-i"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=n-i"
                                 class="navbar__dropdown-title navbar__dropdown-link">Nồi</a>
                         </div>
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=ch-o"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=ch-o"
                                 class="navbar__dropdown-title navbar__dropdown-link">Chảo</a>
                         </div>
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=-i-n"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=-i-n"
                                 class="navbar__dropdown-title navbar__dropdown-link">Đồ điện</a>
                         </div>
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=ch-n"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=ch-n"
                                 class="navbar__dropdown-title navbar__dropdown-link">Chén</a>
                         </div>
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=th-t"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=th-t"
                                 class="navbar__dropdown-title navbar__dropdown-link">Thớt</a>
                         </div>
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=dao"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=dao"
                                 class="navbar__dropdown-title navbar__dropdown-link">Dao</a>
                         </div>
                     </div>
@@ -97,7 +97,8 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
 
         <div class="navbar__actions">
             <div class="navbar__search">
-                <form action="<?= BASE_URL ?>view/product/DanhMucSanPham.php" method="GET">
+                <form action="<?= BASE_URL ?>index.php" method="GET">
+                    <input type="hidden" name="url" value="product">
                     <input type="text" name="search" class="navbar__search-input" placeholder="Tìm kiếm sản phẩm...">
                     <button type="submit" class="navbar__search-button">
                         <img src="<?= BASE_URL ?>assets/icon/Icon-search.svg" alt="Icon Search">
@@ -139,7 +140,7 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
                     <a href="<?= BASE_URL ?>" class="navbar__mobile-link">Trang Chủ</a>
                 </li>
                 <li class="navbar__mobile-item">
-                    <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php" class="navbar__mobile-link">Sản Phẩm</a>
+                    <a href="<?= BASE_URL ?>index.php?url=product" class="navbar__mobile-link">Sản Phẩm</a>
 
                     <input type="checkbox" hidden name="" class="nav__mobile--has-dropdown"
                         id="nav__mobile-item--has-dropdown">
@@ -149,7 +150,7 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
 
                     <div class="navbar__dropdown-mobile">
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=noi"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=n-i"
                                 class="navbar__dropdown-title"
                                 style="text-decoration: none; color: inherit; display: block;">Nồi</a>
                             <ul class="navbar__dropdown-mobile-list">
@@ -162,7 +163,7 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
                             </ul>
                         </div>
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=chao"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=ch-o"
                                 class="navbar__dropdown-title"
                                 style="text-decoration: none; color: inherit; display: block;">Chảo</a>
                             <ul class="navbar__dropdown-mobile-list">
@@ -175,7 +176,7 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
                             </ul>
                         </div>
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=do-dien"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=-i-n"
                                 class="navbar__dropdown-title"
                                 style="text-decoration: none; color: inherit; display: block;">Đồ điện</a>
                             <ul class="navbar__dropdown-mobile-list">
@@ -190,7 +191,7 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
                             </ul>
                         </div>
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=chen"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=ch-n"
                                 class="navbar__dropdown-title"
                                 style="text-decoration: none; color: inherit; display: block;">Chén</a>
                             <ul class="navbar__dropdown-mobile-list">
@@ -205,7 +206,7 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
                             </ul>
                         </div>
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=thot"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=th-t"
                                 class="navbar__dropdown-title"
                                 style="text-decoration: none; color: inherit; display: block;">Thớt</a>
                             <ul class="navbar__dropdown-mobile-list">
@@ -220,7 +221,7 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
                             </ul>
                         </div>
                         <div class="navbar__dropdown-column">
-                            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php?category=dao"
+                            <a href="<?= BASE_URL ?>index.php?url=product&category=dao"
                                 class="navbar__dropdown-title"
                                 style="text-decoration: none; color: inherit; display: block;">Dao</a>
                             <ul class="navbar__dropdown-mobile-list">

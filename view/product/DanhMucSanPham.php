@@ -1,35 +1,14 @@
 <?php
 // views/product/DanhMucSanPham.php
-require_once __DIR__ . '/../../includes/header.php';
-require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../models/Product.php';
-
-// Chuẩn bị các bộ lọc và phân trang (MVC)
-$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$limit = 12; // Số sản phẩm hiển thị trên 1 trang
-$offset = ($page - 1) * $limit;
-
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$sort = isset($_GET['sort']) ? trim($_GET['sort']) : 'newest';
-
-$categories_filter = isset($_GET['categories']) ? (is_array($_GET['categories']) ? $_GET['categories'] : [$_GET['categories']]) : [];
-$category_slug = isset($_GET['category']) ? trim($_GET['category']) : '';
-
-$all_categories = Product::getActiveCategories();
-
-if (!empty($category_slug)) {
-    foreach ($all_categories as $cat) {
-        if ($cat['slug'] === $category_slug && !in_array($cat['ten_danh_muc'], $categories_filter)) {
-            $categories_filter[] = $cat['ten_danh_muc'];
-        }
-    }
+// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect về Router chuẩn
+if (!isset($products)) {
+    require_once __DIR__ . '/../../config.php';
+    header("Location: " . BASE_URL . "index.php?url=product");
+    exit;
 }
 
-$filters = ['search' => $search, 'categories' => $categories_filter, 'sort' => $sort];
-$data = Product::getFilteredProducts($filters, $limit, $offset);
-$products = $data['products'];
-$total = $data['total'];
-$total_pages = ceil($total / $limit);
+require_once __DIR__ . '/../../includes/header.php';
+// Biến $products, $total, $totalPages, $all_categories, $categories_filter, $sort đã được truyền từ ProductController
 ?>
 
 <!DOCTYPE html>
@@ -67,7 +46,7 @@ $total_pages = ceil($total / $limit);
 <ul class="breadcrumb">
     <li><a href="<?= BASE_URL ?>">Trang chủ</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>
-    <li><a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php">Sản phẩm</a></li>
+    <li><a href="<?= BASE_URL ?>index.php?url=product">Sản phẩm</a></li>
 </ul>
 
 <!-- CONTENT -->
@@ -174,9 +153,13 @@ $total_pages = ceil($total / $limit);
                                     <?php endif; ?>
                                 </span>
                             </p>
+                        <?php if ($row['so_luong_ton'] > 0): ?>
                             <a href="javascript:void(0)" class="product__list-cart-button js__add-to-cart" data-product-id="<?= $row['id'] ?>">
                                 <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
                             </a>
+                        <?php else: ?>
+                            <span class="product__list-cart-button" style="border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; padding: 12px; text-decoration: none;" title="Hết hàng">Hết hàng</span>
+                        <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -186,11 +169,11 @@ $total_pages = ceil($total / $limit);
         </div>
     
         <!-- Phân trang -->
-        <?php if ($total_pages > 1): ?>
+        <?php if ($totalPages > 1): ?>
             <div class="pagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 40px; margin-bottom: 20px;">
                 <?php 
                 $params = $_GET;
-                for ($i = 1; $i <= $total_pages; $i++): 
+                for ($i = 1; $i <= $totalPages; $i++): 
                     $params['page'] = $i;
                     $url = '?' . http_build_query($params);
                 ?>

@@ -1,8 +1,5 @@
 <?php
-session_start();
-session_destroy();
-$redirect = $_SERVER['HTTP_REFERER'] ?? '../../index.php';
-header('Location: ' . $redirect);
-exit;
-?>
+require_once __DIR__ . '/../config.php';
 
+header('Location: ' . BASE_URL . 'index.php?url=admin/logout');
+exit;

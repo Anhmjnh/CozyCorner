@@ -64,7 +64,7 @@ require_once __DIR__ . '/../config.php';  // Include config để lấy BASE_URL
                     <a href="<?= BASE_URL ?>" class="footer__link">Trang Chủ</a>
                 </li>
                 <li class="footer__item">
-                    <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php" class="footer__link">Sản Phẩm</a>
+                    <a href="<?= BASE_URL ?>index.php?url=product" class="footer__link">Sản Phẩm</a>
                 </li>
                 <li class="footer__item">
                     <a href="<?= BASE_URL ?>index.php?url=news" class="footer__link">Tin Tức</a>
@@ -80,7 +80,7 @@ require_once __DIR__ . '/../config.php';  // Include config để lấy BASE_URL
             <div class="footer__title font600">Chính Sách</div>
             <ul class="footer__list font400">
                 <li class="footer__item">
-                    <a href="<?= BASE_URL ?>TrungTamHoTro.php" class="footer__link">Chính Sách Hoàn Tiền</a>
+                    <a href="#" class="footer__link">Chính Sách Hoàn Tiền</a>
                 </li>
                 <li class="footer__item">
                     <a href="#" class="footer__link">Chính Sách Giao Hàng</a>

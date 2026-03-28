@@ -1,16 +1,22 @@
 <?php
 // controllers/CartController.php
 
-require_once __DIR__ . '/../models/CartModel.php';
+require_once __DIR__ . '/../core/Controller.php';
 
-class CartController {
-    private $cartModel;
-
+class CartController extends Controller
+{
     public function __construct() {
-        $this->cartModel = new CartModel();
+        $this->cartModel = $this->model('CartModel');
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+    }
+
+    public function index()
+    {
+        $this->view('cart/ChiTietGioHang', [
+            'page_css' => ['assets/css/ChiTietGioHang.css']
+        ]);
     }
 
     private function getCurrentCartId() {
@@ -50,6 +56,15 @@ class CartController {
             $quantity = intval($_POST['quantity'] ?? 1);
 
             if ($product_id > 0 && $quantity > 0) {
+                // KIỂM TRA TỒN KHO (LỚP BẢO VỆ SERVER)
+                $productModel = $this->model('ProductModel');
+                $product_stock = $productModel->findById($product_id);
+
+                if (!$product_stock || $product_stock['so_luong_ton'] <= 0) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Sản phẩm đã hết hàng!']);
+                    exit;
+                }
+
                 $cart_id = $this->getCurrentCartId();
                 $this->cartModel->addToCart($cart_id, $product_id, $quantity);
                 echo json_encode(['status' => 'success']);

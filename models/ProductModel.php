@@ -1,7 +1,8 @@
 <?php
-// models/Product.php
+// models/ProductModel.php
+require_once __DIR__ . '/../core/Model.php';
 
-class Product {
+class ProductModel extends Model {
     /**
      * Tìm sản phẩm bằng ID.
      * Chỉ trả về sản phẩm nếu nó đang ở trạng thái 'HienThi'.
@@ -9,28 +10,50 @@ class Product {
      * @param int $id ID của sản phẩm
      * @return array|null Trả về mảng thông tin sản phẩm hoặc null nếu không tìm thấy.
      */
-    public static function findById(int $id): ?array {
-        $conn = connectDB();
-        $stmt = $conn->prepare("SELECT id, ten_sp, gia, gia_cu, anh FROM products WHERE id = ? AND trang_thai = 'HienThi'");
+    public function findById(int $id): ?array {
+        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id = ? AND trang_thai = 'HienThi'");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
         $product = $result->fetch_assoc();
         $stmt->close();
-        $conn->close();
         return $product;
     }
 
-    public static function getActiveCategories() {
-        $conn = connectDB();
-        $result = $conn->query("SELECT id, ten_danh_muc, slug FROM categories WHERE trang_thai = 'HienThi' ORDER BY id ASC");
+    public function getSimilarProducts($id, $limit = 4) {
+        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id != ? AND trang_thai = 'HienThi' ORDER BY created_at DESC LIMIT ?");
+        $stmt->bind_param("ii", $id, $limit);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $result;
+    }
+
+    public function getBestsellerProducts($limit = 9) {
+        $stmt = $this->conn->prepare("SELECT * FROM products WHERE trang_thai = 'HienThi' ORDER BY luot_ban DESC LIMIT ?");
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $result;
+    }
+
+    public function getNewProducts($limit = 9) {
+        $stmt = $this->conn->prepare("SELECT * FROM products WHERE trang_thai = 'HienThi' ORDER BY created_at DESC LIMIT ?");
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $result;
+    }
+
+    public function getActiveCategories() {
+        $result = $this->conn->query("SELECT id, ten_danh_muc, slug FROM categories WHERE trang_thai = 'HienThi' ORDER BY id ASC");
         $cats = $result->fetch_all(MYSQLI_ASSOC);
-        $conn->close();
         return $cats;
     }
 
-    public static function getFilteredProducts($filters, $limit, $offset) {
-        $conn = connectDB();
+    public function getFilteredProducts($filters, $limit, $offset) {
         $where = ["trang_thai = 'HienThi'"];
         $params = [];
         $types = "";
@@ -62,7 +85,7 @@ class Product {
 
         // Đếm tổng số lượng để phân trang
         $count_sql = "SELECT COUNT(id) as total FROM products WHERE $where_clause";
-        $stmt_count = $conn->prepare($count_sql);
+        $stmt_count = $this->conn->prepare($count_sql);
         if ($types) { $stmt_count->bind_param($types, ...$params); }
         $stmt_count->execute();
         $total = $stmt_count->get_result()->fetch_assoc()['total'];
@@ -70,7 +93,7 @@ class Product {
 
         // Lấy dữ liệu sản phẩm
         $sql = "SELECT * FROM products WHERE $where_clause ORDER BY $order_by LIMIT ? OFFSET ?";
-        $stmt = $conn->prepare($sql);
+        $stmt = $this->conn->prepare($sql);
         
         $types .= "ii";
         $params[] = $limit;
@@ -81,7 +104,6 @@ class Product {
         $result = $stmt->get_result();
         $products = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        $conn->close();
         
         return ['products' => $products, 'total' => $total];
     }

@@ -1,12 +1,47 @@
 <?php
 // controllers/OrderController.php
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../models/OrderModel.php';
-require_once __DIR__ . '/../models/GHNModel.php';
-require_once __DIR__ . '/../models/CartModel.php';
+require_once __DIR__ . '/../core/Controller.php';
 
-class OrderController
+class OrderController extends Controller
 {
+    // Trang Thanh Toán (Checkout)
+    public function checkout()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        // 1. Kiểm tra trạng thái đăng nhập
+        if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+            header("Location: " . BASE_URL . "view/user/DangNhap.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
+            exit;
+        }
+
+        $userId = $_SESSION['user_id'];
+        $userModel = $this->model('UserModel');
+        $user = $userModel->getUserById($userId);
+
+        $cartModel = $this->model('CartModel');
+        $cart_id = $cartModel->getCartId($userId, session_id());
+        $cartItems = $cart_id ? $cartModel->getCartItems($cart_id) : [];
+        
+        $totalPrice = 0;
+        foreach ($cartItems as $item) {
+            $totalPrice += ($item['price'] * $item['quantity']);
+        }
+
+        $this->view('order/ThanhToan', [
+            'user' => $user,
+            'defaultName' => $user['ho_ten'] ?? '',
+            'defaultPhone' => $user['so_dien_thoai'] ?? '',
+            'defaultAddress' => $user['dia_chi'] ?? '',
+            'cartItems' => $cartItems,
+            'totalPrice' => $totalPrice,
+            'shippingFee' => 0,
+            'finalTotal' => $totalPrice, // Phí ship = 0 ban đầu, JS sẽ tự cộng
+            'page_css' => ['assets/css/ThanhToan.css']
+        ]);
+    }
+
     public function process()
     {
         if (session_status() === PHP_SESSION_NONE)
@@ -40,7 +75,7 @@ class OrderController
             // --- BẮT ĐẦU TÍCH HỢP GHN ---
 
             // Lấy sản phẩm từ Giỏ hàng
-            $cartModel = new CartModel();
+            $cartModel = $this->model('CartModel');
             $cart_id = $cartModel->getCartId($user_id, session_id());
             $cartItems = $cart_id ? $cartModel->getCartItems($cart_id) : [];
 
@@ -85,7 +120,7 @@ class OrderController
             ];
 
             // Gọi API tạo đơn hàng của GHN
-            $ghnModel = new GHNModel();
+            $ghnModel = $this->model('GHNModel');
             $ghnResponse = $ghnModel->createOrder($ghnOrderData);
 
             // Xử lý kết quả từ GHN
@@ -96,7 +131,7 @@ class OrderController
                 $tong_tien_cuoi = $tong_tien + $phi_van_chuyen_thuc_te;
 
                 // Lưu đơn hàng vào CSDL của bạn
-                $orderModel = new OrderModel();
+                $orderModel = $this->model('OrderModel');
                 $order_id = $orderModel->createOrder($user_id, $tong_tien_cuoi, $dia_chi_giao_day_du, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te);
 
                 if ($order_id) {
@@ -129,7 +164,7 @@ class OrderController
         $user_id = $_SESSION['user_id'];
 
         if ($order_id > 0) {
-            $orderModel = new OrderModel();
+            $orderModel = $this->model('OrderModel');
             if ($orderModel->cancelOrder($order_id, $user_id)) {
                 $_SESSION['success_message'] = "Đã hủy đơn hàng #ORD" . str_pad($order_id, 5, '0', STR_PAD_LEFT) . " thành công.";
             } else {
@@ -154,7 +189,7 @@ class OrderController
         }
 
         $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-        $orderModel = new OrderModel();
+        $orderModel = $this->model('OrderModel');
         $order = $orderModel->getOrderById($order_id, $_SESSION['user_id']);
 
         if (!$order) {
@@ -162,7 +197,9 @@ class OrderController
         }
         $order['items'] = $orderModel->getOrderDetails($order_id);
 
-        require_once __DIR__ . '/../view/order/ThanhToanThanhCong.php';
+        $this->view('order/ThanhToanThanhCong', [
+            'order' => $order
+        ]);
     }
 
     // API kiểm tra trạng thái đơn hàng (Dành cho chức năng tự động load QR Code)
@@ -178,7 +215,7 @@ class OrderController
         }
 
         $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-        $orderModel = new OrderModel();
+        $orderModel = $this->model('OrderModel');
         $order = $orderModel->getOrderById($order_id, $_SESSION['user_id']);
 
         if ($order) {
@@ -202,7 +239,7 @@ class OrderController
         }
 
         $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-        $orderModel = new OrderModel();
+        $orderModel = $this->model('OrderModel');
         $order = $orderModel->getOrderById($order_id, $_SESSION['user_id']);
 
         if ($order) {

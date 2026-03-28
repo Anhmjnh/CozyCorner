@@ -1,37 +1,41 @@
 <?php
 // models/UserModel.php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../core/Model.php';
 
-class UserModel {
+class UserModel extends Model {
     // Lấy thông tin user bằng số điện thoại
     public function getUserByPhone($phone) {
-        $conn = connectDB();
-        $stmt = $conn->prepare("SELECT id, email FROM users WHERE so_dien_thoai = ?");
+        $stmt = $this->conn->prepare("SELECT id, email FROM users WHERE so_dien_thoai = ?");
         $stmt->bind_param("s", $phone);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        $conn->close();
+        return $user;
+    }
+
+    // Lấy thông tin user bằng email (Dùng cho đăng nhập)
+    public function getUserByEmail($email) {
+        $stmt = $this->conn->prepare("SELECT id, ho_ten, mat_khau, trang_thai FROM users WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $user = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
         return $user;
     }
 
     // Cập nhật mật khẩu mới bằng Email
     public function updatePasswordByEmail($email, $hashedPassword) {
-        $conn = connectDB();
-        $stmt = $conn->prepare("UPDATE users SET mat_khau = ? WHERE email = ?");
+        $stmt = $this->conn->prepare("UPDATE users SET mat_khau = ? WHERE email = ?");
         $stmt->bind_param('ss', $hashedPassword, $email);
         $success = $stmt->execute();
         $stmt->close();
-        $conn->close();
         return $success;
     }
 
     // Tự động tính toán và cập nhật hạng thành viên
     public function updateUserRank($user_id) {
-        $conn = connectDB();
-        
         // Tính tổng tiền các đơn hàng đã thanh toán (Hoàn Thành hoặc Đang Giao & Chuyển khoản)
-        $stmt = $conn->prepare("SELECT SUM(tong_tien) as total_spent FROM orders WHERE user_id = ? AND (trang_thai = 'HoanThanh' OR (trang_thai = 'DangGiao' AND phuong_thuc_thanh_toan = 'ChuyenKhoan'))");
+        $stmt = $this->conn->prepare("SELECT SUM(tong_tien) as total_spent FROM orders WHERE user_id = ? AND (trang_thai = 'HoanThanh' OR (trang_thai = 'DangGiao' AND phuong_thuc_thanh_toan = 'ChuyenKhoan'))");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $res = $stmt->get_result()->fetch_assoc();
@@ -43,10 +47,42 @@ class UserModel {
         elseif ($totalSpent >= 300000) { $hang = 'Vàng'; } 
         elseif ($totalSpent >= 200000) { $hang = 'Bạc'; }
         
-        $stmtUpdate = $conn->prepare("UPDATE users SET hang = ? WHERE id = ?");
+        $stmtUpdate = $this->conn->prepare("UPDATE users SET hang = ? WHERE id = ?");
         $stmtUpdate->bind_param("si", $hang, $user_id);
         $stmtUpdate->execute();
         $stmtUpdate->close();
-        $conn->close();
+    }
+
+    public function getUserById($id) {
+        $stmt = $this->conn->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $user = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $user;
+    }
+
+    public function updateUserProfile($id, $ho_ten, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $avatar = null, $mat_khau = null) {
+        $sql = "UPDATE users SET ho_ten = ?, so_dien_thoai = ?, dia_chi = ?, gioi_tinh = ?, ngay_sinh = ?";
+        $params = [$ho_ten, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh];
+        $types = "sssss";
+        if ($avatar) {
+            $sql .= ", avatar = ?";
+            $params[] = $avatar;
+            $types .= "s";
+        }
+        if ($mat_khau) {
+            $sql .= ", mat_khau = ?";
+            $params[] = $mat_khau;
+            $types .= "s";
+        }
+        $sql .= " WHERE id = ?";
+        $params[] = $id;
+        $types .= "i";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+        $result = $stmt->execute();
+        $stmt->close();
+        return $result;
     }
 }

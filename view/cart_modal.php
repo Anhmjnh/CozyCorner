@@ -22,7 +22,7 @@
 
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box;">
                 <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
-                    <a href="<?= BASE_URL ?>view/cart/ChiTietGioHang.php" class="cart__checkout-button"
+                    <a href="<?= BASE_URL ?>index.php?url=cart" class="cart__checkout-button"
                         style="width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; min-height: 45px; padding: 10px 0;">XEM GIỎ HÀNG</a>
                 <?php else: ?>
                     <a href="javascript:void(0)"
@@ -31,7 +31,7 @@
                         style="width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; min-height: 45px; padding: 10px 0;">XEM GIỎ HÀNG</a>
                 <?php endif; ?>
 
-                <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php" class="cart__continue-shopping-button"
+                <a href="<?= BASE_URL ?>index.php?url=product" class="cart__continue-shopping-button"
                     style="width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; min-height: 45px; padding: 10px 0;">TIẾP TỤC MUA HÀNG</a>
             </div>
         </div>

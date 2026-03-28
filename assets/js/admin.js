@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // 2. Chart.js cho Dashboard
     const ctx = document.getElementById('revenueChart');
     if(ctx) {
-        fetch(BASE_URL + 'admin/api.php?action=chart_data')
+        fetch(BASE_URL + 'index.php?url=admin/api_chart_data')
         .then(res => res.json())
         .then(data => {
             new Chart(ctx, {
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             console.log("Hành động:", action, "ID:", productId);
 
-            fetch(BASE_URL + `admin/api.php?action=${action}`, {
+            fetch(BASE_URL + `index.php?url=admin/api_${action}`, {
                 method: 'POST',
                 body: formData
             })
@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", function() {
             e.preventDefault();
             const formData = new FormData(formCategory);
             const action = formData.get('id') ? 'update_category' : 'add_category';
-            fetch(BASE_URL + `admin/api.php?action=${action}`, {
+            fetch(BASE_URL + `index.php?url=admin/api_${action}`, {
                 method: 'POST',
                 body: formData
             })
@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 6. Xử lý Modal Tin Tức (Thêm)
+    // 6. Xử lý Modal Tin Tức (Thêm & Sửa)
     const newsModal = document.getElementById('newsModal');
     const openAddNewsBtn = document.getElementById('openAddNewsModal');
     const formNews = document.getElementById('formNews');
@@ -163,13 +163,14 @@ document.addEventListener("DOMContentLoaded", function() {
         if (openAddNewsBtn) {
             openAddNewsBtn.onclick = () => openNewsModal();
         }
-        closeNewsBtn.onclick = () => newsModal.style.display = "none";
+        if (closeNewsBtn) closeNewsBtn.onclick = () => newsModal.style.display = "none";
         window.addEventListener('click', (e) => { if (e.target == newsModal) newsModal.style.display = "none"; });
 
         formNews.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(formNews);
-            fetch(BASE_URL + 'admin/api.php?action=add_news', {
+            const action = formData.get('id') ? 'update_news' : 'add_news'; // Chỉnh sửa linh hoạt MVC
+            fetch(BASE_URL + 'index.php?url=admin/api_' + action, {
                 method: 'POST',
                 body: formData
             })
@@ -184,7 +185,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             })
             .catch(err => {
-                showToast('Lỗi hệ thống: Không thể lưu sản phẩm.', 'error');
+                showToast('Lỗi hệ thống: Không thể lưu tin tức.', 'error');
             });
         });
     }
@@ -310,20 +311,7 @@ function showToast(message, type = 'success') {
 
 // Xóa danh mục bằng AJAX
 function deleteCategory(id) {
-    if(confirm('Bạn có chắc chắn muốn xóa danh mục này không?')) {
-        fetch(BASE_URL + 'admin/api.php?action=delete_category', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: id })
-        })
-        .then(res => res.json())
-        .then(res => {
-            if(res.status === 'success') {
-                showToast(res.msg, 'success');
-                document.getElementById('row-cat-' + id).remove();
-            } else { showToast(res.msg, 'error'); }
-        });
-    }
+    // This function is now handled by the modal in categories.php
 }
 
 // Toggle Trạng thái người dùng
@@ -363,22 +351,23 @@ function deleteUser(id) {
     }
 }
 
-// Xóa tin tức bằng AJAX (chưa có trong model/api, chỉ là khung)
+// Xóa tin tức bằng AJAX
 function deleteNews(id) {
     if(confirm('Bạn có chắc chắn muốn xóa tin tức này không?')) {
-        showToast('Chức năng xóa tin tức chưa được triển khai.', 'error');
-        // fetch(BASE_URL + 'admin/api.php?action=delete_news', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ id: id })
-        // })
-        // .then(res => res.json())
-        // .then(res => {
-        //     if(res.status === 'success') {
-        //         showToast(res.msg, 'success');
-        //         document.getElementById('row-news-' + id).remove();
-        //     } else { showToast(res.msg, 'error'); }
-        // });
+        fetch(BASE_URL + 'index.php?url=admin/api_delete_news', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if(res.status === 'success') {
+                showToast(res.msg, 'success');
+                const row = document.getElementById('row-news-' + id);
+                if (row) row.remove();
+            } else { showToast(res.msg, 'error'); }
+        })
+        .catch(err => showToast('Lỗi hệ thống khi xóa tin tức.', 'error'));
     }
 }
 
@@ -399,7 +388,7 @@ function openProductModal(id = null) {
 
     if (id) {
         title.innerText = 'Sửa Sản Phẩm';
-        fetch(BASE_URL + `admin/api.php?action=get_product&id=${id}`)
+        fetch(BASE_URL + `index.php?url=admin/api_get_product&id=${id}`)
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
@@ -437,7 +426,7 @@ function openCategoryModal(id = null) {
 
     if (id) {
         title.innerText = 'Sửa Danh mục';
-        fetch(BASE_URL + `admin/api.php?action=get_category&id=${id}`)
+        fetch(BASE_URL + `index.php?url=admin/api_get_category&id=${id}`)
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
@@ -494,24 +483,87 @@ function openUserModal(id = null) {
     }
 }
 
-// Mở modal tin tức (chỉ thêm)
+// Mở modal tin tức (Thêm & Sửa)
 function openNewsModal(id = null) {
-    const modal = document.getElementById('newsModal');
+    // Kiểm tra và khởi tạo Modal động nếu chưa có trên DOM
+    let modal = document.getElementById('newsModal');
+    if (!modal) {
+        document.getElementById('modal-container-inject').innerHTML = `
+        <div id="newsModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+            <div class="modal-content" style="background: #fff; margin: auto; padding: 30px; border-radius: 10px; width: 90%; max-width: 800px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); position: relative;">
+                <span class="close-modal" style="position: absolute; right: 20px; top: 20px; font-size: 28px; cursor: pointer; color: #888;">&times;</span>
+                <h2 id="newsModalTitle" style="margin-top: 0; margin-bottom: 25px; color: #2e5932; border-bottom: 1px solid #eee; padding-bottom: 15px;">Thêm Tin Tức Mới</h2>
+                <form id="formNews" enctype="multipart/form-data">
+                    <input type="hidden" name="id" id="news_id">
+                    <div style="margin-bottom: 15px;"><label style="display: block; font-weight: 600; margin-bottom: 8px;">Tiêu Đề Bài Viết (*)</label><input type="text" name="tieu_de" id="news_tieu_de" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px;" required></div>
+                    <div style="margin-bottom: 15px; display: flex; gap: 20px;">
+                        <div style="flex: 1;"><label style="display: block; font-weight: 600; margin-bottom: 8px;">Danh Mục</label><select name="danh_muc" id="news_danh_muc" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;"><option value="Mẹo vặt">Mẹo vặt</option><option value="Sản phẩm">Sản phẩm</option><option value="Thiết bị">Thiết bị</option><option value="Sức khỏe">Sức khỏe</option></select></div>
+                        <div style="flex: 1;"><label style="display: block; font-weight: 600; margin-bottom: 8px;">Trạng Thái</label><select name="trang_thai" id="news_trang_thai" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;"><option value="HienThi">Hiển Thị</option><option value="An">Ẩn</option></select></div>
+                    </div>
+                    <div style="margin-bottom: 15px; display: flex; gap: 20px;">
+                        <div style="flex: 2;"><label style="display: block; font-weight: 600; margin-bottom: 8px;">Ảnh Đại Diện</label><input type="file" name="anh" id="news_anh" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px;"><input type="hidden" name="current_anh" id="news_current_anh"></div>
+                        <div style="flex: 1; text-align: center;"><img id="news_image_preview" src="" style="width: 100px; height: 75px; object-fit: cover; display: none; border-radius: 6px; border: 1px solid #ddd; margin-top: 5px;"></div>
+                    </div>
+                    <div style="margin-bottom: 15px;"><label style="display: block; font-weight: 600; margin-bottom: 8px;">Nội Dung (*)</label><textarea name="noi_dung" id="news_noi_dung" rows="10" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; resize: vertical;" required></textarea></div>
+                    <button type="submit" class="btn-primary" style="width: 100%; padding: 14px; font-size: 16px; background: #355F2E; color: white; border: none; border-radius: 6px; cursor: pointer;">LƯU BÀI VIẾT</button>
+                </form>
+            </div>
+        </div>`;
+        modal = document.getElementById('newsModal');
+        
+        // Re-attach listener khi inject HTML mới
+        modal.querySelector('.close-modal').onclick = () => modal.style.display = "none";
+        document.getElementById('news_anh').addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => { document.getElementById('news_image_preview').src = e.target.result; document.getElementById('news_image_preview').style.display = 'block'; }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+        // Attach logic submit form
+        document.getElementById('formNews').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const action = formData.get('id') ? 'update_news' : 'add_news';
+            fetch(BASE_URL + 'index.php?url=admin/api_' + action, { method: 'POST', body: formData })
+            .then(res => res.json()).then(res => {
+                if(res.status === 'success') { showToast(res.msg, 'success'); modal.style.display = 'none'; setTimeout(() => window.location.reload(), 800); }
+                else { showToast(res.msg, 'error'); }
+            });
+        });
+    }
+
     const title = document.getElementById('newsModalTitle');
-    const form = document.getElementById('formNews');
-    form.reset();
+    document.getElementById('formNews').reset();
+    document.getElementById('news_id').value = '';
     document.getElementById('news_image_preview').style.display = 'none';
     document.getElementById('news_current_anh').value = '';
 
-    if (id) { // Chức năng sửa tin tức chưa được triển khai hoàn chỉnh
+    if (id) { 
         title.innerText = 'Sửa Tin Tức';
-        // Logic fetch data và populate form tương tự sản phẩm/danh mục
-        showToast('Chức năng sửa tin tức chưa được triển khai hoàn chỉnh.', 'info');
+        fetch(BASE_URL + `index.php?url=admin/api_get_news&id=${id}`)
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === 'success') {
+                    const news = res.data;
+                    document.getElementById('news_id').value = news.id;
+                    document.getElementById('news_tieu_de').value = news.tieu_de;
+                    if (news.danh_muc) document.getElementById('news_danh_muc').value = news.danh_muc;
+                    document.getElementById('news_noi_dung').value = news.noi_dung;
+                    document.getElementById('news_trang_thai').value = news.trang_thai;
+                    if (news.anh) {
+                        document.getElementById('news_image_preview').src = BASE_URL + 'uploads/' + news.anh;
+                        document.getElementById('news_image_preview').style.display = 'block';
+                        document.getElementById('news_current_anh').value = news.anh;
+                    }
+                    modal.style.display = 'flex';
+                } else { showToast(res.msg, 'error'); }
+            })
+            .catch(err => showToast('Lỗi lấy dữ liệu.', 'error'));
     } else {
         title.innerText = 'Thêm Tin Tức Mới';
-        document.getElementById('news_id').value = '';
+        modal.style.display = 'flex';
     }
-    modal.style.display = 'flex';
 }
 
 // Mở Modal Nhân sự

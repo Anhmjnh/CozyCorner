@@ -23,13 +23,13 @@
             <h2>Cozy<span>Admin</span></h2>
         </div>
         <ul class="sidebar-menu">
-            <li class="<?= (strpos($_SERVER['REQUEST_URI'], 'index.php') !== false || $_SERVER['REQUEST_URI'] == '/cozycorner/admin/') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>admin/index.php"><i class="fas fa-home"></i> <span>Trang chủ</span></a></li>
-            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'products.php') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>admin/products.php"><i class="fas fa-box"></i> <span>Sản phẩm</span></a></li>
-            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'categories.php') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>admin/categories.php"><i class="fas fa-list"></i> <span>Danh mục</span></a></li>
-            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'orders.php') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>admin/orders.php"><i class="fas fa-shopping-cart"></i> <span>Đơn hàng</span></a></li>
-            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'users.php') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>admin/users.php"><i class="fas fa-users"></i> <span>Người dùng</span></a></li>
-            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'staffs') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>admin/staffs"><i class="fas fa-user-tie"></i> <span>Nhân sự</span></a></li>
-            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'news.php') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>admin/news.php"><i class="fas fa-newspaper"></i> <span>Tin tức</span></a></li>
+            <li class="<?= (strpos($_SERVER['REQUEST_URI'], 'url=admin/index') !== false || $_SERVER['REQUEST_URI'] == '/cozycorner/admin/') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/index"><i class="fas fa-home"></i> <span>Trang chủ</span></a></li>
+            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/products') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/products"><i class="fas fa-box"></i> <span>Sản phẩm</span></a></li>
+            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/categories') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/categories"><i class="fas fa-list"></i> <span>Danh mục</span></a></li>
+            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/orders') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/orders"><i class="fas fa-shopping-cart"></i> <span>Đơn hàng</span></a></li>
+            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/users') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/users"><i class="fas fa-users"></i> <span>Người dùng</span></a></li>
+            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/staffs') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/staffs"><i class="fas fa-user-tie"></i> <span>Nhân sự</span></a></li>
+            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/news') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/news"><i class="fas fa-newspaper"></i> <span>Tin tức</span></a></li>
         </ul>
     </aside>
 
@@ -47,7 +47,7 @@
                         <img id="adminAvatarImg" src="<?= isset($_SESSION['admin_avatar']) && $_SESSION['admin_avatar'] ? BASE_URL . 'uploads/' . $_SESSION['admin_avatar'] : BASE_URL . 'assets/icon/Icon-user.svg' ?>" alt="Avatar" style="background: #2c3e50; border-radius: 50%; object-fit: cover; width: 40px; height: 40px;">
                         <span id="adminNameTxt" style="margin-left: 8px; font-weight: 600; color: #2c3e50;"><?= htmlspecialchars($_SESSION['admin_name'] ?? 'Admin') ?></span>
                     </div>
-                    <a href="<?= BASE_URL ?>admin/logout.php" class="logout-btn" style="color: #e74c3c; margin-left: 15px; font-size: 1.2rem;" title="Đăng xuất"><i class="fas fa-sign-out-alt"></i></a>
+                    <a href="<?= BASE_URL ?>index.php?url=admin/logout" class="logout-btn" style="color: #e74c3c; margin-left: 15px; font-size: 1.2rem;" title="Đăng xuất"><i class="fas fa-sign-out-alt"></i></a>
                 </div>
             </div>
         </header>

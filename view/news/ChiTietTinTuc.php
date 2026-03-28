@@ -1,41 +1,6 @@
 <?php
 // view/news/ChiTietTinTuc.php
 require_once __DIR__ . '/../../includes/header.php';
-require_once __DIR__ . '/../../config.php'; // Định nghĩa BASE_URL và connectDB()
-
-$conn = connectDB();
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$news = null;
-$related_news = [];
-
-if ($id > 0) {
-    // Load bài viết chi tiết
-    $stmt = $conn->prepare("SELECT * FROM news WHERE id = ? AND trang_thai = 'HienThi'");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $news = $result->fetch_assoc();
-    $stmt->close();
-
-    // Load bài viết liên quan (3 bài mới nhất, khác id hiện tại)
-    if ($news) {
-        $related_stmt = $conn->prepare("
-            SELECT * FROM news 
-            WHERE id != ? AND trang_thai = 'HienThi' 
-            ORDER BY created_at DESC 
-            LIMIT 3
-        ");
-        $related_stmt->bind_param("i", $id);
-        $related_stmt->execute();
-        $related_result = $related_stmt->get_result();
-        while ($row = $related_result->fetch_assoc()) {
-            $related_news[] = $row;
-        }
-        $related_stmt->close();
-    }
-}
-
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -63,6 +28,40 @@ $conn->close();
     <!-- Font Awesome (cho icon save, user, v.v. nếu cần sau này) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
+
+<style>
+    /* Canh lề và đồng bộ chiều cao cho bài viết liên quan */
+    .news__list {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+    }
+    .news__item {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .news__item > a {
+        display: block;
+        width: 100%;
+    }
+    .news__image {
+        width: 100%;
+        height: 240px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .news__headline {
+        margin-top: 10px;
+        flex-grow: 1;
+    }
+    @media (max-width: 992px) {
+        .news__list { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+        .news__list { grid-template-columns: 1fr; }
+    }
+</style>
 
 <!-- CONTENT -->
 <div class="post">
@@ -101,7 +100,7 @@ $conn->close();
         <?php if (!empty($related_news)): ?>
             <?php foreach ($related_news as $item): ?>
                 <article class="news__item">
-                    <a href="<?= BASE_URL ?>ChiTietTinTuc.php?id=<?= $item['id'] ?>">
+                    <a href="<?= BASE_URL ?>index.php?url=news/chiTiet&id=<?= $item['id'] ?>">
                         <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['anh']) ?>" alt="<?= htmlspecialchars($item['tieu_de']) ?>" class="news__image">
                     </a>
                     <div class="news__content">
@@ -109,7 +108,7 @@ $conn->close();
                         <div class="news__category">Tin tức</div>
                     </div>
                     <div class="news__headline">
-                        <a href="<?= BASE_URL ?>ChiTietTinTuc.php?id=<?= $item['id'] ?>">
+                        <a href="<?= BASE_URL ?>index.php?url=news/chiTiet&id=<?= $item['id'] ?>">
                             <?= htmlspecialchars($item['tieu_de']) ?>
                         </a>
                     </div>

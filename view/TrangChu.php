@@ -1,34 +1,6 @@
 <?php
 // views/home/TrangChu.php
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../config.php';
-
-// Kết nối DB
-$conn = connectDB();
-
-// 1. Sản phẩm bán chạy (top theo lượt bán)
-$bestseller_result = $conn->query("
-    SELECT * FROM products 
-    WHERE trang_thai = 'HienThi' 
-    ORDER BY luot_ban DESC 
-    LIMIT 9
-");
-
-// 2. Sản phẩm mới nhất (theo ngày tạo)
-$new_products_result = $conn->query("
-    SELECT * FROM products 
-    WHERE trang_thai = 'HienThi' 
-    ORDER BY created_at DESC 
-    LIMIT 9
-");
-
-// 3. Tin tức mới nhất
-$news_result = $conn->query("
-    SELECT * FROM news 
-    WHERE trang_thai = 'HienThi' 
-    ORDER BY created_at DESC 
-    LIMIT 3
-");
 ?>
 
 <!-- BANNER -->
@@ -36,10 +8,14 @@ $news_result = $conn->query("
     <div class="banner__content">
         <p class="banner__subtitle-top">Tiện nghi tối ưu</p>
         <div class="banner__title">Bí Quyết Cho Căn <br>Bếp Hiện Đại, <br>Tiện Nghi.</div>
-        <p class="banner__subtitle-bot">Sản phẩm thông minh, thiết kế tinh tế, giúp bạn dễ dàng nấu những bữa ăn <br>ngon mỗi ngày.</p>
+        <p class="banner__subtitle-bot">Sản phẩm thông minh, thiết kế tinh tế, giúp bạn dễ dàng nấu những bữa ăn
+            <br>ngon mỗi ngày.
+        </p>
         <div class="banner__buttons">
-            <a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php" class="banner__button banner__button--primary">KHÁM PHÁ NGAY</a>
-            <a href="<?= BASE_URL ?>LienHe.php" class="banner__button banner__button--secondary">VỀ CHÚNG TÔI</a>
+            <a href="<?= BASE_URL ?>index.php?url=product" class="banner__button banner__button--primary">KHÁM
+                PHÁ NGAY</a>
+            <a href="<?= BASE_URL ?>index.php?url=contact" class="banner__button banner__button--secondary">VỀ CHÚNG
+                TÔI</a>
         </div>
     </div>
 </div>
@@ -49,7 +25,7 @@ $news_result = $conn->query("
     <div class="label__icon-list__item">
         <div class="label__icon-list--background">
             <img class="label__icon-list__image" src="<?= BASE_URL ?>assets/icon/icon-noi.svg" alt="Nồi">
-        </div>           
+        </div>
         <p class="label__icon-list__text">NỒI</p>
     </div>
     <div class="label__icon-list__item">
@@ -88,40 +64,51 @@ $news_result = $conn->query("
 <div class="bestseller">
     <div class="bestseller__info">
         <div class="bestseller__title">Sản Phẩm Bán Chạy</div>
-        <p class="bestseller__desc">Khám phá những sản phẩm gia dụng được yêu thích nhất, lựa chọn hàng đầu của hàng ngàn gia đình.</p>
+        <p class="bestseller__desc">Khám phá những sản phẩm gia dụng được yêu thích nhất, lựa chọn hàng đầu của hàng
+            ngàn gia đình.</p>
         <div class="bestseller__nav">
             <button class="bestseller__nav-button" onclick="scrollProducts(-500)">
-                <img class="bestseller__nav-button--prev" src="<?= BASE_URL ?>assets/icon/icon-button-left.svg" alt="button left">
+                <img class="bestseller__nav-button--prev" src="<?= BASE_URL ?>assets/icon/icon-button-left.svg"
+                    alt="button left">
             </button>
             <button class="bestseller__nav-button" onclick="scrollProducts(500)">
-                <img class="bestseller__nav-button--next" src="<?= BASE_URL ?>assets/icon/icon-button-right.svg" alt="button right">
+                <img class="bestseller__nav-button--next" src="<?= BASE_URL ?>assets/icon/icon-button-right.svg"
+                    alt="button right">
             </button>
         </div>
     </div>
 
     <div class="product__container" id="product_scroll">
-        <?php if ($bestseller_result->num_rows > 0): ?>
-            <?php while ($row = $bestseller_result->fetch_assoc()): ?>
+        <?php if (!empty($bestsellers)): ?>
+            <?php foreach ($bestsellers as $row): ?>
                 <div class="product__card">
                     <a href="<?= BASE_URL ?>view/product/ChiTietSanPham.php?id=<?= $row['id'] ?>" draggable="false">
-                        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($row['anh']) ?>" alt="<?= htmlspecialchars($row['ten_sp']) ?>" class="product__card-image" draggable="false">
+                        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($row['anh']) ?>"
+                            alt="<?= htmlspecialchars($row['ten_sp']) ?>" class="product__card-image" draggable="false">
                     </a>
                     <div class="product__card-text">
                         <p class="product__card-name">
                             <?= htmlspecialchars($row['ten_sp']) ?> <br>
                             <span class="product__card-price">
-                                <?= number_format($row['gia']) ?>đ 
+                                <?= number_format($row['gia']) ?>đ
                                 <?php if ($row['gia_cu'] > 0): ?>
                                     <span class="product__card-old-price"><?= number_format($row['gia_cu']) ?>đ</span>
                                 <?php endif; ?>
                             </span>
                         </p>
-                        <a href="javascript:void(0)" class="product__card-cart js__add-to-cart" data-product-id="<?= $row['id'] ?>">
-                            <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
-                        </a>
+                        <?php if ($row['so_luong_ton'] > 0): ?>
+                            <a href="javascript:void(0)" class="product__card-cart js__add-to-cart"
+                                data-product-id="<?= $row['id'] ?>">
+                                <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                            </a>
+                        <?php else: ?>
+                            <span class="product__card-cart"
+                                style="border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; text-decoration: none;"
+                                title="Hết hàng">Hết hàng</span>
+                        <?php endif; ?>
                     </div>
                 </div>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         <?php else: ?>
             <p>Chưa có sản phẩm bán chạy nào.</p>
         <?php endif; ?>
@@ -145,41 +132,44 @@ $news_result = $conn->query("
 <!-- SẢN PHẨM MỚI -->
 <div class="product__list">
     <div class="product__list-title">Sản Phẩm</div>
-    <div class="product__list-tabs">
-        <div class="product__list-tab product__list-tab--active">Mới</div>
-        <div class="product__list-tab product__list-tab--not-active">Phổ biến</div>
-        <div class="product__list-tab product__list-tab--not-active">Khuyến mãi</div>
-    </div>
 
     <div class="product__list-items">
-        <?php if ($new_products_result->num_rows > 0): ?>
-            <?php while ($row = $new_products_result->fetch_assoc()): ?>
+        <?php if (!empty($new_products)): ?>
+            <?php foreach ($new_products as $row): ?>
                 <div class="product__list-item">
                     <a href="<?= BASE_URL ?>view/product/ChiTietSanPham.php?id=<?= $row['id'] ?>">
-                        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($row['anh']) ?>" alt="<?= htmlspecialchars($row['ten_sp']) ?>" class="product__list-image">
+                        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($row['anh']) ?>"
+                            alt="<?= htmlspecialchars($row['ten_sp']) ?>" class="product__list-image">
                     </a>
                     <div class="product__list-text">
                         <p class="product__list-item-title">
                             <?= htmlspecialchars($row['ten_sp']) ?> <br>
                             <span class="product__list-price">
-                                <?= number_format($row['gia']) ?>đ 
+                                <?= number_format($row['gia']) ?>đ
                                 <?php if ($row['gia_cu'] > 0): ?>
                                     <span class="product__list-old-price"><?= number_format($row['gia_cu']) ?>đ</span>
                                 <?php endif; ?>
                             </span>
                         </p>
-                        <a href="javascript:void(0)" class="product__list-cart-button js__add-to-cart" data-product-id="<?= $row['id'] ?>">
-                            <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
-                        </a>
+                        <?php if ($row['so_luong_ton'] > 0): ?>
+                            <a href="javascript:void(0)" class="product__list-cart-button js__add-to-cart"
+                                data-product-id="<?= $row['id'] ?>">
+                                <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                            </a>
+                        <?php else: ?>
+                            <span class="product__list-cart-button"
+                                style="border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; padding: 12px; text-decoration: none;"
+                                title="Hết hàng">Hết hàng</span>
+                        <?php endif; ?>
                     </div>
                 </div>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         <?php else: ?>
             <p>Chưa có sản phẩm mới nào.</p>
         <?php endif; ?>
     </div>
 
-    <button class="more__btn" onclick="window.location.href='<?= BASE_URL ?>view/product/DanhMucSanPham.php'">
+    <button class="more__btn" onclick="window.location.href='<?= BASE_URL ?>index.php?url=product'">
         <div class="more__btn-text">XEM THÊM</div>
         <img class="more__btn-img" src="<?= BASE_URL ?>assets/icon/Icon-right2.svg" alt="icon right">
     </button>
@@ -194,7 +184,7 @@ $news_result = $conn->query("
             Chúng tôi mang đến các giải pháp tiện ích và hiện đại, giúp bạn tận hưởng không gian bếp trọn vẹn hơn.
         </p>
         <p class="about__description">
-            Với đa dạng sản phẩm từ dụng cụ nhà bếp đến thiết bị thông minh, chúng tôi cam kết chất lượng và an toàn, 
+            Với đa dạng sản phẩm từ dụng cụ nhà bếp đến thiết bị thông minh, chúng tôi cam kết chất lượng và an toàn,
             đáp ứng mọi nhu cầu của gia đình bạn.
         </p>
     </div>
@@ -203,32 +193,59 @@ $news_result = $conn->query("
     </div>
 </div>
 
+<style>
+    /* Đồng bộ chiều cao ảnh và căn chỉnh nội dung bài viết tin tức ở trang chủ */
+    .news__item {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .news__item>a {
+        display: block;
+        width: 100%;
+    }
+
+    .news__image {
+        width: 100%;
+        height: 240px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .news__headline {
+        margin-top: 10px;
+        flex-grow: 1;
+    }
+</style>
+
 <!-- TIN TỨC -->
 <div class="news">
     <div class="news__title">Tin Tức</div>
     <div class="news__list">
-        <?php if ($news_result->num_rows > 0): ?>
-            <?php while ($row = $news_result->fetch_assoc()): ?>
+        <?php if (!empty($news_list)): ?>
+            <?php foreach ($news_list as $row): ?>
                 <article class="news__item">
-                    <a href="<?= BASE_URL ?>view/news/ChiTietTinTuc.php?id=<?= $row['id'] ?>">
-                        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($row['anh']) ?>" alt="<?= htmlspecialchars($row['tieu_de']) ?>" class="news__image">
+                    <a href="<?= BASE_URL ?>index.php?url=news/chiTiet&id=<?= $row['id'] ?>">
+                        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($row['anh']) ?>"
+                            alt="<?= htmlspecialchars($row['tieu_de']) ?>" class="news__image">
                     </a>
                     <div class="news__content">
                         <div class="news__date"><?= date('d/m/Y', strtotime($row['created_at'])) ?></div>
                         <div class="news__category">Tin tức</div>
                     </div>
                     <div class="news__headline">
-                        <a href="<?= BASE_URL ?>view/news/ChiTietTinTuc.php?id=<?= $row['id'] ?>">
+                        <a href="<?= BASE_URL ?>index.php?url=news/chiTiet&id=<?= $row['id'] ?>">
                             <?= htmlspecialchars($row['tieu_de']) ?>
                         </a>
                     </div>
                 </article>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         <?php else: ?>
             <p>Chưa có tin tức nào.</p>
         <?php endif; ?>
     </div>
-    <button class="more__btn" onclick="window.location.href='<?= BASE_URL ?>view/news/DanhMucTinTuc.php'">
+    <button class="more__btn" onclick="window.location.href='<?= BASE_URL ?>index.php?url=news'">
         <div class="more__btn-text">XEM THÊM</div>
         <img class="more__btn-img" src="<?= BASE_URL ?>assets/icon/Icon-right2.svg" alt="icon right">
     </button>
@@ -299,7 +316,6 @@ $news_result = $conn->query("
     });
 </script>
 
-<?php 
-$conn->close(); 
-require_once __DIR__ . '/../includes/footer.php'; 
+<?php
+require_once __DIR__ . '/../includes/footer.php';
 ?>

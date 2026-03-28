@@ -1,59 +1,13 @@
 <?php
-// view/order/ThanhToanDaDangNhap.php
-ob_start();
-require_once __DIR__ . '/../../config.php';
-
-// 1. Kiểm tra trạng thái đăng nhập (Bắt buộc)
-if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
-    // Nếu chưa đăng nhập, chuyển hướng về trang Đăng nhập kèm link quay lại
-    header("Location: " . BASE_URL . "view/user/DangNhap.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
+// view/order/ThanhToan.php
+// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect về Router chuẩn
+if (!isset($cartItems)) {
+    require_once __DIR__ . '/../../config.php';
+    header("Location: " . BASE_URL . "index.php?url=order/checkout");
     exit;
 }
 
 require_once __DIR__ . '/../../includes/header.php';
-
-// 2. Truy vấn dữ liệu người dùng để điền sẵn vào Form
-$conn = connectDB();
-$userId = $_SESSION['user_id'];
-
-$stmt = $conn->prepare("SELECT ho_ten, email, so_dien_thoai, dia_chi FROM users WHERE id = ?");
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
-$stmt->close();
-
-// Xác định địa chỉ mặc định để hiển thị sẵn vào form lúc load trang
-$defaultName = $user['ho_ten'] ?? '';
-$defaultPhone = $user['so_dien_thoai'] ?? '';
-$defaultAddress = $user['dia_chi'] ?? '';
-
-// 3. Truy vấn Giỏ hàng của người dùng (Giả định bảng carts và cart_items)
-// Nếu hệ thống của bạn dùng CartModel, bạn có thể gọi CartModel::getCartItems() tại đây
-$cartItems = [];
-$totalPrice = 0;
-
-$cartStmt = $conn->prepare("
-    SELECT ci.quantity, p.ten_sp, p.gia, p.anh 
-    FROM carts c
-    JOIN cart_items ci ON c.id = ci.cart_id
-    JOIN products p ON ci.product_id = p.id
-    WHERE c.user_id = ?
-");
-if ($cartStmt) {
-    $cartStmt->bind_param("i", $userId);
-    $cartStmt->execute();
-    $result = $cartStmt->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $cartItems[] = $row;
-        $totalPrice += ($row['gia'] * $row['quantity']);
-    }
-    $cartStmt->close();
-}
-$conn->close();
-
-// 4. Tính toán phí vận chuyển ban đầu
-$shippingFee = 0; // Luôn bắt đầu bằng 0đ, sẽ được JS cập nhật
-$finalTotal = $totalPrice + $shippingFee;
 ?>
 
 <style>
@@ -484,14 +438,14 @@ $finalTotal = $totalPrice + $shippingFee;
                     <?php if (!empty($cartItems)): ?>
                         <?php foreach ($cartItems as $item): ?>
                             <li class="checkout__product-item">
-                                <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['anh']) ?>"
-                                    alt="<?= htmlspecialchars($item['ten_sp']) ?>" class="checkout__product-img">
+                                <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['image']) ?>"
+                                    alt="<?= htmlspecialchars($item['name']) ?>" class="checkout__product-img">
                                 <div class="checkout__product-info">
-                                    <h4 class="checkout__product-name"><?= htmlspecialchars($item['ten_sp']) ?></h4>
+                                    <h4 class="checkout__product-name"><?= htmlspecialchars($item['name']) ?></h4>
                                     <span class="checkout__product-qty">Số lượng: <?= $item['quantity'] ?></span>
                                 </div>
                                 <div class="checkout__product-price">
-                                    <?= number_format($item['gia'] * $item['quantity']) ?>đ
+                                    <?= number_format($item['price'] * $item['quantity']) ?>đ
                                 </div>
                             </li>
                         <?php endforeach; ?>
@@ -647,50 +601,5 @@ $finalTotal = $totalPrice + $shippingFee;
 
         if (addressDetail) addressDetail.addEventListener('input', updateFullAddress);
     });
-</script>
-<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
-.then(res => res.json())
-.then(res => {
-if(res.code === 200 && res.data) {
-res.data.forEach(w => ward.innerHTML += `<option value="${w.WardCode}" data-name="${w.WardName}">${w.WardName}</option>
-`);
-}
-})
-.catch(err => console.error("Lỗi parse JSON Phường/Xã:", err));
-});
-
-// 4. Tính phí ship
-ward.addEventListener('change', function() {
-updateFullAddress();
-if(!this.value) return;
-fetch(`<?= BASE_URL ?>index.php?url=ghn/calculate_fee&district_id=${district.value}&ward_code=${this.value}&weight=1000`)
-.then(res => res.json())
-.then(res => {
-if(res.code === 200 && res.data) {
-phiShipInput.value = res.data.total;
-// Tự động hiển thị phí ship ra giao diện thay vì alert
-const feeDisplay = document.querySelector('.checkout__total-line:nth-child(2) span:last-child');
-if(feeDisplay) feeDisplay.innerText = res.data.total.toLocaleString('vi-VN') + 'đ';
-
-// Cập nhật tổng tiền
-const tempTotal = <?= $totalPrice ?>;
-const finalDisplay = document.querySelector('.checkout__final-price');
-if(finalDisplay) finalDisplay.innerText = (tempTotal + res.data.total).toLocaleString('vi-VN') + 'đ';
-}
-})
-.catch(err => console.error("Lỗi parse JSON Phí Ship:", err));
-});
-
-// Cập nhật chuỗi địa chỉ
-function updateFullAddress() {
-const pName = province.options[province.selectedIndex]?.getAttribute('data-name') || '';
-const dName = district.options[district.selectedIndex]?.getAttribute('data-name') || '';
-const wName = ward.options[ward.selectedIndex]?.getAttribute('data-name') || '';
-const detail = addressDetail ? addressDetail.value : '';
-addressInput.value = `${detail}, ${wName}, ${dName}, ${pName}`.replace(/^,\s*/, '').replace(/,\s*,\s*/g, ', ');
-}
-
-if(addressDetail) addressDetail.addEventListener('input', updateFullAddress);
-});
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

@@ -2,6 +2,7 @@
 // controllers/AuthController.php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../models/UserModel.php';
+require_once __DIR__ . '/../models/AdminModel.php';
 
 // Load thư viện PHPMailer cho tính năng Quên mật khẩu
 require_once __DIR__ . '/../libs/PHPMailer/src/Exception.php';
@@ -27,17 +28,12 @@ class AuthController
                 exit;
             }
 
-            $conn = connectDB();
-
             // 1. Kiểm tra bảng admins trước (Tích hợp Admin vào chung form)
             // Cho phép Admin đăng nhập bằng email hoặc tên đăng nhập (username)
-            $stmtAdmin = $conn->prepare("SELECT id, username, password, ho_ten, avatar, vai_tro, trang_thai FROM admins WHERE email = ? OR username = ?");
-            $stmtAdmin->bind_param("ss", $email, $email);
-            $stmtAdmin->execute();
-            $resultAdmin = $stmtAdmin->get_result();
+            $adminModel = new AdminModel();
+            $admin = $adminModel->getAdminByEmailOrUsername($email);
 
-            if ($resultAdmin->num_rows === 1) {
-                $admin = $resultAdmin->fetch_assoc();
+            if ($admin) {
 
                 // Kiểm tra nếu tài khoản bị khóa
                 if ($admin['trang_thai'] === 'Khoa') {
@@ -54,10 +50,7 @@ class AuthController
                     // CHỨC NĂNG NÂNG CẤP: Nếu mật khẩu vẫn là plain text '12345', tự động mã hóa Hash và lưu đè lại vào CSDL!
                     if ($password === $dbPassword) {
                         $newHash = password_hash($password, PASSWORD_DEFAULT);
-                        $updateStmt = $conn->prepare("UPDATE admins SET password = ? WHERE id = ?");
-                        $updateStmt->bind_param("si", $newHash, $admin['id']);
-                        $updateStmt->execute();
-                        $updateStmt->close();
+                        $adminModel->updateAdminPassword($admin['id'], $newHash);
                     }
 
                     // Đăng nhập Admin thành công
@@ -66,22 +59,16 @@ class AuthController
                     $_SESSION['admin_avatar'] = $admin['avatar'] ?? null;
                     $_SESSION['admin_role'] = $admin['vai_tro'];
 
-                    $stmtAdmin->close();
-                    $conn->close();
                     header("Location: " . BASE_URL . "admin");
                     exit;
                 }
             }
-            $stmtAdmin->close();
 
             // 2. Nếu không phải Admin thì kiểm tra xem có phải Khách hàng (User) không
-            $stmtUser = $conn->prepare("SELECT id, ho_ten, mat_khau FROM users WHERE email = ?");
-            $stmtUser->bind_param("s", $email);
-            $stmtUser->execute();
-            $resultUser = $stmtUser->get_result();
-
-            if ($resultUser->num_rows === 1) {
-                $user = $resultUser->fetch_assoc();
+            $userModel = new UserModel();
+            $user = $userModel->getUserByEmail($email);
+            
+            if ($user) {
                 if (password_verify($password, $user['mat_khau'])) {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['user_name'] = $user['ho_ten'];
@@ -104,14 +91,10 @@ class AuthController
                         setcookie('remember_password', '', time() - 3600, '/', '', false, true);
                     }
 
-                    $stmtUser->close();
-                    $conn->close();
                     header("Location: $redirect");
                     exit;
                 }
             }
-            $stmtUser->close();
-            $conn->close();
 
             // Sai tài khoản hoặc mật khẩu (chung cho cả admin và user)
             $_SESSION['error_message'] = 'Tài khoản hoặc mật khẩu không chính xác!';
@@ -251,5 +234,29 @@ class AuthController
         }
         // Gọi View hiển thị
         require_once __DIR__ . '/../view/user/MatKhauMoi.php';
+    }
+
+    public function logout()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // Hủy chỉ session của user, không ảnh hưởng admin
+        unset($_SESSION['user_id']);
+        unset($_SESSION['user_name']);
+
+        // Thiết lập flash message để hiển thị khi chuyển hướng
+        $_SESSION['success_message'] = 'Bạn đã đăng xuất thành công.';
+
+        // Redirect về trang trước đó (hoặc trang chủ nếu không có)
+        $redirect = $_SERVER['HTTP_REFERER'] ?? BASE_URL;
+
+        // An toàn hơn: Nếu trang trước đó là trang cần đăng nhập, chuyển về trang chủ
+        if (strpos($redirect, 'TaiKhoan.php') !== false || strpos($redirect, 'CapNhatTaiKhoan.php') !== false || strpos($redirect, 'ThanhToan.php') !== false) {
+            $redirect = BASE_URL;
+        }
+        header('Location: ' . $redirect);
+        exit;
     }
 }

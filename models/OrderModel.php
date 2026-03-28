@@ -1,13 +1,8 @@
 <?php
 // models/OrderModel.php
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../core/Model.php';
 
-class OrderModel {
-    private $conn;
-
-    public function __construct() {
-        $this->conn = connectDB();
-    }
+class OrderModel extends Model {
 
     public function createOrder($user_id, $tong_tien_cuoi, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen) {
         // Bắt đầu Transaction (Đảm bảo nếu lỗi ở bước nào thì sẽ hoàn tác toàn bộ)
@@ -115,5 +110,14 @@ class OrderModel {
         $result = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         return $result ? $result['user_id'] : null;
+    }
+
+    public function getOrdersByUserId($user_id) {
+        $stmt = $this->conn->prepare("SELECT id, tong_tien, trang_thai, phuong_thuc_thanh_toan, created_at FROM orders WHERE user_id = ? ORDER BY created_at DESC");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $orders;
     }
 }

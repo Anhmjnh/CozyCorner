@@ -127,8 +127,9 @@ require_once __DIR__ . '/includes/admin_header.php';
 
 <div class="filter-container"
     style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
-    <form method="GET" action="<?= BASE_URL ?>admin/users"
+    <form method="GET" action="<?= BASE_URL ?>index.php"
         style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <input type="hidden" name="url" value="admin/users">
         <div class="search-box" style="flex: 1; min-width: 250px; position: relative;">
             <i class="fas fa-search"
                 style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
@@ -161,7 +162,7 @@ require_once __DIR__ . '/includes/admin_header.php';
             style="padding: 10px 20px; background: #34495e; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;"><i
                 class="fas fa-filter"></i> Lọc</button>
         <?php if (!empty($search) || !empty($hang) || !empty($trang_thai)): ?>
-            <a href="<?= BASE_URL ?>admin/users" class="btn btn-light"
+            <a href="<?= BASE_URL ?>index.php?url=admin/users" class="btn btn-light"
                 style="padding: 10px 20px; background: #ecf0f1; color: #333; text-decoration: none; border-radius: 5px; font-weight: 600;"><i
                     class="fas fa-times"></i> Xóa lọc</a>
         <?php endif; ?>
@@ -238,7 +239,7 @@ require_once __DIR__ . '/includes/admin_header.php';
     ?>
     <div class="pagination">
         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-            <a href="<?= BASE_URL ?>admin/users?page=<?= $i ?><?= $query_string ?>"
+            <a href="<?= BASE_URL ?>index.php?url=admin/users&page=<?= $i ?><?= $query_string ?>"
                 class="<?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
         <?php endfor; ?>
     </div>

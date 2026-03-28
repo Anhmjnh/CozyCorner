@@ -1,13 +1,13 @@
 <?php
 // controllers/AdminController.php
-require_once __DIR__ . '/../models/AdminModel.php';
+require_once __DIR__ . '/../core/Controller.php';
 
-class AdminController {
+class AdminController extends Controller {
     private $model;
 
     public function __construct() {
         if (session_status() === PHP_SESSION_NONE) session_start();
-        $this->model = new AdminModel();
+        $this->model = $this->model('AdminModel');
         
         // Middleware Check Login: Bắt buộc phải có session admin mới được gọi các action bên dưới
         if (!isset($_SESSION['admin_id'])) {
@@ -16,10 +16,23 @@ class AdminController {
         }
     }
 
+    public function logout() {
+        // Chỉ hủy session của admin, giữ nguyên session của user
+        unset($_SESSION['admin_id']);
+        unset($_SESSION['admin_name']);
+        unset($_SESSION['admin_avatar']);
+        unset($_SESSION['admin_role']);
+        
+        header("Location: " . BASE_URL . "view/user/DangNhap.php");
+        exit;
+    }
+
     // --- VIEWS ---
     public function index() {
         $stats = $this->model->getDashboardStats();
-        require_once __DIR__ . '/../view/admin/dashboard.php';
+        $this->view('../admin/index', [
+            'stats' => $stats
+        ]);
     }
 
     public function products() {
@@ -35,7 +48,15 @@ class AdminController {
         $totalPages = ceil($total / $limit);
         $all_categories = $this->model->getCategories();
 
-        require_once __DIR__ . '/../admin/products.php';
+        $this->view('../admin/products', [
+            'products' => $products,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'all_categories' => $all_categories,
+            'search' => $search,
+            'category' => $category,
+            'page' => $page
+        ]);
     }
 
     public function users() {
@@ -51,7 +72,15 @@ class AdminController {
         $total = $this->model->getTotalUsersCount($search, $hang, $trang_thai);
         $totalPages = ceil($total / $limit);
 
-        require_once __DIR__ . '/../admin/users.php';
+        $this->view('../admin/users', [
+            'users' => $users,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'search' => $search,
+            'hang' => $hang,
+            'trang_thai' => $trang_thai,
+            'page' => $page
+        ]);
     }
 
     public function categories() {
@@ -66,7 +95,14 @@ class AdminController {
         $total = $this->model->getTotalCategoriesCount($search, $trang_thai);
         $totalPages = ceil($total / $limit);
 
-        require_once __DIR__ . '/../admin/categories.php';
+        $this->view('../admin/categories', [
+            'categories' => $categories,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'search' => $search,
+            'trang_thai' => $trang_thai,
+            'page' => $page
+        ]);
     }
 
     public function staffs() {
@@ -82,7 +118,67 @@ class AdminController {
         $total = $this->model->getTotalStaffsCount($search, $vai_tro, $trang_thai);
         $totalPages = ceil($total / $limit);
 
-        require_once __DIR__ . '/../admin/staffs.php';
+        $this->view('../admin/staffs', [
+            'staffs' => $staffs,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'search' => $search,
+            'vai_tro' => $vai_tro,
+            'trang_thai' => $trang_thai,
+            'page' => $page
+        ]);
+    }
+
+    public function orders() {
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = 15;
+        $offset = ($page - 1) * $limit;
+
+        $search = trim($_GET['search'] ?? '');
+        $trang_thai = trim($_GET['trang_thai'] ?? '');
+        $from_date = trim($_GET['from_date'] ?? '');
+        $to_date = trim($_GET['to_date'] ?? '');
+
+        $orders = $this->model->getOrdersList($limit, $offset, $search, $trang_thai, $from_date, $to_date);
+        $total = $this->model->getTotalOrdersCount($search, $trang_thai, $from_date, $to_date);
+        $total_revenue = $this->model->getTotalRevenue($search, $trang_thai, $from_date, $to_date);
+        $totalPages = ceil($total / $limit);
+
+        $this->view('../admin/orders', [
+            'orders' => $orders,
+            'total' => $total,
+            'total_revenue' => $total_revenue,
+            'totalPages' => $totalPages,
+            'search' => $search,
+            'trang_thai' => $trang_thai,
+            'from_date' => $from_date,
+            'to_date' => $to_date,
+            'page' => $page
+        ]);
+    }
+
+    public function news() {
+        $newsModel = $this->model('NewsModel');
+
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
+        $search = trim($_GET['search'] ?? '');
+        $danh_muc = trim($_GET['danh_muc'] ?? '');
+
+        $newsList = $newsModel->getAdminNewsList($limit, $offset, $search, $danh_muc);
+        $total = $newsModel->getTotalAdminNewsCount($search, $danh_muc);
+        $totalPages = ceil($total / $limit);
+
+        $this->view('../admin/news', [
+            'newsList' => $newsList,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'search' => $search,
+            'danh_muc' => $danh_muc,
+            'page' => $page
+        ]);
     }
 
     // --- AJAX APIs ---
@@ -377,7 +473,234 @@ class AdminController {
         exit;
     }
 
+    // --- API QUẢN LÝ TIN TỨC ---
+    public function api_get_news() {
+        header('Content-Type: application/json');
+        require_once __DIR__ . '/../models/NewsModel.php';
+        $newsModel = new NewsModel();
+        $id = intval($_GET['id'] ?? 0);
+        $data = $newsModel->getNewsById($id);
+
+        if ($data) echo json_encode(['status' => 'success', 'data' => $data]);
+        else echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy tin tức.']);
+        exit;
+    }
+
+    public function api_add_news() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $newsModel = $this->model('NewsModel');
+
+            $tieu_de = trim($_POST['tieu_de'] ?? '');
+            $noi_dung = trim($_POST['noi_dung'] ?? '');
+            $danh_muc = $_POST['danh_muc'] ?? 'Mẹo vặt';
+            $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
+            
+            if (empty($tieu_de) || empty($noi_dung)) {
+                echo json_encode(['status' => 'error', 'msg' => 'Vui lòng nhập đủ tiêu đề và nội dung.']); exit;
+            }
+
+            $anh = '';
+            if (isset($_FILES['anh']) && $_FILES['anh']['error'] == 0) {
+                $target_dir = __DIR__ . "/../uploads/";
+                $filename = time() . "_news_" . basename($_FILES["anh"]["name"]);
+                if (move_uploaded_file($_FILES["anh"]["tmp_name"], $target_dir . $filename)) {
+                    $anh = $filename;
+                }
+            }
+
+            if ($newsModel->addNews($tieu_de, $noi_dung, $danh_muc, $trang_thai, $anh)) echo json_encode(['status' => 'success', 'msg' => 'Thêm tin tức thành công!']);
+            else echo json_encode(['status' => 'error', 'msg' => 'Thêm tin tức thất bại.']);
+        }
+        exit;
+    }
+
+    public function api_update_news() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $newsModel = $this->model('NewsModel');
+
+            $id = intval($_POST['id'] ?? 0);
+            $tieu_de = trim($_POST['tieu_de'] ?? '');
+            $noi_dung = trim($_POST['noi_dung'] ?? '');
+            $danh_muc = $_POST['danh_muc'] ?? 'Mẹo vặt';
+            $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
+            $anh = $_POST['current_anh'] ?? '';
+
+            if (isset($_FILES['anh']) && $_FILES['anh']['error'] == 0) {
+                $target_dir = __DIR__ . "/../uploads/";
+                $filename = time() . "_news_" . basename($_FILES["anh"]["name"]);
+                if (move_uploaded_file($_FILES["anh"]["tmp_name"], $target_dir . $filename)) $anh = $filename;
+            }
+
+            if ($newsModel->updateNews($id, $tieu_de, $noi_dung, $danh_muc, $trang_thai, $anh)) echo json_encode(['status' => 'success', 'msg' => 'Cập nhật thành công!']);
+            else echo json_encode(['status' => 'error', 'msg' => 'Cập nhật thất bại.']);
+        }
+        exit;
+    }
+
+    public function api_delete_news() {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (isset($data['id'])) {
+            $newsModel = $this->model('NewsModel');
+            if ($newsModel->deleteNews($data['id'])) echo json_encode(['status' => 'success', 'msg' => 'Xóa tin tức thành công!']);
+            else echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa tin tức này.']);
+        }
+        exit;
+    }
+
+    // --- API QUẢN LÝ SẢN PHẨM (từ api.php) ---
+    public function api_get_product() {
+        header('Content-Type: application/json');
+        $id = $_GET['id'] ?? 0;
+        $product = $this->model->getProductById($id);
+        if ($product) {
+            echo json_encode(['status' => 'success', 'data' => $product]);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy sản phẩm.']);
+        }
+        exit;
+    }
+
+    public function api_update_product() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'] ?? 0;
+            $ten_sp = $_POST['ten_sp'] ?? '';
+            $gia = $_POST['gia'] ?? 0;
+            $gia_cu = $_POST['gia_cu'] ?? 0;
+            $danh_muc = $_POST['danh_muc'] ?? 'Khac';
+            $so_luong = $_POST['so_luong'] ?? 0;
+            $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
+
+            $anh = null;
+            if (isset($_FILES['anh']) && $_FILES['anh']['tmp_name'] != '') {
+                $target_dir = __DIR__ . "/../uploads/";
+                $filename = time() . "_" . basename($_FILES["anh"]["name"]);
+                if (move_uploaded_file($_FILES["anh"]["tmp_name"], $target_dir . $filename)) {
+                    $anh = $filename;
+                }
+            } else if (isset($_POST['current_anh'])) {
+                $anh = $_POST['current_anh'];
+            }
+
+            if ($this->model->updateProduct($id, $ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh)) {
+                echo json_encode(['status' => 'success', 'msg' => 'Cập nhật sản phẩm thành công!']);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Lỗi khi cập nhật sản phẩm.']);
+            }
+        }
+        exit;
+    }
+
+    // --- API QUẢN LÝ DANH MỤC (từ api.php) ---
+    public function api_get_category() {
+        header('Content-Type: application/json');
+        $id = $_GET['id'] ?? 0;
+        $category = $this->model->getCategoryById($id);
+        if ($category) {
+            echo json_encode(['status' => 'success', 'data' => $category]);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy danh mục.']);
+        }
+        exit;
+    }
+
+    public function api_add_category() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $ten_danh_muc = $_POST['ten_danh_muc'] ?? '';
+            $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
+
+            if (!empty($ten_danh_muc)) {
+                if ($this->model->addCategory($ten_danh_muc, $trang_thai)) {
+                    echo json_encode(['status' => 'success', 'msg' => 'Thêm danh mục thành công!']);
+                } else {
+                    echo json_encode(['status' => 'error', 'msg' => 'Lỗi: Tên danh mục có thể đã tồn tại.']);
+                }
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Tên danh mục không được để trống.']);
+            }
+        }
+        exit;
+    }
+
+    public function api_update_category() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'] ?? 0;
+            $ten_danh_muc = $_POST['ten_danh_muc'] ?? '';
+            $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
+
+            if (!empty($ten_danh_muc)) {
+                if ($this->model->updateCategory($id, $ten_danh_muc, $trang_thai)) {
+                    echo json_encode(['status' => 'success', 'msg' => 'Cập nhật danh mục thành công!']);
+                } else {
+                    echo json_encode(['status' => 'error', 'msg' => 'Lỗi: Tên danh mục có thể đã tồn tại hoặc không có gì thay đổi.']);
+                }
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Tên danh mục không được để trống.']);
+            }
+        }
+        exit;
+    }
+
+    public function api_delete_category() {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (isset($data['id'])) {
+            if ($this->model->deleteCategory($data['id'])) {
+                echo json_encode(['status' => 'success', 'msg' => 'Xóa danh mục thành công!']);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa danh mục.']);
+            }
+        }
+        exit;
+    }
+
+    // --- API QUẢN LÝ ĐƠN HÀNG (từ api.php) ---
+    public function api_get_order() {
+        header('Content-Type: application/json');
+        $id = $_GET['id'] ?? 0;
+        $order = $this->model->getOrderById($id);
+
+        if ($order) {
+            $order['items'] = $this->model->getOrderDetailsByOrderId($id);
+            echo json_encode(['status' => 'success', 'data' => $order]);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy đơn hàng.']);
+        }
+        exit;
+    }
+
+    public function api_update_order_status() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'] ?? 0;
+            $trang_thai = $_POST['trang_thai'] ?? '';
+
+            if ($id > 0 && in_array($trang_thai, ['ChoXacNhan', 'DangGiao', 'HoanThanh', 'Huy'])) {
+                if ($this->model->updateOrderStatus($id, $trang_thai)) {
+                    $user_id = $this->model->getUserIdByOrderId($id);
+                    if ($user_id) {
+                        $userModel = $this->model('UserModel');
+                        $userModel->updateUserRank($user_id);
+                    }
+                    echo json_encode(['status' => 'success', 'msg' => 'Cập nhật trạng thái thành công!']);
+                } else {
+                    echo json_encode(['status' => 'error', 'msg' => 'Lỗi cập nhật trạng thái.']);
+                }
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Dữ liệu không hợp lệ.']);
+            }
+        }
+        exit;
+    }
+
     public function __destruct() {
-        $this->model->close();
+        if ($this->model) {
+            $this->model->close();
+        }
     }
 }

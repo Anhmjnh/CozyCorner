@@ -1,20 +1,23 @@
 <?php
 // models/AdminModel.php
+require_once __DIR__ . '/../core/Model.php';
 
-class AdminModel
+class AdminModel extends Model
 {
-    private $conn;
-
-    public function __construct()
-    {
-        $this->conn = connectDB();
-    }
 
     // --- QUẢN LÝ ADMIN ---
     public function getAdminById($id)
     {
         $stmt = $this->conn->prepare("SELECT id, username, email, ho_ten, avatar, so_dien_thoai, dia_chi, gioi_tinh, ngay_sinh, password, vai_tro, trang_thai, created_at FROM admins WHERE id = ?");
         $stmt->bind_param("i", $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+
+    public function getAdminByEmailOrUsername($login_id)
+    {
+        $stmt = $this->conn->prepare("SELECT id, username, password, ho_ten, avatar, vai_tro, trang_thai FROM admins WHERE email = ? OR username = ?");
+        $stmt->bind_param("ss", $login_id, $login_id);
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc();
     }
@@ -296,14 +299,66 @@ class AdminModel
     }
 
     // --- QUẢN LÝ ĐƠN HÀNG ---
-    public function getOrders()
+    private function buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) {
+        $sql = " WHERE 1=1";
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (o.id LIKE '%$search_esc%' OR u.ho_ten LIKE '%$search_esc%')";
+        }
+        if (!empty($trang_thai)) {
+            $tt_esc = $this->conn->real_escape_string($trang_thai);
+            $sql .= " AND o.trang_thai = '$tt_esc'";
+        }
+        if (!empty($from_date)) {
+            $fd_esc = $this->conn->real_escape_string($from_date);
+            $sql .= " AND DATE(o.created_at) >= '$fd_esc'";
+        }
+        if (!empty($to_date)) {
+            $td_esc = $this->conn->real_escape_string($to_date);
+            $sql .= " AND DATE(o.created_at) <= '$td_esc'";
+        }
+        return $sql;
+    }
+
+    public function getOrdersList($limit = 15, $offset = 0, $search = '', $trang_thai = '', $from_date = '', $to_date = '') {
+        $sql = "SELECT o.*, u.ho_ten as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $limit, $offset);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getTotalOrdersCount($search = '', $trang_thai = '', $from_date = '', $to_date = '') {
+        $sql = "SELECT COUNT(o.id) as total FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date);
+        return $this->conn->query($sql)->fetch_assoc()['total'] ?? 0;
+    }
+
+    public function getTotalRevenue($search = '', $trang_thai = '', $from_date = '', $to_date = '') {
+        $sql = "SELECT SUM(o.tong_tien) as total_revenue FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " AND (o.trang_thai = 'HoanThanh' OR (o.trang_thai = 'DangGiao' AND o.phuong_thuc_thanh_toan = 'ChuyenKhoan'))";
+        return $this->conn->query($sql)->fetch_assoc()['total_revenue'] ?? 0;
+    }
+
+    public function getOrderById($id)
     {
-        $sql = "SELECT o.*, u.ho_ten as user_name 
-                FROM orders o 
-                JOIN users u ON o.user_id = u.id 
-                ORDER BY o.created_at DESC";
-        $result = $this->conn->query($sql);
-        return $result->fetch_all(MYSQLI_ASSOC);
+        $stmt = $this->conn->prepare("SELECT o.*, u.ho_ten as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+
+    public function getOrderDetailsByOrderId($order_id)
+    {
+        $stmt = $this->conn->prepare("SELECT od.*, p.ten_sp, p.anh FROM order_details od LEFT JOIN products p ON od.product_id = p.id WHERE od.order_id = ?");
+        $stmt->bind_param("i", $order_id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function updateOrderStatus($id, $trang_thai)
+    {
+        $stmt = $this->conn->prepare("UPDATE orders SET trang_thai = ? WHERE id = ?");
+        $stmt->bind_param("si", $trang_thai, $id);
+        return $stmt->execute();
     }
 
     // --- QUẢN LÝ NGƯỜI DÙNG ---
@@ -348,6 +403,15 @@ class AdminModel
         }
         $res = $this->conn->query($sql);
         return $res->fetch_assoc()['total'];
+    }
+
+    public function getUserIdByOrderId($order_id)
+    {
+        $stmt = $this->conn->prepare("SELECT user_id FROM orders WHERE id = ?");
+        $stmt->bind_param("i", $order_id);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        return $result ? $result['user_id'] : null;
     }
 
     public function getUserById($id)

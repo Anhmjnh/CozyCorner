@@ -125,7 +125,8 @@ require_once __DIR__ . '/includes/admin_header.php';
 
 <!-- THANH TÌM KIẾM VÀ LỌC -->
 <div class="filter-container" style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
-    <form method="GET" action="<?= BASE_URL ?>admin/products" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+    <form method="GET" action="<?= BASE_URL ?>index.php" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <input type="hidden" name="url" value="admin/products">
         <!-- Input Search -->
         <div class="search-box" style="flex: 1; min-width: 250px; position: relative;">
             <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
@@ -149,7 +150,7 @@ require_once __DIR__ . '/includes/admin_header.php';
         <!-- Buttons -->
         <button type="submit" class="btn btn-secondary" style="padding: 10px 20px; background: #34495e; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;"><i class="fas fa-filter"></i> Lọc</button>
         <?php if (!empty($search) || !empty($category)): ?>
-            <a href="<?= BASE_URL ?>admin/products" class="btn btn-light" style="padding: 10px 20px; background: #ecf0f1; color: #333; text-decoration: none; border-radius: 5px; font-weight: 600;"><i class="fas fa-times"></i> Xóa lọc</a>
+            <a href="<?= BASE_URL ?>index.php?url=admin/products" class="btn btn-light" style="padding: 10px 20px; background: #ecf0f1; color: #333; text-decoration: none; border-radius: 5px; font-weight: 600;"><i class="fas fa-times"></i> Xóa lọc</a>
         <?php endif; ?>
     </form>
 </div>
@@ -205,7 +206,7 @@ require_once __DIR__ . '/includes/admin_header.php';
     ?>
     <div class="pagination">
         <?php for($i=1; $i<=$totalPages; $i++): ?>
-            <a href="<?= BASE_URL ?>admin/products?page=<?= $i ?><?= $query_string ?>" class="<?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
+            <a href="<?= BASE_URL ?>index.php?url=admin/products&page=<?= $i ?><?= $query_string ?>" class="<?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
         <?php endfor; ?>
     </div>
 </div>
@@ -287,7 +288,7 @@ function closeDeleteConfirmModal() {
 document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
     const id = document.getElementById('delete_product_id_input').value;
     
-    fetch('<?= BASE_URL ?>admin/api.php?action=delete_product', {
+    fetch('<?= BASE_URL ?>index.php?url=admin/api_delete_product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: id })

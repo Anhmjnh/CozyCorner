@@ -1,5 +1,12 @@
 <?php
 // view/order/ThanhToanThanhCong.php
+// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect
+if (!isset($order)) {
+    require_once __DIR__ . '/../../config.php';
+    header("Location: " . BASE_URL);
+    exit;
+}
+
 require_once __DIR__ . '/../../includes/header.php';
 
 // Kiểm tra phương thức thanh toán từ cột `phuong_thuc_thanh_toan`

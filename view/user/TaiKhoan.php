@@ -1,62 +1,12 @@
 <?php
 // views/user/TaiKhoan.php
-require_once __DIR__ . '/../../config.php';
-
-// Chặn truy cập nếu chưa đăng nhập
-if (!isset($_SESSION['user_id'])) {
-    header('Location: ' . BASE_URL . 'view/user/DangNhap.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect về Router chuẩn
+if (!isset($user)) {
+    require_once __DIR__ . '/../../config.php';
+    header("Location: " . BASE_URL . "index.php?url=user/account");
     exit;
 }
-
-// Trang này cần CSS giống CapNhatTaiKhoan
-$page_css = ['assets/css/CapNhatTaiKhoan.css'];
-
 require_once __DIR__ . '/../../includes/header.php';
-require_once __DIR__ . '/../../models/UserModel.php';
-
-$userId = $_SESSION['user_id'];
-
-// Tự động cập nhật hạng thành viên dựa trên tổng chi tiêu
-$userModel = new UserModel();
-$userModel->updateUserRank($userId);
-
-// Lấy tab hiện tại (mặc định là profile)
-$tab = $_GET['tab'] ?? 'profile';
-
-$conn = connectDB();
-
-// 1. Lấy thông tin User (bao gồm cả Hạng thành viên)
-$stmt = $conn->prepare("SELECT ho_ten, email, so_dien_thoai, dia_chi, gioi_tinh, ngay_sinh, avatar, hang FROM users WHERE id = ?");
-$stmt->bind_param('i', $userId);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
-$stmt->close();
-
-// 2. Lấy danh sách đơn hàng nếu đang ở tab Lịch sử đơn hàng
-$orders = [];
-$totalCompletedSpent = 0;
-if ($tab === 'orders') {
-    try {
-        $stmtOrder = $conn->prepare("SELECT id, tong_tien, trang_thai, phuong_thuc_thanh_toan, created_at FROM orders WHERE user_id = ? ORDER BY created_at DESC");
-        if ($stmtOrder) {
-            $stmtOrder->bind_param('i', $userId);
-            $stmtOrder->execute();
-            $orders = $stmtOrder->get_result()->fetch_all(MYSQLI_ASSOC);
-            $stmtOrder->close();
-
-            foreach ($orders as $o) {
-                if ($o['trang_thai'] === 'HoanThanh' || ($o['trang_thai'] === 'DangGiao' && ($o['phuong_thuc_thanh_toan'] ?? '') === 'ChuyenKhoan')) {
-                    $totalCompletedSpent += $o['tong_tien'];
-                }
-            }
-        }
-    } catch (Exception $e) {
-        // Bỏ qua lỗi nếu chưa có bảng orders
-    }
-}
-
-$conn->close();
 ?>
 
 <style>
@@ -504,11 +454,11 @@ $conn->close();
         </div>
 
         <ul class="account-sidebar__menu">
-            <li><a href="?tab=profile" class="<?= $tab === 'profile' ? 'active' : '' ?>"><i class="fas fa-user"></i>
+            <li><a href="<?= BASE_URL ?>index.php?url=user/account&tab=profile" class="<?= $tab === 'profile' ? 'active' : '' ?>"><i class="fas fa-user"></i>
                     Thông tin tài khoản</a></li>
-            <li><a href="?tab=orders" class="<?= $tab === 'orders' ? 'active' : '' ?>"><i class="fas fa-box"></i> Lịch
+            <li><a href="<?= BASE_URL ?>index.php?url=user/account&tab=orders" class="<?= $tab === 'orders' ? 'active' : '' ?>"><i class="fas fa-box"></i> Lịch
                     sử mua hàng</a></li>
-            <li><a href="<?= BASE_URL ?>view/user/Logout.php" style="color: #555555;"><i
+            <li><a href="<?= BASE_URL ?>index.php?url=auth/logout" style="color: #555555;"><i
                         class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
         </ul>
     </div>
@@ -544,7 +494,7 @@ $conn->close();
             </div>
 
             <div style="margin-top: 30px;">
-                <a href="<?= BASE_URL ?>view/user/CapNhatTaiKhoan.php" class="account__button"><i class="fas fa-edit"></i>
+                <a href="<?= BASE_URL ?>index.php?url=user/update" class="account__button"><i class="fas fa-edit"></i>
                     Cập nhật tài khoản</a>
             </div>
 
