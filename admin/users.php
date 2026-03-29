@@ -122,7 +122,20 @@ require_once __DIR__ . '/includes/admin_header.php';
         <p style="margin: 5px 0 0; color: #333; font-size: 14px;">Tổng số:
             <strong><?= number_format($total) ?></strong> người dùng</p>
     </div>
-    <button class="btn btn-primary" onclick="openUserModal()"><i class="fas fa-plus"></i> Thêm Người Dùng</button>
+    <div class="header-actions" style="display: flex; gap: 10px; align-items: center;">
+        <?php
+        $export_query = http_build_query([
+            'search' => $search ?? '',
+            'hang' => $hang ?? '',
+            'trang_thai' => $trang_thai ?? ''
+        ]);
+        ?>
+        <!-- Nút Xuất Excel -->
+        <a href="<?= BASE_URL ?>index.php?url=admin/export_users_to_csv&<?= $export_query ?>" class="btn btn-success" style="background-color: #1D6F42; border-color: #1D6F42; color: #fff; padding: 0 15px; font-weight: 600; border-radius: 5px; text-decoration: none !important; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; box-sizing: border-box; line-height: 1;">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </a>
+        <button class="btn btn-primary" onclick="openUserModal()" style="padding: 0 15px; font-weight: 600; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; box-sizing: border-box; border: none; cursor: pointer; line-height: 1;"><i class="fas fa-plus"></i> Thêm Người Dùng</button>
+    </div>
 </div>
 
 <div class="filter-container"

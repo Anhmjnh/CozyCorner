@@ -116,6 +116,37 @@ class VoucherModel extends Model {
         return $total;
     }
 
+    // Lấy tất cả voucher cho chức năng export (không phân trang)
+    public function getVouchersForExport($search = '', $loai_voucher = '', $trang_thai = '')
+    {
+        $sql = "SELECT * FROM vouchers WHERE 1=1";
+        $params = [];
+        $types = "";
+
+        if (!empty($search)) {
+            $sql .= " AND ma_voucher LIKE ?";
+            $params[] = "%" . $search . "%";
+            $types .= "s";
+        }
+        if (!empty($loai_voucher)) {
+            $sql .= " AND loai_voucher = ?";
+            $params[] = $loai_voucher;
+            $types .= "s";
+        }
+        if (!empty($trang_thai)) {
+            $sql .= " AND trang_thai = ?";
+            $params[] = $trang_thai;
+            $types .= "s";
+        }
+
+        $sql .= " ORDER BY id DESC";
+        $stmt = $this->conn->prepare($sql);
+        if (!empty($types))  $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        return $result;
+    }
+
     // Lấy voucher theo ID (cho form sửa)
     public function getVoucherById($id) {
         $stmt = $this->conn->prepare("SELECT * FROM vouchers WHERE id = ?");

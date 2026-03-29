@@ -2,13 +2,16 @@
 // controllers/AdminController.php
 require_once __DIR__ . '/../core/Controller.php';
 
-class AdminController extends Controller {
+class AdminController extends Controller
+{
     private $model;
 
-    public function __construct() {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+    public function __construct()
+    {
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
         $this->model = $this->model('AdminModel');
-        
+
         // Middleware Check Login
         if (!isset($_SESSION['admin_id'])) {
             header("Location: " . BASE_URL . "view/user/DangNhap.php");
@@ -16,26 +19,29 @@ class AdminController extends Controller {
         }
     }
 
-    public function logout() {
+    public function logout()
+    {
 
         unset($_SESSION['admin_id']);
         unset($_SESSION['admin_name']);
         unset($_SESSION['admin_avatar']);
         unset($_SESSION['admin_role']);
-        
+
         header("Location: " . BASE_URL . "view/user/DangNhap.php");
         exit;
     }
 
     // --- VIEWS ---
-    public function index() {
+    public function index()
+    {
         $stats = $this->model->getDashboardStats();
         $this->view('../admin/index', [
             'stats' => $stats
         ]);
     }
 
-    public function products() {
+    public function products()
+    {
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         $limit = 10;
         $offset = ($page - 1) * $limit;
@@ -59,7 +65,8 @@ class AdminController extends Controller {
         ]);
     }
 
-    public function users() {
+    public function users()
+    {
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         $limit = 10;
         $offset = ($page - 1) * $limit;
@@ -83,7 +90,8 @@ class AdminController extends Controller {
         ]);
     }
 
-    public function categories() {
+    public function categories()
+    {
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         $limit = 10;
         $offset = ($page - 1) * $limit;
@@ -105,7 +113,8 @@ class AdminController extends Controller {
         ]);
     }
 
-    public function staffs() {
+    public function staffs()
+    {
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         $limit = 10;
         $offset = ($page - 1) * $limit;
@@ -129,7 +138,8 @@ class AdminController extends Controller {
         ]);
     }
 
-    public function orders() {
+    public function orders()
+    {
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         $limit = 15;
         $offset = ($page - 1) * $limit;
@@ -157,7 +167,341 @@ class AdminController extends Controller {
         ]);
     }
 
-    public function vouchers() {
+    public function export_orders_to_csv()
+    {
+        // Lấy các tham số lọc tương tự trang danh sách đơn hàng
+        $search = trim($_GET['search'] ?? '');
+        $trang_thai = trim($_GET['trang_thai'] ?? '');
+        $from_date = trim($_GET['from_date'] ?? '');
+        $to_date = trim($_GET['to_date'] ?? '');
+
+        // Lấy tất cả dữ liệu đơn hàng phù hợp với bộ lọc (không phân trang)
+        $orders = $this->model->getOrdersForExport($search, $trang_thai, $from_date, $to_date);
+
+        // Đặt tên file và header
+        $filename = "cozycorner_orders_" . date('Y-m-d') . ".csv";
+        header('Content-Type: text/csv; charset=UTF-16LE');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        // Mở output stream
+        $output = fopen('php://output', 'w');
+
+
+        fputs($output, chr(0xFF) . chr(0xFE));
+
+        $memory = fopen('php://memory', 'w+');
+
+        // Ghi dòng tiêu đề
+        fputcsv($memory, [
+            'ID Đơn Hàng',
+            'Mã Vận Đơn',
+            'Tên Khách Hàng',
+            'Tổng Tiền',
+            'Phí Ship',
+            'Giảm Giá TV',
+            'Mã Voucher',
+            'Giảm Giá Voucher',
+            'Địa Chỉ Giao',
+            'Trạng Thái',
+            'PT Thanh Toán',
+            'Ghi Chú',
+            'Ngày Tạo'
+        ], "\t"); // Sử dụng Tab làm dấu phân cách
+
+        // Ghi dữ liệu
+        if (!empty($orders)) {
+            foreach ($orders as $order) {
+                // Thêm khoảng trắng trước ngày tháng để Excel hiểu là dạng Text, tránh hiển thị lỗi '###'
+                if (!empty($order['created_at'])) {
+                    $order['created_at'] = " " . date('d/m/Y H:i:s', strtotime($order['created_at']));
+                }
+                fputcsv($memory, $order, "\t");
+            }
+        }
+
+        // Đọc dữ liệu từ bộ đệm, chuyển sang UTF-16LE và xuất ra file
+        rewind($memory);
+        $csv_data = stream_get_contents($memory);
+        fclose($memory);
+
+        fputs($output, mb_convert_encoding($csv_data, 'UTF-16LE', 'UTF-8'));
+
+        fclose($output);
+        exit;
+    }
+
+    public function export_products_to_csv()
+    {
+        // Lấy các tham số lọc
+        $search = trim($_GET['search'] ?? '');
+        $category = trim($_GET['category'] ?? '');
+
+        // Lấy tất cả dữ liệu sản phẩm phù hợp
+        $products = $this->model->getProductsForExport($search, $category);
+
+        // Đặt tên file và header
+        $filename = "cozycorner_products_" . date('Y-m-d') . ".csv";
+        header('Content-Type: text/csv; charset=UTF-16LE');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        // Mở output stream
+        $output = fopen('php://output', 'w');
+
+        // Ghi BOM cho UTF-16LE
+        fputs($output, chr(0xFF) . chr(0xFE));
+
+        // Dùng bộ đệm
+        $memory = fopen('php://memory', 'w+');
+
+        // Ghi dòng tiêu đề
+        fputcsv($memory, [
+            'ID', 'Tên SP', 'Slug', 'Giá', 'Giá Cũ', 'Mô Tả', 'Ảnh', 'Danh Mục', 'Cân nặng (g)', 'Tồn kho', 'Lượt bán', 'Trạng thái', 'Ngày Tạo'
+        ], "\t");
+
+        // Ghi dữ liệu
+        if (!empty($products)) {
+            foreach ($products as $product) {
+                if (!empty($product['created_at'])) {
+                    $product['created_at'] = " " . date('d/m/Y H:i:s', strtotime($product['created_at']));
+                }
+                fputcsv($memory, $product, "\t");
+            }
+        }
+
+        rewind($memory);
+        $csv_data = stream_get_contents($memory);
+        fclose($memory);
+        fputs($output, mb_convert_encoding($csv_data, 'UTF-16LE', 'UTF-8'));
+        fclose($output);
+        exit;
+    }
+
+    public function export_categories_to_csv()
+    {
+        // Lấy các tham số lọc
+        $search = trim($_GET['search'] ?? '');
+        $trang_thai = trim($_GET['trang_thai'] ?? '');
+
+        // Lấy tất cả dữ liệu danh mục phù hợp
+        $categories = $this->model->getCategoriesForExport($search, $trang_thai);
+
+        // Đặt tên file và header
+        $filename = "cozycorner_categories_" . date('Y-m-d') . ".csv";
+        header('Content-Type: text/csv; charset=UTF-16LE');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        // Mở output stream
+        $output = fopen('php://output', 'w');
+
+        // Ghi BOM cho UTF-16LE
+        fputs($output, chr(0xFF) . chr(0xFE));
+
+        // Dùng bộ đệm
+        $memory = fopen('php://memory', 'w+');
+
+        // Ghi dòng tiêu đề
+        fputcsv($memory, [
+            'ID', 'Tên Danh Mục', 'Slug', 'Trạng Thái', 'Ngày Tạo'
+        ], "\t");
+
+        // Ghi dữ liệu
+        if (!empty($categories)) {
+            foreach ($categories as $category) {
+                if (isset($category['trang_thai'])) {
+                    $category['trang_thai'] = ($category['trang_thai'] == 'HienThi') ? 'Hiển Thị' : 'Ẩn';
+                }
+                if (!empty($category['created_at'])) {
+                    $category['created_at'] = " " . date('d/m/Y H:i:s', strtotime($category['created_at']));
+                }
+                fputcsv($memory, $category, "\t");
+            }
+        }
+
+        rewind($memory);
+        $csv_data = stream_get_contents($memory);
+        fclose($memory);
+        fputs($output, mb_convert_encoding($csv_data, 'UTF-16LE', 'UTF-8'));
+        fclose($output);
+        exit;
+    }
+
+    public function export_vouchers_to_csv()
+    {
+        $voucherModel = $this->model('VoucherModel');
+
+        // Lấy các tham số lọc
+        $search = trim($_GET['search'] ?? '');
+        $loai_voucher = trim($_GET['loai_voucher'] ?? '');
+        $trang_thai = trim($_GET['trang_thai'] ?? '');
+
+        // Lấy tất cả dữ liệu voucher phù hợp
+        $vouchers = $voucherModel->getVouchersForExport($search, $loai_voucher, $trang_thai);
+
+        // Đặt tên file và header
+        $filename = "cozycorner_vouchers_" . date('Y-m-d') . ".csv";
+        header('Content-Type: text/csv; charset=UTF-16LE');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        // Mở output stream
+        $output = fopen('php://output', 'w');
+
+        // Ghi BOM cho UTF-16LE
+        fputs($output, chr(0xFF) . chr(0xFE));
+
+        // Dùng bộ đệm
+        $memory = fopen('php://memory', 'w+');
+
+        // Ghi dòng tiêu đề
+        fputcsv($memory, [
+            'ID', 'Mã Voucher', 'Loại', 'Giá trị', 'Giảm tối đa', 'Đơn tối thiểu', 'Số lượng', 'Đã dùng', 'Ngày bắt đầu', 'Ngày hết hạn', 'Trạng thái'
+        ], "\t");
+
+        // Ghi dữ liệu
+        if (!empty($vouchers)) {
+            foreach ($vouchers as $voucher) {
+                if (isset($voucher['loai_voucher'])) {
+                    switch ($voucher['loai_voucher']) {
+                        case 'PhanTram':
+                            $voucher['loai_voucher'] = 'Phần Trăm';
+                            break;
+                        case 'TienMat':
+                            $voucher['loai_voucher'] = 'Tiền Mặt';
+                            break;
+                        case 'FreeShip':
+                            $voucher['loai_voucher'] = 'Miễn phí vận chuyển';
+                            break;
+                    }
+                }
+                if (isset($voucher['trang_thai'])) {
+                    $voucher['trang_thai'] = ($voucher['trang_thai'] == 'HoatDong') ? 'Hoạt Động' : 'Khóa';
+                }
+                if (!empty($voucher['ngay_bat_dau'])) {
+                    $voucher['ngay_bat_dau'] = " " . date('d/m/Y H:i:s', strtotime($voucher['ngay_bat_dau']));
+                }
+                if (!empty($voucher['ngay_het_han'])) {
+                    $voucher['ngay_het_han'] = " " . date('d/m/Y H:i:s', strtotime($voucher['ngay_het_han']));
+                }
+
+                fputcsv($memory, [
+                    $voucher['id'], $voucher['ma_voucher'], $voucher['loai_voucher'], $voucher['gia_tri'], $voucher['giam_toi_da'], $voucher['don_toi_thieu'], $voucher['so_luong'], $voucher['da_dung'], $voucher['ngay_bat_dau'], $voucher['ngay_het_han'], $voucher['trang_thai']
+                ], "\t");
+            }
+        }
+
+        rewind($memory);
+        $csv_data = stream_get_contents($memory);
+        fclose($memory);
+        fputs($output, mb_convert_encoding($csv_data, 'UTF-16LE', 'UTF-8'));
+        fclose($output);
+        exit;
+    }
+
+    public function export_users_to_csv()
+    {
+        // Lấy các tham số lọc
+        $search = trim($_GET['search'] ?? '');
+        $hang = trim($_GET['hang'] ?? '');
+        $trang_thai = trim($_GET['trang_thai'] ?? '');
+
+        // Lấy tất cả dữ liệu người dùng phù hợp
+        $users = $this->model->getUsersForExport($search, $hang, $trang_thai);
+
+        // Đặt tên file và header
+        $filename = "cozycorner_users_" . date('Y-m-d') . ".csv";
+        header('Content-Type: text/csv; charset=UTF-16LE');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        $output = fopen('php://output', 'w');
+        fputs($output, chr(0xFF) . chr(0xFE));
+        $memory = fopen('php://memory', 'w+');
+
+        fputcsv($memory, ['ID', 'Họ Tên', 'Email', 'SĐT', 'Địa chỉ', 'Giới tính', 'Hạng', 'Trạng thái', 'Ngày sinh', 'Ngày đăng ký'], "\t");
+
+        if (!empty($users)) {
+            foreach ($users as $user) {
+                $user['trang_thai'] = ($user['trang_thai'] == 'HoatDong') ? 'Hoạt Động' : 'Khóa';
+                $user['created_at'] = " " . date('d/m/Y H:i:s', strtotime($user['created_at']));
+                fputcsv($memory, [$user['id'], $user['ho_ten'], $user['email'], $user['so_dien_thoai'], $user['dia_chi'], $user['gioi_tinh'], $user['hang'], $user['trang_thai'], $user['ngay_sinh'], $user['created_at']], "\t");
+            }
+        }
+
+        rewind($memory);
+        $csv_data = stream_get_contents($memory);
+        fclose($memory);
+        fputs($output, mb_convert_encoding($csv_data, 'UTF-16LE', 'UTF-8'));
+        fclose($output);
+        exit;
+    }
+
+    public function export_staffs_to_csv()
+    {
+        $search = trim($_GET['search'] ?? '');
+        $vai_tro = trim($_GET['vai_tro'] ?? '');
+        $trang_thai = trim($_GET['trang_thai'] ?? '');
+
+        $staffs = $this->model->getStaffsForExport($search, $vai_tro, $trang_thai);
+
+        $filename = "cozycorner_staffs_" . date('Y-m-d') . ".csv";
+        header('Content-Type: text/csv; charset=UTF-16LE');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        $output = fopen('php://output', 'w');
+        fputs($output, chr(0xFF) . chr(0xFE));
+        $memory = fopen('php://memory', 'w+');
+
+        fputcsv($memory, ['ID', 'Username', 'Họ Tên', 'Email', 'SĐT', 'Vai Trò', 'Trạng Thái', 'Ngày Tham Gia'], "\t");
+
+        if (!empty($staffs)) {
+            foreach ($staffs as $staff) {
+                $staff['trang_thai'] = ($staff['trang_thai'] == 'HoatDong') ? 'Hoạt Động' : 'Khóa';
+                $staff['created_at'] = " " . date('d/m/Y H:i:s', strtotime($staff['created_at']));
+                fputcsv($memory, [$staff['id'], $staff['username'], $staff['ho_ten'], $staff['email'], $staff['so_dien_thoai'], $staff['vai_tro'], $staff['trang_thai'], $staff['created_at']], "\t");
+            }
+        }
+
+        rewind($memory);
+        $csv_data = stream_get_contents($memory);
+        fclose($memory);
+        fputs($output, mb_convert_encoding($csv_data, 'UTF-16LE', 'UTF-8'));
+        fclose($output);
+        exit;
+    }
+
+    public function export_news_to_csv()
+    {
+        $newsModel = $this->model('NewsModel');
+        $search = trim($_GET['search'] ?? '');
+        $danh_muc = trim($_GET['danh_muc'] ?? '');
+        $newsList = $newsModel->getNewsForExport($search, $danh_muc);
+
+        $filename = "cozycorner_news_" . date('Y-m-d') . ".csv";
+        header('Content-Type: text/csv; charset=UTF-16LE');
+        header('Content-Disposition: attachment; filename=' . $filename);
+
+        $output = fopen('php://output', 'w');
+        fputs($output, chr(0xFF) . chr(0xFE));
+        $memory = fopen('php://memory', 'w+');
+
+        fputcsv($memory, ['ID', 'Tiêu Đề', 'Slug', 'Danh Mục', 'Lượt Xem', 'Trạng Thái', 'Ngày Tạo'], "\t");
+
+        if (!empty($newsList)) {
+            foreach ($newsList as $news) {
+                $news['trang_thai'] = ($news['trang_thai'] == 'HienThi') ? 'Hiển Thị' : 'Ẩn';
+                $news['created_at'] = " " . date('d/m/Y H:i:s', strtotime($news['created_at']));
+                fputcsv($memory, [$news['id'], $news['tieu_de'], $news['slug'], $news['danh_muc'], $news['luot_xem'], $news['trang_thai'], $news['created_at']], "\t");
+            }
+        }
+
+        rewind($memory);
+        $csv_data = stream_get_contents($memory);
+        fclose($memory);
+        fputs($output, mb_convert_encoding($csv_data, 'UTF-16LE', 'UTF-8'));
+        fclose($output);
+        exit;
+    }
+
+    public function vouchers()
+    {
         $voucherModel = $this->model('VoucherModel');
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         $limit = 10;
@@ -182,7 +526,8 @@ class AdminController extends Controller {
         ]);
     }
 
-    public function news() {
+    public function news()
+    {
         $newsModel = $this->model('NewsModel');
 
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
@@ -207,7 +552,8 @@ class AdminController extends Controller {
     }
 
     // --- AJAX APIs ---
-    public function api_get_admin_profile() {
+    public function api_get_admin_profile()
+    {
         header('Content-Type: application/json');
         $admin = $this->model->getAdminById($_SESSION['admin_id']);
         if ($admin) {
@@ -219,7 +565,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_update_admin_profile() {
+    public function api_update_admin_profile()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $admin_id = $_SESSION['admin_id'];
@@ -229,7 +576,7 @@ class AdminController extends Controller {
             $dia_chi = trim($_POST['dia_chi'] ?? '');
             $gioi_tinh = $_POST['gioi_tinh'] ?? 'Nam';
             $ngay_sinh = trim($_POST['ngay_sinh'] ?? '');
-            
+
             $current_password = trim($_POST['current_password'] ?? '');
             $new_password = trim($_POST['new_password'] ?? '');
             $confirm_password = trim($_POST['confirm_password'] ?? '');
@@ -278,14 +625,15 @@ class AdminController extends Controller {
                     $newHash = password_hash($new_password, PASSWORD_DEFAULT);
                     $this->model->updateAdminPassword($admin_id, $newHash);
                 }
-                
+
                 $_SESSION['admin_name'] = $ho_ten;
-                if ($avatar) $_SESSION['admin_avatar'] = $avatar;
-                
+                if ($avatar)
+                    $_SESSION['admin_avatar'] = $avatar;
+
                 echo json_encode([
-                    'status' => 'success', 
-                    'msg' => 'Cập nhật thông tin thành công!', 
-                    'name' => $ho_ten, 
+                    'status' => 'success',
+                    'msg' => 'Cập nhật thông tin thành công!',
+                    'name' => $ho_ten,
                     'avatar' => $_SESSION['admin_avatar'] ?? null
                 ]);
             } else {
@@ -295,13 +643,15 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_chart_data() {
+    public function api_chart_data()
+    {
         header('Content-Type: application/json');
         echo json_encode($this->model->getRevenueChartData());
         exit;
     }
 
-    public function api_add_product() {
+    public function api_add_product()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ten_sp = $_POST['ten_sp'] ?? '';
@@ -311,7 +661,7 @@ class AdminController extends Controller {
             $so_luong = $_POST['so_luong'] ?? 0;
             $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
             $mo_ta = $_POST['mo_ta'] ?? '';
-            
+
             // Xử lý upload ảnh
             $anh = '';
             if (isset($_FILES['anh']) && $_FILES['anh']['error'] == 0) {
@@ -332,7 +682,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_delete_product() {
+    public function api_delete_product()
+    {
         header('Content-Type: application/json');
         $data = json_decode(file_get_contents("php://input"), true);
         if (isset($data['id'])) {
@@ -345,7 +696,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_get_user() {
+    public function api_get_user()
+    {
         header('Content-Type: application/json');
         $id = $_GET['id'] ?? 0;
         $user = $this->model->getUserById($id);
@@ -357,7 +709,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_save_user() {
+    public function api_save_user()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? '';
@@ -374,18 +727,25 @@ class AdminController extends Controller {
             if (!empty($ho_ten) && !empty($email)) {
                 if (empty($id)) { // Logic Thêm Mới
                     if (empty($mat_khau)) {
-                        echo json_encode(['status' => 'error', 'msg' => 'Vui lòng nhập mật khẩu cho người dùng mới.']); exit;
+                        echo json_encode(['status' => 'error', 'msg' => 'Vui lòng nhập mật khẩu cho người dùng mới.']);
+                        exit;
                     }
                     $hash = password_hash($mat_khau, PASSWORD_DEFAULT);
                     if ($this->model->addUser($ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $hang, $trang_thai, $hash)) {
                         echo json_encode(['status' => 'success', 'msg' => 'Thêm người dùng thành công!']);
-                    } else { echo json_encode(['status' => 'error', 'msg' => 'Email này có thể đã tồn tại trong hệ thống.']); }
+                    } else {
+                        echo json_encode(['status' => 'error', 'msg' => 'Email này có thể đã tồn tại trong hệ thống.']);
+                    }
                 } else {
                     // Logic Cập Nhật
                     if ($this->model->updateUserAdmin($id, $ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $hang, $trang_thai)) {
-                        if (!empty($mat_khau)) { $this->model->updateUserPassword($id, password_hash($mat_khau, PASSWORD_DEFAULT)); }
+                        if (!empty($mat_khau)) {
+                            $this->model->updateUserPassword($id, password_hash($mat_khau, PASSWORD_DEFAULT));
+                        }
                         echo json_encode(['status' => 'success', 'msg' => 'Cập nhật người dùng thành công!']);
-                    } else { echo json_encode(['status' => 'error', 'msg' => 'Lỗi khi cập nhật.']); }
+                    } else {
+                        echo json_encode(['status' => 'error', 'msg' => 'Lỗi khi cập nhật.']);
+                    }
                 }
             } else {
                 echo json_encode(['status' => 'error', 'msg' => 'Họ tên và Email không được để trống.']);
@@ -394,7 +754,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_delete_user() {
+    public function api_delete_user()
+    {
         header('Content-Type: application/json');
         $data = json_decode(file_get_contents("php://input"), true);
         if (isset($data['id'])) {
@@ -407,7 +768,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_toggle_user_status() {
+    public function api_toggle_user_status()
+    {
         header('Content-Type: application/json');
         $data = json_decode(file_get_contents("php://input"), true);
         if (isset($data['id'])) {
@@ -421,7 +783,8 @@ class AdminController extends Controller {
     }
 
     // --- API QUẢN LÝ NHÂN SỰ ---
-    public function api_get_staff() {
+    public function api_get_staff()
+    {
         header('Content-Type: application/json');
         $id = $_GET['id'] ?? 0;
         $staff = $this->model->getAdminById($id);
@@ -434,7 +797,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_save_staff() {
+    public function api_save_staff()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? '';
@@ -447,11 +811,13 @@ class AdminController extends Controller {
             // Kiểm tra phân quyền: Staff không được tạo mới, không được sửa Admin
             if ($_SESSION['admin_role'] !== 'Admin') {
                 if (empty($id)) {
-                    echo json_encode(['status' => 'error', 'msg' => 'Bạn không có quyền thêm nhân viên mới.']); exit;
+                    echo json_encode(['status' => 'error', 'msg' => 'Bạn không có quyền thêm nhân viên mới.']);
+                    exit;
                 }
                 $targetStaff = $this->model->getAdminById($id);
                 if ($targetStaff['vai_tro'] === 'Admin' && $id != $_SESSION['admin_id']) {
-                    echo json_encode(['status' => 'error', 'msg' => 'Bạn không có quyền chỉnh sửa thông tin của Admin.']); exit;
+                    echo json_encode(['status' => 'error', 'msg' => 'Bạn không có quyền chỉnh sửa thông tin của Admin.']);
+                    exit;
                 }
                 $vai_tro = 'Staff'; // Ép kiểu, staff không thể tự thăng cấp lên Admin
             }
@@ -460,7 +826,8 @@ class AdminController extends Controller {
                 $username = $_POST['username'] ?? '';
                 $password = $_POST['password'] ?? '';
                 if (empty($username) || empty($password) || empty($ho_ten)) {
-                    echo json_encode(['status' => 'error', 'msg' => 'Vui lòng điền đủ thông tin bắt buộc.']); exit;
+                    echo json_encode(['status' => 'error', 'msg' => 'Vui lòng điền đủ thông tin bắt buộc.']);
+                    exit;
                 }
                 $hash = password_hash($password, PASSWORD_DEFAULT);
                 if ($this->model->addStaff($username, $email, $ho_ten, $so_dien_thoai, $vai_tro, $trang_thai, $hash)) {
@@ -482,37 +849,46 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_delete_staff() {
+    public function api_delete_staff()
+    {
         header('Content-Type: application/json');
         if ($_SESSION['admin_role'] !== 'Admin') {
-            echo json_encode(['status' => 'error', 'msg' => 'Chỉ Admin mới có quyền xóa.']); exit;
+            echo json_encode(['status' => 'error', 'msg' => 'Chỉ Admin mới có quyền xóa.']);
+            exit;
         }
         $data = json_decode(file_get_contents("php://input"), true);
         if (isset($data['id'])) {
             if ($data['id'] == $_SESSION['admin_id']) {
-                echo json_encode(['status' => 'error', 'msg' => 'Bạn không thể tự xóa chính mình!']); exit;
+                echo json_encode(['status' => 'error', 'msg' => 'Bạn không thể tự xóa chính mình!']);
+                exit;
             }
             if ($this->model->deleteStaff($data['id'])) {
                 echo json_encode(['status' => 'success', 'msg' => 'Xóa tài khoản thành công!']);
-            } else { echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa.']); }
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa.']);
+            }
         }
         exit;
     }
 
     // --- API QUẢN LÝ TIN TỨC ---
-    public function api_get_news() {
+    public function api_get_news()
+    {
         header('Content-Type: application/json');
         require_once __DIR__ . '/../models/NewsModel.php';
         $newsModel = new NewsModel();
         $id = intval($_GET['id'] ?? 0);
         $data = $newsModel->getNewsById($id);
 
-        if ($data) echo json_encode(['status' => 'success', 'data' => $data]);
-        else echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy tin tức.']);
+        if ($data)
+            echo json_encode(['status' => 'success', 'data' => $data]);
+        else
+            echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy tin tức.']);
         exit;
     }
 
-    public function api_add_news() {
+    public function api_add_news()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newsModel = $this->model('NewsModel');
@@ -521,9 +897,10 @@ class AdminController extends Controller {
             $noi_dung = trim($_POST['noi_dung'] ?? '');
             $danh_muc = $_POST['danh_muc'] ?? 'Mẹo vặt';
             $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
-            
+
             if (empty($tieu_de) || empty($noi_dung)) {
-                echo json_encode(['status' => 'error', 'msg' => 'Vui lòng nhập đủ tiêu đề và nội dung.']); exit;
+                echo json_encode(['status' => 'error', 'msg' => 'Vui lòng nhập đủ tiêu đề và nội dung.']);
+                exit;
             }
 
             $anh = '';
@@ -535,13 +912,16 @@ class AdminController extends Controller {
                 }
             }
 
-            if ($newsModel->addNews($tieu_de, $noi_dung, $danh_muc, $trang_thai, $anh)) echo json_encode(['status' => 'success', 'msg' => 'Thêm tin tức thành công!']);
-            else echo json_encode(['status' => 'error', 'msg' => 'Thêm tin tức thất bại.']);
+            if ($newsModel->addNews($tieu_de, $noi_dung, $danh_muc, $trang_thai, $anh))
+                echo json_encode(['status' => 'success', 'msg' => 'Thêm tin tức thành công!']);
+            else
+                echo json_encode(['status' => 'error', 'msg' => 'Thêm tin tức thất bại.']);
         }
         exit;
     }
 
-    public function api_update_news() {
+    public function api_update_news()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newsModel = $this->model('NewsModel');
@@ -556,28 +936,35 @@ class AdminController extends Controller {
             if (isset($_FILES['anh']) && $_FILES['anh']['error'] == 0) {
                 $target_dir = __DIR__ . "/../uploads/";
                 $filename = time() . "_news_" . basename($_FILES["anh"]["name"]);
-                if (move_uploaded_file($_FILES["anh"]["tmp_name"], $target_dir . $filename)) $anh = $filename;
+                if (move_uploaded_file($_FILES["anh"]["tmp_name"], $target_dir . $filename))
+                    $anh = $filename;
             }
 
-            if ($newsModel->updateNews($id, $tieu_de, $noi_dung, $danh_muc, $trang_thai, $anh)) echo json_encode(['status' => 'success', 'msg' => 'Cập nhật thành công!']);
-            else echo json_encode(['status' => 'error', 'msg' => 'Cập nhật thất bại.']);
+            if ($newsModel->updateNews($id, $tieu_de, $noi_dung, $danh_muc, $trang_thai, $anh))
+                echo json_encode(['status' => 'success', 'msg' => 'Cập nhật thành công!']);
+            else
+                echo json_encode(['status' => 'error', 'msg' => 'Cập nhật thất bại.']);
         }
         exit;
     }
 
-    public function api_delete_news() {
+    public function api_delete_news()
+    {
         header('Content-Type: application/json');
         $data = json_decode(file_get_contents("php://input"), true);
         if (isset($data['id'])) {
             $newsModel = $this->model('NewsModel');
-            if ($newsModel->deleteNews($data['id'])) echo json_encode(['status' => 'success', 'msg' => 'Xóa tin tức thành công!']);
-            else echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa tin tức này.']);
+            if ($newsModel->deleteNews($data['id']))
+                echo json_encode(['status' => 'success', 'msg' => 'Xóa tin tức thành công!']);
+            else
+                echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa tin tức này.']);
         }
         exit;
     }
 
     // --- API QUẢN LÝ SẢN PHẨM  ---
-    public function api_get_product() {
+    public function api_get_product()
+    {
         header('Content-Type: application/json');
         $id = $_GET['id'] ?? 0;
         $product = $this->model->getProductById($id);
@@ -589,7 +976,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_update_product() {
+    public function api_update_product()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? 0;
@@ -622,7 +1010,8 @@ class AdminController extends Controller {
     }
 
     // --- API QUẢN LÝ DANH MỤC  ---
-    public function api_get_category() {
+    public function api_get_category()
+    {
         header('Content-Type: application/json');
         $id = $_GET['id'] ?? 0;
         $category = $this->model->getCategoryById($id);
@@ -634,7 +1023,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_add_category() {
+    public function api_add_category()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ten_danh_muc = $_POST['ten_danh_muc'] ?? '';
@@ -653,7 +1043,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_update_category() {
+    public function api_update_category()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? 0;
@@ -673,7 +1064,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_delete_category() {
+    public function api_delete_category()
+    {
         header('Content-Type: application/json');
         $data = json_decode(file_get_contents("php://input"), true);
         if (isset($data['id'])) {
@@ -687,7 +1079,8 @@ class AdminController extends Controller {
     }
 
     // --- API QUẢN LÝ ĐƠN HÀNG  ---
-    public function api_get_order() {
+    public function api_get_order()
+    {
         header('Content-Type: application/json');
         $id = $_GET['id'] ?? 0;
         $order = $this->model->getOrderById($id);
@@ -701,7 +1094,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_update_order_status() {
+    public function api_update_order_status()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? 0;
@@ -726,7 +1120,8 @@ class AdminController extends Controller {
     }
 
     // --- API QUẢN LÝ VOUCHER ---
-    public function api_get_voucher() {
+    public function api_get_voucher()
+    {
         header('Content-Type: application/json');
         $id = $_GET['id'] ?? 0;
         $voucherModel = $this->model('VoucherModel');
@@ -746,11 +1141,12 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_save_voucher() {
+    public function api_save_voucher()
+    {
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? '';
-            
+
             $data = [
                 'ma_voucher' => strtoupper(trim($_POST['ma_voucher'] ?? '')),
                 'loai_voucher' => $_POST['loai_voucher'] ?? 'TienMat',
@@ -786,7 +1182,8 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function api_delete_voucher() {
+    public function api_delete_voucher()
+    {
         header('Content-Type: application/json');
         $data = json_decode(file_get_contents("php://input"), true);
         if (isset($data['id'])) {

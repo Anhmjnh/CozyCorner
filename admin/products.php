@@ -11,7 +11,7 @@ require_once __DIR__ . '/includes/admin_header.php';
 ?>
 
 <style>
-    /*  MODAL XÁC NHẬN XÓA */
+    /* MODAL XÁC NHẬN XÓA */
     .custom-modal {
         display: none;
         position: fixed;
@@ -97,7 +97,7 @@ require_once __DIR__ . '/includes/admin_header.php';
         color: #fff;
     }
     .btn-danger-custom:hover {
-        background-color: #355f2;
+        background-color: #2a4d24; /* Đã sửa mã màu hover */
     }
     .btn-secondary-custom {
         background-color: #f0f0f0;
@@ -112,6 +112,28 @@ require_once __DIR__ . '/includes/admin_header.php';
         from {top: -300px; opacity: 0}
         to {top: 0; opacity: 1}
     }
+
+    /* Đảm bảo các nút trong header thẳng hàng */
+    .header-actions {
+        display: flex; 
+        gap: 10px; 
+        align-items: center;
+    }
+    
+    .btn-sync {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        height: 40px; /* Cố định chiều cao để 2 nút bằng nhau */
+        padding: 0 15px;
+        border-radius: 5px;
+        font-weight: 600;
+        white-space: nowrap;
+        border: none;
+        cursor: pointer;
+    }
 </style>
 
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -119,20 +141,32 @@ require_once __DIR__ . '/includes/admin_header.php';
         <h2 style="margin: 0; color: #333;">Quản lý Sản Phẩm</h2>
         <p style="margin: 5px 0 0; color: #333; font-size: 14px;">Tổng số: <strong><?= number_format($total) ?></strong> sản phẩm</p>
     </div>
-    <button class="btn btn-primary" id="openAddProductModal"><i class="fas fa-plus"></i> Thêm Sản Phẩm</button>
+    <div class="header-actions">
+        <?php
+        $export_query = http_build_query([
+            'search' => $search,
+            'category' => $category
+        ]);
+        ?>
+        <a href="<?= BASE_URL ?>index.php?url=admin/export_products_to_csv&<?= $export_query ?>" 
+           class="btn btn-primary btn-sync" style="background-color: #1D6F42; border-color: #1D6F42;">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </a>
+
+        <button class="btn btn-primary btn-sync" id="openAddProductModal">
+            <i class="fas fa-plus"></i> Thêm Sản Phẩm
+        </button>
+    </div>
 </div>
 
-<!-- THANH TÌM KIẾM VÀ LỌC -->
 <div class="filter-container" style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
     <form method="GET" action="<?= BASE_URL ?>index.php" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
         <input type="hidden" name="url" value="admin/products">
-        <!-- Input Search -->
         <div class="search-box" style="flex: 1; min-width: 250px; position: relative;">
             <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
             <input type="text" name="search" placeholder="Nhập tên sản phẩm cần tìm..." value="<?= htmlspecialchars($search ?? '') ?>" style="width: 100%; box-sizing: border-box; padding: 10px 15px 10px 40px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; font-size: 14px; outline: none;">
         </div>
 
-        <!-- Filter Category -->
         <div class="filter-box" style="min-width: 200px;">
             <select name="category" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; font-size: 14px; background: #fafafa; outline: none; cursor: pointer;">
                 <option value="">-- Tất cả danh mục --</option>
@@ -146,7 +180,6 @@ require_once __DIR__ . '/includes/admin_header.php';
             </select>
         </div>
 
-        <!-- Buttons -->
         <button type="submit" class="btn btn-secondary" style="padding: 10px 20px; background: #34495e; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;"><i class="fas fa-filter"></i> Lọc</button>
         <?php if (!empty($search) || !empty($category)): ?>
             <a href="<?= BASE_URL ?>index.php?url=admin/products" class="btn btn-light" style="padding: 10px 20px; background: #ecf0f1; color: #333; text-decoration: none; border-radius: 5px; font-weight: 600;"><i class="fas fa-times"></i> Xóa lọc</a>
@@ -197,7 +230,6 @@ require_once __DIR__ . '/includes/admin_header.php';
         </tbody>
     </table>
     
-    <!-- Pagination -->
     <?php
     $query_string = "";
     if (!empty($search)) $query_string .= "&search=" . urlencode($search);
@@ -210,7 +242,6 @@ require_once __DIR__ . '/includes/admin_header.php';
     </div>
 </div>
 
-<!-- MODAL THÊM SẢN PHẨM -->
 <div id="productModal" class="modal">
     <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
         <div class="modal-header">
@@ -254,7 +285,6 @@ require_once __DIR__ . '/includes/admin_header.php';
     </div>
 </div>
 
-<!-- Custom Modal Xác nhận Xóa -->
 <div id="deleteConfirmModal" class="custom-modal">
     <div class="custom-modal-content">
         <div class="custom-modal-header">

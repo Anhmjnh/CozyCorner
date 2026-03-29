@@ -94,6 +94,26 @@ require_once __DIR__ . '/includes/admin_header.php';
             opacity: 1
         }
     }
+
+    .header-actions {
+        display: flex; 
+        gap: 10px; 
+        align-items: center;
+    }
+    .btn-sync {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        height: 40px; 
+        padding: 0 15px;
+        border-radius: 5px;
+        font-weight: 600;
+        white-space: nowrap;
+        border: none;
+        cursor: pointer;
+    }
 </style>
 
 <div class="page-header"
@@ -103,7 +123,19 @@ require_once __DIR__ . '/includes/admin_header.php';
         <p style="margin: 5px 0 0; color: #333; font-size: 14px;">Tổng số: <strong><?= number_format($total) ?></strong>
             bài viết</p>
     </div>
-    <button class="btn btn-primary" onclick="openNewsModal()"><i class="fas fa-plus"></i> Thêm Bài Viết Mới</button>
+    <div class="header-actions">
+        <?php
+        $export_query = http_build_query([
+            'search' => $search ?? '',
+            'danh_muc' => $danh_muc ?? ''
+        ]);
+        ?>
+        <!-- Nút Xuất Excel -->
+        <a href="<?= BASE_URL ?>index.php?url=admin/export_news_to_csv&<?= $export_query ?>" class="btn btn-primary btn-sync" style="background-color: #1D6F42; border-color: #1D6F42;">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </a>
+        <button class="btn btn-primary btn-sync" onclick="openNewsModal()"><i class="fas fa-plus"></i> Thêm Bài Viết Mới</button>
+    </div>
 </div>
 
 <div class="filter-container"

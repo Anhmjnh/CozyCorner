@@ -116,6 +116,26 @@ require_once __DIR__ . '/includes/admin_header.php';
             opacity: 1
         }
     }
+
+    .header-actions {
+        display: flex; 
+        gap: 10px; 
+        align-items: center;
+    }
+    .btn-sync {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        height: 40px; 
+        padding: 0 15px;
+        border-radius: 5px;
+        font-weight: 600;
+        white-space: nowrap;
+        border: none;
+        cursor: pointer;
+    }
 </style>
 
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -123,7 +143,20 @@ require_once __DIR__ . '/includes/admin_header.php';
         <h2 style="margin: 0; color: #333;"><i class="fas fa-ticket-alt"></i> Quản Lý Mã Giảm Giá</h2>
         <p style="margin: 5px 0 0; color: #333; font-size: 14px;">Tổng số: <strong><?= number_format($total ?? 0) ?></strong> mã</p>
     </div>
-    <button class="btn btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> Thêm Mã Mới</button>
+    <div class="header-actions">
+        <?php
+        $export_query = http_build_query([
+            'search' => $search ?? '',
+            'loai_voucher' => $loai_voucher ?? '',
+            'trang_thai' => $trang_thai ?? ''
+        ]);
+        ?>
+        <!-- Nút Xuất Excel -->
+        <a href="<?= BASE_URL ?>index.php?url=admin/export_vouchers_to_csv&<?= $export_query ?>" class="btn btn-primary btn-sync" style="background-color: #1D6F42; border-color: #1D6F42;">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </a>
+        <button class="btn btn-primary btn-sync" onclick="openModal()"><i class="fas fa-plus"></i> Thêm Mã Mới</button>
+    </div>
 </div>
 
     <!-- Bộ lọc & Tìm kiếm -->

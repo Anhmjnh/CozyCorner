@@ -43,6 +43,22 @@ class NewsModel extends Model {
         return $this->conn->query($sql)->fetch_assoc()['total'] ?? 0;
     }
 
+    public function getNewsForExport($search = '', $danh_muc = '')
+    {
+        $sql = "SELECT id, tieu_de, slug, danh_muc, luot_xem, trang_thai, created_at FROM news WHERE 1=1";
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND tieu_de LIKE '%$search_esc%'";
+        }
+        if (!empty($danh_muc)) {
+            $cat_esc = $this->conn->real_escape_string($danh_muc);
+            $sql .= " AND danh_muc = '$cat_esc'";
+        }
+        $sql .= " ORDER BY created_at DESC";
+        $result = $this->conn->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
     public function getLatestNews($limit = 3) {
         $stmt = $this->conn->prepare("SELECT * FROM news WHERE trang_thai = 'HienThi' ORDER BY created_at DESC LIMIT ?");
         $stmt->bind_param("i", $limit);

@@ -8,6 +8,28 @@ if (!isset($orders)) {
 require_once __DIR__ . '/includes/admin_header.php';
 ?>
 
+<style>
+    .header-actions {
+        display: flex; 
+        gap: 10px; 
+        align-items: center;
+    }
+    .btn-sync {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        height: 40px; 
+        padding: 0 15px;
+        border-radius: 5px;
+        font-weight: 600;
+        white-space: nowrap;
+        border: none;
+        cursor: pointer;
+    }
+</style>
+
 <div class="page-header"
     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <div>
@@ -18,6 +40,21 @@ require_once __DIR__ . '/includes/admin_header.php';
             Tổng giá trị đơn hàng đã thanh toán: <strong
                 style="color: #333;"><?= number_format($total_revenue) ?>đ</strong>
         </p>
+    </div>
+    <div class="header-actions">
+        <?php
+        // Xây dựng chuỗi query cho link export để giữ lại bộ lọc hiện tại
+        $export_query = http_build_query([
+            'search' => $search,
+            'trang_thai' => $trang_thai,
+            'from_date' => $from_date,
+            'to_date' => $to_date
+        ]);
+        ?>
+        <!-- Nút Xuất Excel -->
+        <a href="<?= BASE_URL ?>index.php?url=admin/export_orders_to_csv&<?= $export_query ?>" class="btn btn-primary btn-sync" style="background-color: #1D6F42; border-color: #1D6F42;">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </a>
     </div>
 </div>
 
@@ -63,6 +100,7 @@ require_once __DIR__ . '/includes/admin_header.php';
         <?php endif; ?>
     </form>
 </div>
+
 
 <div class="table-container">
     <table class="admin-table">
@@ -179,6 +217,7 @@ require_once __DIR__ . '/includes/admin_header.php';
         </div>
     </div>
 </div>
+
 
 <!-- MODAL CẬP NHẬT TRẠNG THÁI -->
 <div id="statusModal" class="modal">

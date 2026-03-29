@@ -91,6 +91,26 @@ $current_role = $_SESSION['admin_role'] ?? 'Staff';
             opacity: 1
         }
     }
+
+    .header-actions {
+        display: flex; 
+        gap: 10px; 
+        align-items: center;
+    }
+    .btn-sync {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        height: 40px; 
+        padding: 0 15px;
+        border-radius: 5px;
+        font-weight: 600;
+        white-space: nowrap;
+        border: none;
+        cursor: pointer;
+    }
 </style>
 
 <div class="page-header"
@@ -100,9 +120,22 @@ $current_role = $_SESSION['admin_role'] ?? 'Staff';
         <p style="margin: 5px 0 0; color: #333; font-size: 14px;">Tổng số:
             <strong><?= number_format($total) ?></strong> tài khoản</p>
     </div>
-    <?php if ($current_role === 'Admin'): ?>
-        <button class="btn btn-primary" onclick="openStaffModal()"><i class="fas fa-plus"></i> Thêm Tài Khoản</button>
-    <?php endif; ?>
+    <div class="header-actions">
+        <?php
+        $export_query = http_build_query([
+            'search' => $search ?? '',
+            'vai_tro' => $vai_tro ?? '',
+            'trang_thai' => $trang_thai ?? ''
+        ]);
+        ?>
+        <!-- Nút Xuất Excel -->
+        <a href="<?= BASE_URL ?>index.php?url=admin/export_staffs_to_csv&<?= $export_query ?>" class="btn btn-primary btn-sync" style="background-color: #1D6F42; border-color: #1D6F42;">
+            <i class="fas fa-file-excel"></i> Xuất Excel
+        </a>
+        <?php if ($current_role === 'Admin'): ?>
+            <button class="btn btn-primary btn-sync" onclick="openStaffModal()"><i class="fas fa-plus"></i> Thêm Tài Khoản</button>
+        <?php endif; ?>
+    </div>
 </div>
 
 <!-- THANH TÌM KIẾM VÀ LỌC -->

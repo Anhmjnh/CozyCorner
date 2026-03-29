@@ -110,6 +110,28 @@ class AdminModel extends Model
         return $stmt->execute();
     }
 
+    public function getStaffsForExport($search = '', $vai_tro = '', $trang_thai = '')
+    {
+        $sql = "SELECT id, username, ho_ten, email, so_dien_thoai, vai_tro, trang_thai, created_at FROM admins WHERE 1=1";
+
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (ho_ten LIKE '%$search_esc%' OR email LIKE '%$search_esc%' OR so_dien_thoai LIKE '%$search_esc%')";
+        }
+        if (!empty($vai_tro)) {
+            $vt_esc = $this->conn->real_escape_string($vai_tro);
+            $sql .= " AND vai_tro = '$vt_esc'";
+        }
+        if (!empty($trang_thai)) {
+            $tt_esc = $this->conn->real_escape_string($trang_thai);
+            $sql .= " AND trang_thai = '$tt_esc'";
+        }
+
+        $sql .= " ORDER BY id DESC";
+        $result = $this->conn->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
     // --- THỐNG KÊ DASHBOARD ---
     public function getDashboardStats()
     {
@@ -224,6 +246,22 @@ class AdminModel extends Model
         return $stmt->execute();
     }
 
+    public function getProductsForExport($search = '', $category = '')
+    {
+        $sql = "SELECT id, ten_sp, slug, gia, gia_cu, mo_ta, anh, danh_muc, weight, so_luong_ton, luot_ban, trang_thai, created_at FROM products WHERE 1=1";
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND ten_sp LIKE '%$search_esc%'";
+        }
+        if (!empty($category)) {
+            $cat_esc = $this->conn->real_escape_string($category);
+            $sql .= " AND danh_muc = '$cat_esc'";
+        }
+        $sql .= " ORDER BY id DESC";
+        $result = $this->conn->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
     // --- QUẢN LÝ DANH MỤC ---
     public function getCategories()
     {
@@ -298,6 +336,24 @@ class AdminModel extends Model
         return $stmt->execute();
     }
 
+    public function getCategoriesForExport($search = '', $trang_thai = '')
+    {
+        $sql = "SELECT id, ten_danh_muc, slug, trang_thai, created_at FROM categories WHERE 1=1";
+
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (ten_danh_muc LIKE '%$search_esc%' OR slug LIKE '%$search_esc%')";
+        }
+        if (!empty($trang_thai)) {
+            $tt_esc = $this->conn->real_escape_string($trang_thai);
+            $sql .= " AND trang_thai = '$tt_esc'";
+        }
+
+        $sql .= " ORDER BY id DESC";
+        $result = $this->conn->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
     // --- QUẢN LÝ ĐƠN HÀNG ---
     private function buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) {
         $sql = " WHERE 1=1";
@@ -336,6 +392,29 @@ class AdminModel extends Model
     public function getTotalRevenue($search = '', $trang_thai = '', $from_date = '', $to_date = '') {
         $sql = "SELECT SUM(o.tong_tien) as total_revenue FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " AND (o.trang_thai = 'HoanThanh' OR (o.trang_thai = 'DangGiao' AND o.phuong_thuc_thanh_toan = 'ChuyenKhoan'))";
         return $this->conn->query($sql)->fetch_assoc()['total_revenue'] ?? 0;
+    }
+
+    public function getOrdersForExport($search = '', $trang_thai = '', $from_date = '', $to_date = '') {
+        $sql = "SELECT 
+                    o.id,
+                    o.ghn_order_code,
+                    u.ho_ten as user_name,
+                    o.tong_tien,
+                    o.phi_van_chuyen,
+                    o.giam_gia_thanh_vien,
+                    o.ma_voucher,
+                    o.giam_gia_voucher,
+                    o.dia_chi_giao,
+                    o.trang_thai,
+                    o.phuong_thuc_thanh_toan,
+                    o.ghi_chu,
+                    o.created_at
+                FROM orders o 
+                LEFT JOIN users u ON o.user_id = u.id" 
+                . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) 
+                . " ORDER BY o.created_at DESC";
+        $result = $this->conn->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
 
     public function getOrderById($id)
@@ -463,6 +542,28 @@ class AdminModel extends Model
         } catch (Exception $e) {
             return false;
         }
+    }
+
+    public function getUsersForExport($search = '', $hang = '', $trang_thai = '')
+    {
+        $sql = "SELECT id, ho_ten, email, so_dien_thoai, dia_chi, gioi_tinh, hang, trang_thai, ngay_sinh, created_at FROM users WHERE 1=1";
+
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (ho_ten LIKE '%$search_esc%' OR email LIKE '%$search_esc%' OR so_dien_thoai LIKE '%$search_esc%')";
+        }
+        if (!empty($hang)) {
+            $hang_esc = $this->conn->real_escape_string($hang);
+            $sql .= " AND hang = '$hang_esc'";
+        }
+        if (!empty($trang_thai)) {
+            $tt_esc = $this->conn->real_escape_string($trang_thai);
+            $sql .= " AND trang_thai = '$tt_esc'";
+        }
+
+        $sql .= " ORDER BY id DESC";
+        $result = $this->conn->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
 
     
