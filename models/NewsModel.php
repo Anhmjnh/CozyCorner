@@ -114,11 +114,5 @@ class NewsModel extends Model {
         $stmt->close();
         return $result;
     }
-
-    public function __destruct() {
-        if ($this->conn) {
-            $this->conn->close();
-        }
-    }
 }
 ?>

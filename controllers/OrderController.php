@@ -3,6 +3,14 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../core/Controller.php';
 
+// Load thư viện PHPMailer
+require_once __DIR__ . '/../libs/PHPMailer/src/Exception.php';
+require_once __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 class OrderController extends Controller
 {
     // Trang Thanh Toán (Checkout)
@@ -29,6 +37,18 @@ class OrderController extends Controller
             $totalPrice += ($item['price'] * $item['quantity']);
         }
 
+        // Tính giảm giá hạng thành viên
+        $hang = $user['hang'] ?? 'Đồng';
+        $phanTramGiam = 0;
+        if ($hang === 'Kim Cương') $phanTramGiam = 10;
+        elseif ($hang === 'Vàng') $phanTramGiam = 5;
+        elseif ($hang === 'Bạc') $phanTramGiam = 2;
+        $giamGiaThanhVien = ($totalPrice * $phanTramGiam) / 100;
+
+        // Lấy danh sách Voucher đang hoạt động
+        $voucherModel = $this->model('VoucherModel');
+        $activeVouchers = $voucherModel->getActiveVouchers();
+
         $this->view('order/ThanhToan', [
             'user' => $user,
             'defaultName' => $user['ho_ten'] ?? '',
@@ -36,6 +56,9 @@ class OrderController extends Controller
             'defaultAddress' => $user['dia_chi'] ?? '',
             'cartItems' => $cartItems,
             'totalPrice' => $totalPrice,
+            'phanTramGiam' => $phanTramGiam,
+            'giamGiaThanhVien' => $giamGiaThanhVien,
+            'activeVouchers' => $activeVouchers,
             'shippingFee' => 0,
             'finalTotal' => $totalPrice, // Phí ship = 0 ban đầu, JS sẽ tự cộng
             'page_css' => ['assets/css/ThanhToan.css']
@@ -100,8 +123,67 @@ class OrderController extends Controller
                 ];
             }
 
-            // Xác định số tiền cần thu hộ (COD)
-            $cod_amount = ($phuong_thuc === 'COD') ? intval($tong_tien) : 0;
+            $ghnModel = $this->model('GHNModel');
+            
+            // 1. Tính phí ship trước bằng API Fee của GHN
+            $feeResponse = $ghnModel->calculateFee($to_district_id, $to_ward_code, $tong_can_nang);
+            $phi_van_chuyen_thuc_te = 0;
+            if (isset($feeResponse['code']) && $feeResponse['code'] == 200) {
+                $phi_van_chuyen_thuc_te = $feeResponse['data']['total'];
+            }
+
+            // 2. Tính giảm giá thành viên
+            $userModel = $this->model('UserModel');
+            $user = $userModel->getUserById($user_id);
+            $hang = $user['hang'] ?? 'Đồng';
+            $phanTramGiam = 0;
+            if ($hang === 'Kim Cương') $phanTramGiam = 10;
+            elseif ($hang === 'Vàng') $phanTramGiam = 5;
+            elseif ($hang === 'Bạc') $phanTramGiam = 2;
+            $giam_gia_thanh_vien = ($tong_tien * $phanTramGiam) / 100;
+
+            // 3. Tính toán Voucher
+            $ma_voucher = trim($_POST['ma_voucher'] ?? '');
+            $giam_gia_voucher = 0;
+            $giam_gia_freeship = 0;
+            $loai_voucher = '';
+            $tien_giam_ghi_db = 0;
+
+            if (!empty($ma_voucher)) {
+                $voucherModel = $this->model('VoucherModel');
+                $checkVoucher = $voucherModel->checkVoucher($ma_voucher);
+                if ($checkVoucher['status'] && $tong_tien >= $checkVoucher['data']['don_toi_thieu']) {
+                    $vData = $checkVoucher['data'];
+                    $loai_voucher = $vData['loai_voucher'];
+                    
+                    if ($loai_voucher == 'TienMat') {
+                        $giam_gia_voucher = $vData['gia_tri'];
+                    } elseif ($loai_voucher == 'PhanTram') {
+                        $giam_gia_voucher = ($tong_tien * $vData['gia_tri']) / 100;
+                        if ($vData['giam_toi_da'] > 0 && $giam_gia_voucher > $vData['giam_toi_da']) {
+                            $giam_gia_voucher = $vData['giam_toi_da'];
+                        }
+                    } elseif ($loai_voucher == 'FreeShip') {
+                        $giam_gia_freeship = min($phi_van_chuyen_thuc_te, $vData['gia_tri']);
+                    }
+                    
+                    $tien_giam_ghi_db = ($loai_voucher == 'FreeShip') ? $giam_gia_freeship : $giam_gia_voucher;
+                } else {
+                    $ma_voucher = null; // Hủy mã nếu không hợp lệ
+                }
+            }
+
+            // 4. Chốt số tiền cuối cùng khách phải trả
+            $tien_hang_sau_giam = $tong_tien - $giam_gia_thanh_vien - $giam_gia_voucher;
+            if ($tien_hang_sau_giam < 0) $tien_hang_sau_giam = 0;
+
+            $phi_ship_sau_giam = $phi_van_chuyen_thuc_te - $giam_gia_freeship;
+            if ($phi_ship_sau_giam < 0) $phi_ship_sau_giam = 0;
+
+            $tong_tien_cuoi = $tien_hang_sau_giam + $phi_ship_sau_giam;
+
+            // Xác định số tiền cần thu hộ (COD) trên tổng tiền ĐÃ GIẢM
+            $cod_amount = ($phuong_thuc === 'COD') ? intval($tong_tien_cuoi) : 0;
 
             // Chuẩn bị dữ liệu gửi lên GHN
             $ghnOrderData = [
@@ -120,21 +202,26 @@ class OrderController extends Controller
             ];
 
             // Gọi API tạo đơn hàng của GHN
-            $ghnModel = $this->model('GHNModel');
             $ghnResponse = $ghnModel->createOrder($ghnOrderData);
 
             // Xử lý kết quả từ GHN
             if (isset($ghnResponse['code']) && $ghnResponse['code'] == 200) {
                 $ghn_order_code = $ghnResponse['data']['order_code'];
-                $phi_van_chuyen_thuc_te = $ghnResponse['data']['total_fee'];
-                // Tổng tiền cuối cùng khách phải trả (luôn là tiền hàng + phí ship)
-                $tong_tien_cuoi = $tong_tien + $phi_van_chuyen_thuc_te;
 
                 // Lưu đơn hàng vào CSDL của bạn
                 $orderModel = $this->model('OrderModel');
-                $order_id = $orderModel->createOrder($user_id, $tong_tien_cuoi, $dia_chi_giao_day_du, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te);
+                $order_id = $orderModel->createOrder($user_id, $tong_tien_cuoi, $dia_chi_giao_day_du, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db);
 
                 if ($order_id) {
+                    if (!empty($ma_voucher)) {
+                        $voucherModel->incrementVoucherUsage($ma_voucher); // Tăng lượt dùng voucher
+                    }
+                    
+                    // Chỉ gửi email ngay lập tức cho đơn COD
+                    if ($phuong_thuc === 'COD') {
+                        $this->sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems);
+                    }
+
                     header('Location: ' . BASE_URL . 'index.php?url=order/success&id=' . $order_id);
                 } else {
                     // Lỗi nghiêm trọng: Đã tạo đơn trên GHN nhưng không lưu được vào DB
@@ -249,5 +336,140 @@ class OrderController extends Controller
             echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy đơn hàng.']);
         }
         exit;
+    }
+
+    // API Ajax cho chức năng chọn/nhập Voucher ở frontend màn hình Thanh Toán
+    public function api_apply_voucher()
+    {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $ma_voucher = trim($_POST['ma_voucher'] ?? '');
+            $tong_tien = intval($_POST['tong_tien'] ?? 0); // Tiền hàng ban đầu
+            $phi_ship = intval($_POST['phi_ship'] ?? 0);   // Phí ship hiện tại
+
+            if (empty($ma_voucher)) {
+                echo json_encode(['status' => false, 'msg' => 'Vui lòng nhập mã giảm giá.']);
+                exit;
+            }
+
+            $voucherModel = $this->model('VoucherModel');
+            $check = $voucherModel->checkVoucher($ma_voucher);
+
+            if (!$check['status']) {
+                echo json_encode($check);
+                exit;
+            }
+
+            $vData = $check['data'];
+            if ($tong_tien < $vData['don_toi_thieu']) {
+                echo json_encode(['status' => false, 'msg' => 'Đơn hàng chưa đạt giá trị tối thiểu ' . number_format($vData['don_toi_thieu'], 0, ',', '.') . 'đ']);
+                exit;
+            }
+
+            $giam_gia = 0;
+            if ($vData['loai_voucher'] == 'TienMat') {
+                $giam_gia = $vData['gia_tri'];
+            } elseif ($vData['loai_voucher'] == 'PhanTram') {
+                $giam_gia = ($tong_tien * $vData['gia_tri']) / 100;
+                if ($vData['giam_toi_da'] > 0 && $giam_gia > $vData['giam_toi_da']) {
+                    $giam_gia = $vData['giam_toi_da'];
+                }
+            } elseif ($vData['loai_voucher'] == 'FreeShip') {
+                $giam_gia = min($phi_ship, $vData['gia_tri']);
+            }
+
+            echo json_encode([
+                'status' => true,
+                'msg' => 'Áp dụng mã thành công!',
+                'giam_gia' => $giam_gia,
+                'loai_voucher' => $vData['loai_voucher']
+            ]);
+        }
+        exit;
+    }
+
+    // --- HÀM GỬI EMAIL XÁC NHẬN ĐƠN HÀNG ---
+    private function sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems) {
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host       = SMTP_HOST;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = SMTP_USERNAME;
+            $mail->Password   = SMTP_PASSWORD;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port       = SMTP_PORT;
+            $mail->CharSet    = 'UTF-8';
+
+            $mail->setFrom(SMTP_USERNAME, 'COZY CORNER');
+            $mail->addAddress($user['email'], $user['ho_ten']);
+
+            $mail->isHTML(true);
+            $mail->Subject = "Xác nhận đơn hàng #ORD" . str_pad($order_id, 5, '0', STR_PAD_LEFT) . " từ COZY CORNER";
+            
+            // Tạo bảng HTML chứa danh sách sản phẩm
+            $itemsHtml = '';
+            foreach ($cartItems as $item) {
+                $subtotal = number_format($item['price'] * $item['quantity'], 0, ',', '.');
+                $price = number_format($item['price'], 0, ',', '.');
+                $itemsHtml .= "
+                    <tr>
+                        <td style='padding: 10px; border-bottom: 1px solid #eee;'>{$item['name']}</td>
+                        <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: center;'>{$item['quantity']}</td>
+                        <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: right;'>{$price}đ</td>
+                        <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: right;'>{$subtotal}đ</td>
+                    </tr>
+                ";
+            }
+
+            $totalFormatted = number_format($tong_tien_cuoi, 0, ',', '.');
+
+            // Nắp ráp toàn bộ khung Email
+            $mail->Body = "
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);'>
+                    <div style='background-color: #2e5932; color: #fff; padding: 25px; text-align: center;'>
+                        <h2 style='margin: 0; font-size: 24px;'>Cảm ơn bạn đã đặt hàng!</h2>
+                    </div>
+                    <div style='padding: 30px; color: #444; line-height: 1.6;'>
+                        <p style='font-size: 16px;'>Xin chào <strong>{$user['ho_ten']}</strong>,</p>
+                        <p style='font-size: 15px;'>COZY CORNER đã nhận được đơn hàng <strong>#ORD" . str_pad($order_id, 5, '0', STR_PAD_LEFT) . "</strong> của bạn và đang tiến hành xử lý.</p>
+                        
+                        <h3 style='border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2e5932; margin-top: 30px;'>Chi tiết đơn hàng</h3>
+                        <table style='width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;'>
+                            <thead>
+                                <tr style='background-color: #f8fbf9;'>
+                                    <th style='padding: 12px 10px; text-align: left; border-bottom: 2px solid #ddd; color: #2e5932;'>Sản phẩm</th>
+                                    <th style='padding: 12px 10px; text-align: center; border-bottom: 2px solid #ddd; color: #2e5932;'>SL</th>
+                                    <th style='padding: 12px 10px; text-align: right; border-bottom: 2px solid #ddd; color: #2e5932;'>Đơn giá</th>
+                                    <th style='padding: 12px 10px; text-align: right; border-bottom: 2px solid #ddd; color: #2e5932;'>Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {$itemsHtml}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan='3' style='padding: 20px 10px; text-align: right;'>Tổng thanh toán:</td>
+                                    <td style='padding: 20px 10px; text-align: right;'>{$totalFormatted}đ</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        
+                        <p style='text-align: center; margin-top: 35px;'>
+                            <a href='" . BASE_URL . "index.php?url=user/account&tab=orders' style='background-color: #2e5932; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;'>Xem Lịch Sử Đơn Hàng</a>
+                        </p>
+                    </div>
+                    <div style='background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 13px; color: #888; border-top: 1px solid #eee;'>
+                        <p style='margin: 0 0 5px 0;'>Đây là email tự động từ hệ thống, vui lòng không trả lời email này.</p>
+                        <p style='margin: 0; font-weight: bold;'>© " . date('Y') . " COZY CORNER.</p>
+                    </div>
+                </div>
+            ";
+            
+            $mail->send();
+        } catch (Exception $e) {
+            // Chỉ ghi log lỗi ra file để debug, không làm gián đoạn luồng đặt hàng của khách
+            error_log("Lỗi gửi mail xác nhận đơn hàng: " . $mail->ErrorInfo);
+        }
     }
 }

@@ -31,4 +31,20 @@ class ReviewModel {
         $stmt->close();
         return $result;
     }
+
+    public function updateReview($review_id, $user_id, $rating, $comment) {
+        $stmt = $this->conn->prepare("UPDATE reviews SET rating = ?, comment = ? WHERE id = ? AND user_id = ?");
+        $stmt->bind_param("isii", $rating, $comment, $review_id, $user_id);
+        $result = $stmt->execute();
+        $stmt->close();
+        return $result;
+    }
+
+    public function deleteReview($review_id, $user_id) {
+        $stmt = $this->conn->prepare("DELETE FROM reviews WHERE id = ? AND user_id = ?");
+        $stmt->bind_param("ii", $review_id, $user_id);
+        $result = $stmt->execute();
+        $stmt->close();
+        return $result;
+    }
 }

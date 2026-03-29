@@ -1,6 +1,6 @@
 <?php
 // view/cart/ChiTietGioHang.php
-// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect về Router chuẩn
+
 if (!defined('BASE_URL')) {
     require_once __DIR__ . '/../../config.php';
     header("Location: " . BASE_URL . "index.php?url=cart");
@@ -14,12 +14,12 @@ require_once __DIR__ . '/../../includes/header.php';
     /* Định dạng lại khung bao quanh toàn bộ trang giỏ hàng */
     .cart-detail-wrapper {
         max-width: 1200px;
-        margin: 20px auto 80px auto; /* Canh giữa và đẩy lề dưới 80px để không dính Footer */
+        margin: 20px auto 80px auto; 
         padding: 0 20px;
-        min-height: 50vh; /* Giữ chiều cao tối thiểu đẩy Footer xuống dưới cùng */
+        min-height: 50vh; 
     }
 
-    /* Định dạng lại Breadcrumb (Trang chủ > Giỏ hàng chi tiết) nằm ngang */
+    
     .breadcrumb-custom {
         display: flex;
         align-items: center;
@@ -39,7 +39,7 @@ require_once __DIR__ . '/../../includes/header.php';
     }
 
     .breadcrumb-custom a:hover {
-        color: #2e5932; /* Đổi màu xanh lá khi di chuột vào */
+        color: #2e5932; 
     }
 
     .breadcrumb-custom img {
@@ -61,7 +61,7 @@ require_once __DIR__ . '/../../includes/header.php';
         background: #fff;
         padding: 30px;
         border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06); /* Đổ bóng mềm mại hơn */
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
         border: 1px solid #eaeaea;
     }
 
@@ -72,7 +72,7 @@ require_once __DIR__ . '/../../includes/header.php';
         border-top: 1px solid #eaeaea;
         display: flex;
         flex-direction: column;
-        align-items: flex-end; /* Ép mọi thứ sang phải */
+        align-items: flex-end; 
         gap: 20px;
     }
 
@@ -84,7 +84,7 @@ require_once __DIR__ . '/../../includes/header.php';
 
     .cart__total-price {
         font-size: 1.8rem;
-        color: #333; /* Màu cam nổi bật (Bạn có thể đổi sang #2e5932 nếu thích đồng bộ xanh) */
+        color: #333; 
         margin-left: 10px;
     }
 
@@ -94,12 +94,12 @@ require_once __DIR__ . '/../../includes/header.php';
         gap: 15px;
     }
 
-    /* --- NÚT TIẾP TỤC MUA HÀNG (Nền trắng, viền xanh) --- */
+    /* --- NÚT TIẾP TỤC MUA HÀNG  */
     .btn-continue {
         padding: 12px 25px;
         background: #fff;
-        color: #2e5932; /* Chữ màu xanh lá */
-        border: 1px solid #2e5932; /* Viền màu xanh lá */
+        color: #2e5932; 
+        border: 1px solid #2e5932; 
         border-radius: 6px;
         text-decoration: none;
         font-weight: bold;
@@ -107,15 +107,15 @@ require_once __DIR__ . '/../../includes/header.php';
     }
 
     .btn-continue:hover {
-        background: #2e5932; /* Nền xanh lá khi di chuột */
-        color: #fff; /* Chữ trắng khi di chuột */
+        background: #2e5932; 
+        color: #fff; 
     }
 
-    /* --- NÚT THANH TOÁN (Nền xanh, chữ trắng) --- */
+    /* --- NÚT THANH TOÁN  */
     .btn-checkout {
         padding: 12px 30px;
-        background: #2e5932; /* Nền xanh lá */
-        color: #fff; /* Chữ trắng */
+        background: #2e5932; 
+        color: #fff; 
         border: 1px solid #2e5932;
         border-radius: 6px;
         text-decoration: none;
@@ -124,7 +124,7 @@ require_once __DIR__ . '/../../includes/header.php';
     }
 
     .btn-checkout:hover {
-        background: #1f4023; /* Nền xanh đậm hơn khi di chuột */
+        background: #1f4023; 
         border-color: #1f4023;
     }
 </style>

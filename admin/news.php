@@ -5,7 +5,6 @@ if (!isset($newsList)) {
     exit;
 }
 
-// Nạp giao diện chung của Admin
 require_once __DIR__ . '/includes/admin_header.php';
 ?>
 
@@ -216,16 +215,16 @@ require_once __DIR__ . '/includes/admin_header.php';
     <?php if ($totalPages > 1): ?>
         <div class="pagination">
             <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                <a href="<?= BASE_URL ?>index.php?url=admin/news&page=<?= $i ?><?= $qs ?>" class="page-link <?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
+                <a href="<?= BASE_URL ?>index.php?url=admin/news&page=<?= $i ?><?= $qs ?>"
+                    class="page-link <?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
             <?php endfor; ?>
         </div>
     <?php endif; ?>
 </div>
 
-<!-- Khung Toast Notification -->
+
 <div id="toast" class="toast"></div>
 
-<!-- Form Modal (Ẩn phía sau) -->
 <div id="modal-container-inject"></div>
 
 <!-- Custom Modal Xác nhận Xóa Tin Tức -->

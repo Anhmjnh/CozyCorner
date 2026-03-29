@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. Toggle Sidebar
+    // Toggle Sidebar
     const toggleBtn = document.getElementById('toggleSidebar');
     const sidebar = document.getElementById('sidebar');
     if(toggleBtn) {
@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 2. Chart.js cho Dashboard
+    // Chart.js cho Dashboard
     const ctx = document.getElementById('revenueChart');
     if(ctx) {
         fetch(BASE_URL + 'index.php?url=admin/api_chart_data')
@@ -32,9 +32,9 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 3. Xử lý Modal Sản Phẩm (Thêm & Sửa)
+    // . Xử lý Modal Sản Phẩm (Thêm & Sửa)
     const productModal = document.getElementById('productModal');
-    const openAddProductBtn = document.getElementById('openAddProductModal'); // Đã đổi ID để tránh trùng
+    const openAddProductBtn = document.getElementById('openAddProductModal'); 
     const formProduct = document.getElementById('formProduct');
 
     if (productModal && formProduct) {
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function() {
             e.preventDefault();
             console.log("Đang thực hiện lưu sản phẩm...");
             const formData = new FormData(formProduct);
-            
+
             // Kiểm tra ID để quyết định thêm hay sửa
             const productId = formData.get('id');
             const action = (productId && productId !== "") ? 'update_product' : 'add_product';
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 if(res.status === 'success') {
                     showToast(res.msg, 'success');
                     productModal.style.display = 'none';
-                    setTimeout(() => window.location.reload(), 1000); // Tải lại để update table
+                    setTimeout(() => window.location.reload(), 1000); 
                 } else {
                     showToast(res.msg, 'error');
                 }
@@ -79,9 +79,9 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 4. Xử lý Modal Danh mục (Thêm & Sửa)
+    //  Xử lý Modal Danh mục (Thêm & Sửa)
     const categoryModal = document.getElementById('categoryModal');
-    const openAddCategoryBtn = document.getElementById('openAddModal'); // ID trên trang categories.php
+    const openAddCategoryBtn = document.getElementById('openAddModal'); 
     const formCategory = document.getElementById('formCategory');
 
     if (categoryModal && formCategory) {
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 if(res.status === 'success') {
                     showToast(res.msg, 'success');
                     categoryModal.style.display = 'none';
-                    setTimeout(() => window.location.reload(), 1000); // Tải lại để update table
+                    setTimeout(() => window.location.reload(), 1000); 
                 } else {
                     showToast(res.msg, 'error');
                 }
@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 5. Xử lý Modal Người Dùng (Sửa)
+    //  Xử lý Modal Người Dùng (Sửa)
     const userModal = document.getElementById('userModal');
     const formUser = document.getElementById('formUser');
 
@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 6. Xử lý Modal Tin Tức (Thêm & Sửa)
+    //  Xử lý Modal Tin Tức (Thêm & Sửa)
     const newsModal = document.getElementById('newsModal');
     const openAddNewsBtn = document.getElementById('openAddNewsModal');
     const formNews = document.getElementById('formNews');
@@ -169,7 +169,7 @@ document.addEventListener("DOMContentLoaded", function() {
         formNews.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(formNews);
-            const action = formData.get('id') ? 'update_news' : 'add_news'; // Chỉnh sửa linh hoạt MVC
+            const action = formData.get('id') ? 'update_news' : 'add_news'; 
             fetch(BASE_URL + 'index.php?url=admin/api_' + action, {
                 method: 'POST',
                 body: formData
@@ -190,7 +190,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 7. Xử lý Modal Thông tin cá nhân Admin
+    //  Xử lý Modal Thông tin cá nhân Admin
     const adminProfileModal = document.getElementById('adminProfileModal');
     const openAdminProfileModal = document.getElementById('openAdminProfileModal');
     const closeAdminProfileModal = document.getElementById('closeAdminProfileModal');
@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (adminProfileModal && openAdminProfileModal && formAdminProfile) {
         openAdminProfileModal.addEventListener('click', () => {
-            // Tự động tải dữ liệu cá nhân thông qua Controller (MVC)
+           
             fetch(BASE_URL + 'admin/api_get_admin_profile')
                 .then(res => res.json())
                 .then(res => {
@@ -217,7 +217,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             adminProfileAvatarPreview.src = BASE_URL + 'assets/icon/Icon-user.svg';
                         }
                         
-                        // Làm rỗng trường mật khẩu (nếu trước đó đã nhập nửa chừng rồi tắt)
+                        // Làm rỗng trường mật khẩu 
                         document.getElementById('admin_profile_current_password').value = '';
                         document.getElementById('admin_profile_new_password').value = '';
                         document.getElementById('admin_profile_confirm_password').value = '';
@@ -311,7 +311,7 @@ function showToast(message, type = 'success') {
 
 // Xóa danh mục bằng AJAX
 function deleteCategory(id) {
-    // This function is now handled by the modal in categories.php
+   
 }
 
 // Toggle Trạng thái người dùng
@@ -400,6 +400,8 @@ function openProductModal(id = null) {
                     document.getElementById('product_danh_muc').value = p.danh_muc; // Chọn đúng danh mục đang có
                     form.querySelector('[name="so_luong"]').value = p.so_luong_ton;
                     document.getElementById('product_trang_thai').value = p.trang_thai;
+                    document.getElementById('product_mo_ta').value = p.mo_ta || '';
+
                     if (p.anh) {
                         document.getElementById('product_image_preview').src = BASE_URL + 'uploads/' + p.anh;
                         document.getElementById('product_image_preview').style.display = 'block';

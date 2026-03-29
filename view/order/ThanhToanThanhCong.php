@@ -1,6 +1,6 @@
 <?php
 // view/order/ThanhToanThanhCong.php
-// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect
+
 if (!isset($order)) {
     require_once __DIR__ . '/../../config.php';
     header("Location: " . BASE_URL);
@@ -13,7 +13,7 @@ require_once __DIR__ . '/../../includes/header.php';
 $isQR = (($order['phuong_thuc_thanh_toan'] ?? 'COD') === 'ChuyenKhoan');
 $phuong_thuc_text = $isQR ? 'Chuyển khoản qua Ngân hàng (VietQR)' : 'Thanh toán khi nhận hàng (COD)';
 
-// Trạng thái thanh toán (Nếu là QR và trạng thái là ChoXacNhan -> Chưa thanh toán)
+// Trạng thái thanh toán
 $isPendingPayment = ($isQR && $order['trang_thai'] === 'ChoXacNhan');
 
 // Tính lại tiền ship hiển thị
@@ -46,7 +46,7 @@ $phi_ship = $order['tong_tien'] - $tong_san_pham;
         border: 1px solid #eaeaea;
     }
 
-    /* Nếu không phải QR, cho cột trái căn giữa và giới hạn độ rộng */
+    
     .success-main--center {
         max-width: 850px;
         margin: 0 auto;
@@ -346,7 +346,7 @@ $phi_ship = $order['tong_tien'] - $tong_san_pham;
         </div>
     </div>
 
-    <!-- CỘT PHẢI: MÃ QR THANH TOÁN (Chỉ hiện khi chọn Chuyển khoản) -->
+    <!-- CỘT PHẢI: MÃ QR THANH TOÁN  -->
     <?php if ($isPendingPayment): ?>
         <div class="success-sidebar">
             <h2 class="qr-title">Thanh Toán Bằng QR Code</h2>
@@ -354,12 +354,12 @@ $phi_ship = $order['tong_tien'] - $tong_san_pham;
 
             <div class="qr-img-wrapper">
                 <?php
-                // Lấy thông tin ngân hàng từ file config.php (Chuẩn hệ thống lớn)
+               
                 $bank = SEPAY_BANK_ID;
                 $acc = SEPAY_BANK_ACC;
                 $accName = SEPAY_BANK_NAME;
 
-                $des = 'ORD' . $order['id']; // Nội dung chuyển khoản (Càng ngắn QR càng dễ quét)
+                $des = 'ORD' . $order['id']; 
                 $qr_sepay_url = "https://qr.sepay.vn/img?acc={$acc}&bank={$bank}&amount=" . intval($order['tong_tien']) . "&des={$des}&accountName=" . urlencode($accName);
                 ?>
                 <img class="qr-img" src="<?= $qr_sepay_url ?>" alt="QR Code Thanh Toán SePay">

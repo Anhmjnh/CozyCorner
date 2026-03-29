@@ -13,7 +13,7 @@ class UserModel extends Model {
         return $user;
     }
 
-    // Lấy thông tin user bằng email (Dùng cho đăng nhập)
+    // Lấy thông tin user bằng email 
     public function getUserByEmail($email) {
         $stmt = $this->conn->prepare("SELECT id, ho_ten, mat_khau, trang_thai FROM users WHERE email = ?");
         $stmt->bind_param("s", $email);

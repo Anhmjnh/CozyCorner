@@ -1,6 +1,6 @@
 <?php
 // view/order/ThanhToan.php
-// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect về Router chuẩn
+
 if (!isset($cartItems)) {
     require_once __DIR__ . '/../../config.php';
     header("Location: " . BASE_URL . "index.php?url=order/checkout");
@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <style>
-    /* --- BỘ CSS CHUẨN CHO TRANG THANH TOÁN --- */
+    /* TRANG THANH TOÁN --- */
     .checkout-wrapper {
         max-width: 1200px;
         margin: 30px auto 80px auto;
@@ -31,14 +31,13 @@ require_once __DIR__ . '/../../includes/header.php';
 
     .checkout__container {
         display: flex;
-        flex-wrap: wrap;
         gap: 30px;
         align-items: flex-start;
     }
 
     /* CỘT TRÁI - FORM */
     .checkout__left {
-        flex: 1 1 60%;
+        flex: 1;
         background: #fff;
         padding: 35px;
         border-radius: 12px;
@@ -130,7 +129,8 @@ require_once __DIR__ . '/../../includes/header.php';
 
     /* CỘT PHẢI - ĐƠN HÀNG */
     .checkout__right {
-        flex: 1 1 35%;
+        width: 420px;
+        flex-shrink: 0;
         background: #fff;
         padding: 35px;
         border-radius: 12px;
@@ -199,6 +199,8 @@ require_once __DIR__ . '/../../includes/header.php';
 
     .checkout__totals {
         margin-bottom: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #eaeaea;
     }
 
     .checkout__total-line {
@@ -237,7 +239,7 @@ require_once __DIR__ . '/../../includes/header.php';
         box-shadow: 0 4px 15px rgba(46, 89, 50, 0.4);
     }
 
-    /* --- STYLES CHO MODAL THÔNG BÁO LỖI --- */
+    /* --- MODAL THÔNG BÁO LỖI --- */
     .checkout-modal {
         display: none;
         position: fixed;
@@ -320,6 +322,232 @@ require_once __DIR__ . '/../../includes/header.php';
         }
     }
 
+    /* --- CSS CHO VOUCHER --- */
+    .voucher-section {
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #eaeaea;
+    }
+
+    .voucher-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0 0 12px 0;
+        color: #333;
+    }
+
+    .voucher-input-group {
+        display: flex;
+        gap: 10px;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .voucher-input-group input {
+        flex: 1;
+        padding: 12px 15px;
+        border: 1px solid #dcdcdc;
+        border-radius: 8px;
+        outline: none;
+        font-family: inherit;
+        font-size: 14px;
+        background-color: #fdfdfd;
+        transition: all 0.3s;
+    }
+
+    .voucher-input-group input:focus {
+        border-color: #2e5932;
+        background-color: #fff;
+    }
+
+    .btn-apply-voucher,
+    .btn-select-voucher {
+        padding: 0 13px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: 0.3s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        border: 1px solid transparent;
+    }
+
+    .btn-apply-voucher {
+        background: #2e5932;
+        color: white;
+    }
+
+    .btn-apply-voucher:hover {
+        background: #1f4023;
+    }
+
+    .btn-select-voucher {
+        background: #f8fbf9;
+        color: #2e5932;
+        border-color: #2e5932;
+        gap: 6px;
+    }
+
+    .btn-select-voucher:hover {
+        background: #eef6f0;
+    }
+
+    .voucher-message {
+        margin-top: 10px;
+        font-size: 13px;
+        min-height: 18px;
+    }
+
+    .highlight-green {
+        color: #2e5932 !important;
+        font-weight: 600;
+    }
+
+    /* --- CSS VOUCHER MODAL (POPUP) --- */
+    .voucher-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .voucher-modal-content {
+        background-color: white;
+        padding: 25px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 450px;
+        position: relative;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        animation: animatetop 0.4s;
+    }
+
+    .voucher-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+    }
+
+    .voucher-modal-title {
+        margin: 0;
+        font-size: 18px;
+        color: #2e5932;
+        font-weight: bold;
+    }
+
+    .close-voucher-modal {
+        font-size: 24px;
+        cursor: pointer;
+        color: #999;
+        font-weight: bold;
+        line-height: 1;
+    }
+
+    .close-voucher-modal:hover {
+        color: #333;
+    }
+
+    .voucher-list {
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-right: 5px;
+    }
+
+    .voucher-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border: 1px solid #eaeaea;
+        border-radius: 8px;
+        gap: 15px;
+        transition: 0.3s;
+    }
+
+    .voucher-item:hover {
+        border-color: #2e5932;
+        background: #f8fbf9;
+    }
+
+    .voucher-icon {
+        font-size: 24px;
+        background: #eef6f0;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        flex-shrink: 0;
+        color: #2e5932;
+    }
+
+    .voucher-info {
+        flex: 1;
+    }
+
+    .voucher-info strong {
+        display: block;
+        color: #2e5932;
+        font-size: 15px;
+        margin-bottom: 4px;
+    }
+
+    .voucher-info p {
+        margin: 0;
+        font-size: 13px;
+        color: #555;
+    }
+
+    .voucher-info small {
+        color: #888;
+        font-size: 12px;
+        display: block;
+        margin-top: 4px;
+    }
+
+    .btn-use-voucher {
+        background: #2e5932;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        white-space: nowrap;
+        transition: 0.3s;
+    }
+
+    .btn-use-voucher:hover {
+        background: #1f4023;
+    }
+
+    .voucher-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .voucher-list::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 4px;
+    }
+
     @media (max-width: 900px) {
         .checkout__container {
             flex-direction: column;
@@ -348,16 +576,16 @@ require_once __DIR__ . '/../../includes/header.php';
     <li style="color: #333; text-decoration: none;">Thanh toán</li>
 </ul>
 
-<!-- CONTENT: CHECKOUT -->
+
 <div class="checkout-wrapper">
     <h1 class="checkout__title">Thanh Toán Đơn Hàng</h1>
 
     <div class="checkout__container">
-        <!-- CỘT TRÁI: FORM THÔNG TIN GIAO HÀNG -->
+     
         <div class="checkout__left">
             <h2 class="checkout__subtitle">Thông Tin Giao Hàng</h2>
 
-            <!-- Form gửi dữ liệu tạo đơn hàng (action trỏ về OrderController nếu có) -->
+           
             <form action="<?= BASE_URL ?>index.php?url=order/process" method="POST" id="checkout-form"
                 class="checkout__form">
                 <div class="checkout__group">
@@ -407,6 +635,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 <input type="hidden" name="phi_ship" id="phi_ship_input" value="0">
                 <input type="hidden" name="to_district_id" id="to_district_id_input" value="">
                 <input type="hidden" name="to_ward_code" id="to_ward_code_input" value="">
+                <input type="hidden" name="ma_voucher" id="hidden_ma_voucher" value="">
 
                 <div class="checkout__group">
                     <label for="ghi_chu" class="checkout__label">Ghi chú đơn hàng (Tùy chọn)</label>
@@ -422,7 +651,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     </label>
                     <label class="checkout__payment-method">
                         <input type="radio" name="phuong_thuc_thanh_toan" value="ChuyenKhoan">
-                        <span>Chuyển khoản qua Ngân hàng (VietQR)</span>
+                        <span>Chuyển khoản qua Ngân hàng </span>
                     </label>
                 </div>
             </form>
@@ -454,18 +683,44 @@ require_once __DIR__ . '/../../includes/header.php';
                     <?php endif; ?>
                 </ul>
 
+                <div class="voucher-section">
+                    <h4 class="voucher-title">Mã giảm giá / Freeship</h4>
+                    <div class="voucher-input-group">
+                        <input type="text" id="ma_voucher_input" placeholder="Nhập mã..." autocomplete="off">
+                        <button type="button" id="btn-show-vouchers" class="btn-select-voucher"><i
+                                class="fas fa-ticket-alt"></i> Chọn</button>
+                        <button type="button" id="btn-apply-voucher" class="btn-apply-voucher">Áp dụng</button>
+                    </div>
+                    <div id="voucher-message" class="voucher-message"></div>
+                </div>
+
                 <div class="checkout__totals">
                     <div class="checkout__total-line">
                         <span>Tạm tính:</span>
-                        <span style="font-weight: 600;"><?= number_format($totalPrice) ?>đ</span>
+                        <span id="summary-total-price" data-price="<?= $totalPrice ?>"
+                            style="font-weight: 600;"><?= number_format($totalPrice) ?>đ</span>
                     </div>
+
+                    <?php if (isset($giamGiaThanhVien) && $giamGiaThanhVien > 0): ?>
+                        <div class="checkout__total-line highlight-green">
+                            <span>Hạng <?= htmlspecialchars($user['hang'] ?? 'Đồng') ?> (-<?= $phanTramGiam ?>%):</span>
+                            <span>-<?= number_format($giamGiaThanhVien) ?>đ</span>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="checkout__total-line">
                         <span>Phí vận chuyển:</span>
-                        <span style="font-weight: 600;">0đ</span>
+                        <span id="summary-shipping-fee" data-fee="0" style="font-weight: 600;">0đ</span>
+                    </div>
+                    <div class="checkout__total-line highlight-green" id="voucher-discount-line" style="display: none;">
+                        <span>Mã giảm giá:</span>
+                        <span id="summary-voucher-discount">-0đ</span>
                     </div>
                     <div class="checkout__total-line checkout__total-line--final">
-                        <span>Tổng cộng:</span>
-                        <span class="checkout__final-price"><?= number_format($finalTotal) ?>đ</span>
+                        <span>Tổng thanh toán:</span>
+                        <span id="summary-final-total" class="checkout__final-price">
+                            <?= number_format($totalPrice - ($giamGiaThanhVien ?? 0)) ?>đ
+                        </span>
                     </div>
                 </div>
 
@@ -490,6 +745,45 @@ require_once __DIR__ . '/../../includes/header.php';
         <div class="checkout-modal-footer">
             <button type="button" class="checkout-modal-button"
                 onclick="document.getElementById('ghnErrorModal').style.display='none'">Đã hiểu</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CHỌN VOUCHER -->
+<div id="voucher-modal" class="voucher-modal">
+    <div class="voucher-modal-content">
+        <div class="voucher-modal-header">
+            <h3 class="voucher-modal-title">Kho Voucher Của Bạn</h3>
+            <span class="close-voucher-modal" id="close-voucher-modal">&times;</span>
+        </div>
+        <div class="voucher-list">
+            <?php if (!empty($activeVouchers)): ?>
+                <?php foreach ($activeVouchers as $v): ?>
+                    <div class="voucher-item">
+                        <div class="voucher-icon">
+                            <?= $v['loai_voucher'] == 'FreeShip' ? '<i class="fas fa-shipping-fast"></i>' : '<i class="fas fa-ticket-alt"></i>' ?>
+                        </div>
+                        <div class="voucher-info">
+                            <strong><?= htmlspecialchars($v['ma_voucher']) ?></strong>
+                            <p>
+                                <?php
+                                if ($v['loai_voucher'] == 'TienMat')
+                                    echo 'Giảm ' . number_format($v['gia_tri']) . 'đ';
+                                elseif ($v['loai_voucher'] == 'PhanTram')
+                                    echo 'Giảm ' . $v['gia_tri'] . '% (Tối đa ' . number_format($v['giam_toi_da']) . 'đ)';
+                                elseif ($v['loai_voucher'] == 'FreeShip')
+                                    echo 'Miễn phí vận chuyển (Tối đa ' . number_format($v['gia_tri']) . 'đ)';
+                                ?>
+                            </p>
+                            <small>Đơn tối thiểu: <?= number_format($v['don_toi_thieu']) ?>đ</small>
+                        </div>
+                        <button type="button" class="btn-use-voucher" data-code="<?= htmlspecialchars($v['ma_voucher']) ?>">Dùng
+                            ngay</button>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p style="text-align:center; padding: 20px; color: #777;">Hiện chưa có mã giảm giá nào khả dụng.</p>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -574,16 +868,13 @@ require_once __DIR__ . '/../../includes/header.php';
                         const calculatedFee = res.data.total;
                         phiShipInput.value = calculatedFee; // Gán phí ship vào input ẩn
 
-                        // Tự động hiển thị phí ship ra giao diện thay vì alert
-                        const feeDisplay = document.querySelector('.checkout__total-line:nth-child(2) span:last-child');
-                        if (feeDisplay) {
-                            feeDisplay.innerText = calculatedFee.toLocaleString('vi-VN') + 'đ';
-                        }
+                        // Tự động hiển thị phí ship ra giao diện
+                        document.getElementById('summary-shipping-fee').dataset.fee = calculatedFee;
+                        document.getElementById('summary-shipping-fee').innerText = calculatedFee.toLocaleString('vi-VN') + 'đ';
 
-                        // Cập nhật tổng tiền
-                        const tempTotal = <?= $totalPrice ?>;
-                        const finalDisplay = document.querySelector('.checkout__final-price');
-                        if (finalDisplay) finalDisplay.innerText = (tempTotal + calculatedFee).toLocaleString('vi-VN') + 'đ';
+                        if (typeof calculateFinalTotal === 'function') {
+                            calculateFinalTotal();
+                        }
                     } else {
                         handleGhnError('tính phí vận chuyển', res);
                     }
@@ -600,6 +891,110 @@ require_once __DIR__ . '/../../includes/header.php';
         }
 
         if (addressDetail) addressDetail.addEventListener('input', updateFullAddress);
+
+        // --- LOGIC XỬ LÝ VOUCHER ---
+        const btnApplyVoucher = document.getElementById('btn-apply-voucher');
+        const inputVoucher = document.getElementById('ma_voucher_input');
+        const hiddenMaVoucher = document.getElementById('hidden_ma_voucher');
+        const voucherMessage = document.getElementById('voucher-message');
+        const voucherDiscountLine = document.getElementById('voucher-discount-line');
+        const summaryVoucherDiscount = document.getElementById('summary-voucher-discount');
+        const summaryFinalTotal = document.getElementById('summary-final-total');
+        const summaryShippingFee = document.getElementById('summary-shipping-fee');
+        const summaryTotalPrice = document.getElementById('summary-total-price');
+
+        let currentVoucherDiscount = 0;
+        let currentVoucherType = '';
+
+        window.calculateFinalTotal = function () {
+            let tongTienHang = parseInt(summaryTotalPrice.dataset.price) || 0;
+            let giamGiaThanhVien = <?= $giamGiaThanhVien ?? 0 ?>;
+            let phiShip = parseInt(summaryShippingFee.dataset.fee) || 0;
+
+            let giamVoucherDonHang = 0;
+            let giamVoucherFreeShip = 0;
+
+            if (currentVoucherType === 'FreeShip') {
+                giamVoucherFreeShip = currentVoucherDiscount;
+                if (giamVoucherFreeShip > phiShip) giamVoucherFreeShip = phiShip;
+            } else {
+                giamVoucherDonHang = currentVoucherDiscount;
+            }
+
+            let tienHangSauGiam = tongTienHang - giamGiaThanhVien - giamVoucherDonHang;
+            if (tienHangSauGiam < 0) tienHangSauGiam = 0;
+
+            let phiShipSauGiam = phiShip - giamVoucherFreeShip;
+            if (phiShipSauGiam < 0) phiShipSauGiam = 0;
+
+            let tongThanhToan = tienHangSauGiam + phiShipSauGiam;
+
+            summaryFinalTotal.innerText = tongThanhToan.toLocaleString('vi-VN') + 'đ';
+
+            let tongTienGiamVoucher = giamVoucherDonHang + giamVoucherFreeShip;
+            if (tongTienGiamVoucher > 0) {
+                voucherDiscountLine.style.display = 'flex';
+                summaryVoucherDiscount.innerText = '-' + tongTienGiamVoucher.toLocaleString('vi-VN') + 'đ';
+            } else {
+                voucherDiscountLine.style.display = 'none';
+            }
+        };
+
+        btnApplyVoucher.addEventListener('click', function () {
+            let maVoucher = inputVoucher.value.trim();
+            let tongTienHang = parseInt(summaryTotalPrice.dataset.price) || 0;
+            let phiShip = parseInt(summaryShippingFee.dataset.fee) || 0;
+
+            if (maVoucher === '') {
+                voucherMessage.innerHTML = '<span style="color:#e74c3c">Vui lòng nhập mã!</span>';
+                currentVoucherDiscount = 0;
+                currentVoucherType = '';
+                hiddenMaVoucher.value = '';
+                calculateFinalTotal();
+                return;
+            }
+
+            fetch('<?= BASE_URL ?>index.php?url=order/api_apply_voucher', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `ma_voucher=${maVoucher}&tong_tien=${tongTienHang}&phi_ship=${phiShip}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status) {
+                        voucherMessage.innerHTML = `<span style="color:#28a745"><i class="fas fa-check-circle"></i> ${data.msg}</span>`;
+                        currentVoucherDiscount = data.giam_gia;
+                        currentVoucherType = data.loai_voucher;
+                        hiddenMaVoucher.value = maVoucher; // Cập nhật input ẩn để submit form
+                    } else {
+                        voucherMessage.innerHTML = `<span style="color:#e74c3c"><i class="fas fa-times-circle"></i> ${data.msg}</span>`;
+                        currentVoucherDiscount = 0;
+                        currentVoucherType = '';
+                        hiddenMaVoucher.value = '';
+                        inputVoucher.value = '';
+                    }
+                    calculateFinalTotal();
+                })
+                .catch(error => console.error('Lỗi AJAX Voucher:', error));
+        });
+
+        // --- LOGIC XỬ LÝ POPUP CHỌN VOUCHER ---
+        const vModal = document.getElementById('voucher-modal');
+        const btnShowVouchers = document.getElementById('btn-show-vouchers');
+        const btnCloseVModal = document.getElementById('close-voucher-modal');
+        const btnsUseVoucher = document.querySelectorAll('.btn-use-voucher');
+
+        if (btnShowVouchers) btnShowVouchers.addEventListener('click', () => vModal.style.display = 'flex');
+        if (btnCloseVModal) btnCloseVModal.addEventListener('click', () => vModal.style.display = 'none');
+        window.addEventListener('click', (e) => { if (e.target === vModal) vModal.style.display = 'none'; });
+
+        btnsUseVoucher.forEach(btn => {
+            btn.addEventListener('click', function () {
+                inputVoucher.value = this.dataset.code;
+                vModal.style.display = 'none';
+                btnApplyVoucher.click(); // Tự động bấm "Áp dụng"
+            });
+        });
     });
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

@@ -1,6 +1,6 @@
 <?php
 // views/user/CapNhatTaiKhoan.php
-// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect về Router chuẩn
+
 if (!isset($formData)) {
     require_once __DIR__ . '/../../config.php';
     header("Location: " . BASE_URL . "index.php?url=user/update");

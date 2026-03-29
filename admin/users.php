@@ -1,7 +1,7 @@
 <?php
-// admin/users.php (Đóng vai trò View trong MVC)
+// admin/users.php 
 
-// Nếu truy cập trực tiếp file này mà không qua Controller, chuyển hướng về Route chuẩn
+
 if (!isset($users)) {
     require_once __DIR__ . '/../config.php';
     header("Location: " . BASE_URL . "admin/users");
@@ -12,7 +12,7 @@ require_once __DIR__ . '/includes/admin_header.php';
 ?>
 
 <style>
-    /* --- STYLES CHO MODAL XÁC NHẬN XÓA --- */
+    /*  MODAL XÁC NHẬN XÓA  */
     .custom-modal {
         display: none;
         position: fixed;

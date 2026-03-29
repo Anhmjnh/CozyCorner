@@ -4,14 +4,14 @@ require_once __DIR__ . '/../config.php';
 
 class GHNModel
 {
-    // Chuyển sang môi trường DEV của GHN
+
     private $api_url = "https://dev-online-gateway.ghn.vn/shiip/public-api";
 
     private function request($endpoint, $data = [], $method = 'GET', $is_v2 = false)
     {
         $url = $this->api_url . $endpoint;
         $headers = [
-            'token: ' . GHN_API_TOKEN, // Đổi thành chữ thường cho khớp 100% với tài liệu GHN
+            'token: ' . GHN_API_TOKEN, 
             'Content-Type: application/json'
         ];
 
@@ -31,12 +31,12 @@ class GHNModel
             }
         }
 
-        // Tắt kiểm tra SSL trên localhost để tránh lỗi XAMPP
+       
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
         $response = curl_exec($ch);
-        $error = curl_error($ch); // Bắt lỗi cURL nếu có
+        $error = curl_error($ch); 
         curl_close($ch);
 
         if ($error) {
@@ -53,7 +53,7 @@ class GHNModel
 
     public function getDistricts($province_id)
     {
-        // Dùng POST để gửi tham số trong body, đúng chuẩn và ổn định hơn
+       
         return $this->request('/master-data/district', ['province_id' => intval($province_id)], 'POST');
     }
 
@@ -68,7 +68,7 @@ class GHNModel
             'service_type_id' => 2,
             'from_district_id' => intval(GHN_FROM_DISTRICT_ID),
             'to_district_id' => intval($to_district_id),
-            'to_ward_code' => (string) $to_ward_code, // Ward code bắt buộc là chuỗi
+            'to_ward_code' => (string) $to_ward_code, 
             'weight' => intval($weight)
         ];
         return $this->request('/v2/shipping-order/fee', $data, 'POST', true);

@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/OrderModel.php';
+require_once __DIR__ . '/../models/VoucherModel.php';
 
 class UserController {
     
@@ -27,6 +28,7 @@ class UserController {
         
         $orders = [];
         $totalCompletedSpent = 0;
+        $activeVouchers = [];
         
         if ($tab === 'orders') {
             $orderModel = new OrderModel();
@@ -36,6 +38,9 @@ class UserController {
                     $totalCompletedSpent += $o['tong_tien'];
                 }
             }
+        } elseif ($tab === 'vouchers') {
+            $voucherModel = new VoucherModel();
+            $activeVouchers = $voucherModel->getActiveVouchers();
         }
 
         $page_css = ['assets/css/CapNhatTaiKhoan.css'];

@@ -1,7 +1,6 @@
 <?php
-// admin/products.php (Đóng vai trò View trong MVC)
+// admin/products.php 
 
-// Nếu truy cập trực tiếp file này mà không qua Controller, chuyển hướng về Route chuẩn
 if (!isset($products)) {
     require_once __DIR__ . '/../config.php';
     header("Location: " . BASE_URL . "admin/products");
@@ -12,7 +11,7 @@ require_once __DIR__ . '/includes/admin_header.php';
 ?>
 
 <style>
-    /* --- STYLES CHO MODAL XÁC NHẬN XÓA --- */
+    /*  MODAL XÁC NHẬN XÓA */
     .custom-modal {
         display: none;
         position: fixed;
@@ -80,7 +79,7 @@ require_once __DIR__ . '/includes/admin_header.php';
         display: block;
         text-align: center;
         font-size: 50px;
-        color: #f39c12; /* Màu vàng cảnh báo */
+        color: #f39c12; 
         margin-bottom: 20px;
     }
 
@@ -213,7 +212,7 @@ require_once __DIR__ . '/includes/admin_header.php';
 
 <!-- MODAL THÊM SẢN PHẨM -->
 <div id="productModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
         <div class="modal-header">
             <h3 id="productModalTitle">Thêm Sản Phẩm Mới</h3>
             <span class="close-modal">&times;</span>
@@ -246,7 +245,11 @@ require_once __DIR__ . '/includes/admin_header.php';
                 <input type="hidden" name="current_anh" id="product_current_anh">
                 <img id="product_image_preview" src="" alt="Ảnh hiện tại" style="max-width: 100px; margin-top: 10px; display: none;">
             </div>
-            <button type="submit" class="btn btn-primary w-100">LƯU SẢN PHẨM</button>
+            <div class="form-group">
+                <label>Mô Tả Chi Tiết</label>
+                <textarea name="mo_ta" id="product_mo_ta" rows="6" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; resize: vertical;"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-100" style="margin-top: 10px; margin-bottom: 10px;">LƯU SẢN PHẨM</button>
         </form>
     </div>
 </div>

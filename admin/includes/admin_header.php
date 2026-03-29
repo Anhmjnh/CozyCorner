@@ -20,13 +20,16 @@
     <!-- SIDEBAR -->
     <aside class="admin-sidebar" id="sidebar">
         <div class="sidebar-logo">
-            <h2>Cozy<span>Admin</span></h2>
+            <a href="<?= BASE_URL ?>index.php?url=admin/index" style="text-decoration: none; color: inherit;">
+                <h2>Cozy<span>Admin</span></h2>
+            </a>
         </div>
         <ul class="sidebar-menu">
             <li class="<?= (strpos($_SERVER['REQUEST_URI'], 'url=admin/index') !== false || $_SERVER['REQUEST_URI'] == '/cozycorner/admin/') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/index"><i class="fas fa-home"></i> <span>Trang chủ</span></a></li>
             <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/products') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/products"><i class="fas fa-box"></i> <span>Sản phẩm</span></a></li>
             <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/categories') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/categories"><i class="fas fa-list"></i> <span>Danh mục</span></a></li>
             <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/orders') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/orders"><i class="fas fa-shopping-cart"></i> <span>Đơn hàng</span></a></li>
+            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/vouchers') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/vouchers"><i class="fas fa-ticket-alt"></i> <span>Quản lý Voucher</span></a></li>
             <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/users') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/users"><i class="fas fa-users"></i> <span>Người dùng</span></a></li>
             <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/staffs') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/staffs"><i class="fas fa-user-tie"></i> <span>Nhân sự</span></a></li>
             <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/news') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/news"><i class="fas fa-newspaper"></i> <span>Tin tức</span></a></li>

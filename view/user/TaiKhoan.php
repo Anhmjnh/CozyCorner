@@ -1,6 +1,6 @@
 <?php
 // views/user/TaiKhoan.php
-// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect về Router chuẩn
+
 if (!isset($user)) {
     require_once __DIR__ . '/../../config.php';
     header("Location: " . BASE_URL . "index.php?url=user/account");
@@ -454,10 +454,15 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
 
         <ul class="account-sidebar__menu">
-            <li><a href="<?= BASE_URL ?>index.php?url=user/account&tab=profile" class="<?= $tab === 'profile' ? 'active' : '' ?>"><i class="fas fa-user"></i>
+            <li><a href="<?= BASE_URL ?>index.php?url=user/account&tab=profile"
+                    class="<?= $tab === 'profile' ? 'active' : '' ?>"><i class="fas fa-user"></i>
                     Thông tin tài khoản</a></li>
-            <li><a href="<?= BASE_URL ?>index.php?url=user/account&tab=orders" class="<?= $tab === 'orders' ? 'active' : '' ?>"><i class="fas fa-box"></i> Lịch
+            <li><a href="<?= BASE_URL ?>index.php?url=user/account&tab=orders"
+                    class="<?= $tab === 'orders' ? 'active' : '' ?>"><i class="fas fa-box"></i> Lịch
                     sử mua hàng</a></li>
+            <li><a href="<?= BASE_URL ?>index.php?url=user/account&tab=vouchers"
+                    class="<?= $tab === 'vouchers' ? 'active' : '' ?>"><i class="fas fa-ticket-alt"></i> Kho Voucher</a>
+            </li>
             <li><a href="<?= BASE_URL ?>index.php?url=auth/logout" style="color: #555555;"><i
                         class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
         </ul>
@@ -548,13 +553,15 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <a href="javascript:void(0)" onclick="viewOrder(<?= $order['id'] ?>)"
                                         style="color: #2e5932; font-weight: bold; text-decoration: none; margin-right: 15px;"><i
                                             class="fas fa-eye"></i> Xem</a>
-                                    
-                                    <?php 
+
+                                    <?php
                                     // Logic: Chỉ cho phép hủy nếu đang Chờ Xác Nhận (chưa thanh toán QR / chưa duyệt COD).
                                     // Nếu đã Đang Giao, chỉ cho phép hủy nếu là đơn COD (vì chưa thu tiền). QR đã sang Đang Giao tức là đã thanh toán -> CẤM HỦY.
                                     $canCancel = false;
-                                    if (($order['trang_thai'] ?? '') === 'ChoXacNhan') $canCancel = true;
-                                    elseif (($order['trang_thai'] ?? '') === 'DangGiao' && ($order['phuong_thuc_thanh_toan'] ?? 'COD') === 'COD') $canCancel = true;
+                                    if (($order['trang_thai'] ?? '') === 'ChoXacNhan')
+                                        $canCancel = true;
+                                    elseif (($order['trang_thai'] ?? '') === 'DangGiao' && ($order['phuong_thuc_thanh_toan'] ?? 'COD') === 'COD')
+                                        $canCancel = true;
                                     ?>
                                     <?php if ($canCancel): ?>
                                         <a href="javascript:void(0)" onclick="showCancelConfirm(<?= $order['id'] ?>)"
@@ -568,6 +575,71 @@ require_once __DIR__ . '/../../includes/header.php';
                 </table>
             <?php endif; ?>
 
+        <?php elseif ($tab === 'vouchers'): ?>
+            <div class="account-content__header">
+                <h2 class="account-content__title">Kho Voucher Của Bạn</h2>
+            </div>
+
+            <div class="voucher-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+                <?php if (empty($activeVouchers)): ?>
+                    <div
+                        style="grid-column: 1 / -1; text-align: center; padding: 60px 0; background: #fdfdfd; border-radius: 8px; border: 1px dashed #ccc;">
+                        <i class="fas fa-ticket-alt" style="font-size: 50px; color: #ddd; margin-bottom: 15px;"></i>
+                        <p style="color: #777; font-size: 1.1rem; margin-bottom: 20px;">Hiện tại chưa có mã giảm giá nào.</p>
+                        <a href="<?= BASE_URL ?>index.php?url=product" class="account__button">MUA SẮM NGAY</a>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($activeVouchers as $v): ?>
+                        <div class="user-voucher-card"
+                            style="display: flex; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: transform 0.3s, box-shadow 0.3s;"
+                            onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 15px rgba(0,0,0,0.08)'"
+                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.03)'">
+                            <div
+                                style="background: <?= $v['loai_voucher'] == 'FreeShip' ? '#3498db' : '#2e5932' ?>; color: white; width: 90px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 28px; border-right: 2px dashed #eee; position: relative;">
+                                <?= $v['loai_voucher'] == 'FreeShip' ? '<i class="fas fa-shipping-fast"></i>' : '<i class="fas fa-percent"></i>' ?>
+                                <div
+                                    style="position: absolute; right: -9px; top: -9px; width: 16px; height: 16px; background: white; border-radius: 50%; border: 1px solid #e0e0e0; border-top-color: transparent; border-right-color: transparent; transform: rotate(45deg);">
+                                </div>
+                                <div
+                                    style="position: absolute; right: -9px; bottom: -9px; width: 16px; height: 16px; background: white; border-radius: 50%; border: 1px solid #e0e0e0; border-bottom-color: transparent; border-right-color: transparent; transform: rotate(-45deg);">
+                                </div>
+                            </div>
+                            <div
+                                style="padding: 15px 15px 15px 20px; flex: 1; background: #fff; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <h4 style="margin: 0 0 8px 0; color: #333; font-size: 16px;">
+                                        <?php
+                                        if ($v['loai_voucher'] == 'TienMat')
+                                            echo 'Giảm ' . number_format($v['gia_tri']) . 'đ';
+                                        elseif ($v['loai_voucher'] == 'PhanTram')
+                                            echo 'Giảm ' . $v['gia_tri'] . '%';
+                                        elseif ($v['loai_voucher'] == 'FreeShip')
+                                            echo 'Miễn phí vận chuyển (tối đa ' . number_format($v['gia_tri']) . 'đ)';
+                                        ?>
+                                    </h4>
+                                    <p style="margin: 0 0 12px 0; font-size: 13px; color: #666; line-height: 1.5;">
+                                        Đơn tối thiểu <?= number_format($v['don_toi_thieu']) ?>đ
+                                        <?php if ($v['loai_voucher'] == 'PhanTram' && $v['giam_toi_da'] > 0): ?>
+                                            <br>Giảm tối đa <?= number_format($v['giam_toi_da']) ?>đ
+                                        <?php endif; ?>
+                                    </p>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="font-size: 12px; color: #999;">
+                                        HSD:
+                                        <?= $v['ngay_het_han'] ? date('d/m/Y', strtotime($v['ngay_het_han'])) : 'Không giới hạn' ?>
+                                    </div>
+                                    <button onclick="copyVoucherCode('<?= htmlspecialchars($v['ma_voucher']) ?>')"
+                                        style="background: #f8fbf9; border: 1px solid #2e5932; padding: 6px 12px; border-radius: 4px; font-weight: 600; color: #2e5932; cursor: pointer; font-size: 12px; transition: 0.3s;"
+                                        onmouseover="this.style.background='#2e5932'; this.style.color='#fff'"
+                                        onmouseout="this.style.background='#f8fbf9'; this.style.color='#2e5932'">Sao chép</button>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
     </div>
 </div>
@@ -725,6 +797,21 @@ require_once __DIR__ . '/../../includes/header.php';
         if (event.target === cancelModal) {
             cancelModal.style.display = "none";
         }
+    }
+</script>
+
+<script>
+    function copyVoucherCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            // Tự động tạo một toast nhỏ báo thành công
+            const toast = document.createElement('div');
+            toast.innerText = `Đã sao chép mã: ${code}`;
+            toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #355F2E; color: white; padding: 10px 20px; border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 9999; font-family: Open Sans; font-size: 14px;';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }).catch(err => {
+            alert('Không thể sao chép mã. Vui lòng thử lại.');
+        });
     }
 </script>
 

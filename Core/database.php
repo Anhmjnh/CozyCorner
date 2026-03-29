@@ -24,5 +24,12 @@ class Database {
     public function getConnection() {
         return $this->conn;
     }
+
+    // Tự động đóng kết nối khi toàn bộ chương trình (script) PHP kết thúc
+    public function __destruct() {
+        if ($this->conn) {
+            $this->conn->close();
+        }
+    }
 }
 ?>

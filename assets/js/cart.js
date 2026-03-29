@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Load giỏ hàng lần đầu
     loadCart();
 
-    // Xử lý sự kiện "Thêm vào giỏ" (Event Delegation)
+    // Xử lý sự kiện "Thêm vào giỏ" 
     document.body.addEventListener('click', function (e) {
         const addBtn = e.target.closest('.js__add-to-cart');
         if (addBtn) {

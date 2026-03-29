@@ -44,7 +44,7 @@ $current_category = isset($_GET['category']) ? $_GET['category'] : 'Tất cả';
     .news__item {
         display: flex;
         flex-direction: column;
-        height: 100%; /* Giúp các khung bài viết dài bằng nhau trên cùng 1 hàng */
+        height: 100%; 
     }
     .news__item > a {
         display: block;
@@ -52,13 +52,13 @@ $current_category = isset($_GET['category']) ? $_GET['category'] : 'Tất cả';
     }
     .news__image {
         width: 100%;
-        height: 240px; /* Cố định chiều cao ảnh, bạn có thể chỉnh to/nhỏ tùy ý */
-        object-fit: cover; /* Cắt ảnh cho vừa vặn khung mà không bị méo tỉ lệ */
-        border-radius: 8px; /* Bo tròn góc ảnh nhẹ nhàng */
+        height: 240px; 
+        object-fit: cover; 
+        border-radius: 8px; 
     }
     .news__headline {
         margin-top: 10px;
-        flex-grow: 1; /* Tự động giãn không gian để các chữ thẳng hàng */
+        flex-grow: 1; 
     }
 </style>
 

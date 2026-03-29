@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/AdminModel.php';
 
-// Load thư viện PHPMailer cho tính năng Quên mật khẩu
+
 require_once __DIR__ . '/../libs/PHPMailer/src/Exception.php';
 require_once __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
@@ -28,7 +28,7 @@ class AuthController
                 exit;
             }
 
-            // 1. Kiểm tra bảng admins trước (Tích hợp Admin vào chung form)
+            // . Kiểm tra bảng admins trước 
             // Cho phép Admin đăng nhập bằng email hoặc tên đăng nhập (username)
             $adminModel = new AdminModel();
             $admin = $adminModel->getAdminByEmailOrUsername($email);
@@ -42,12 +42,12 @@ class AuthController
                     exit;
                 }
 
-                $dbPassword = trim($admin['password']); // Xóa các ký tự thừa như \r\n trong CSDL nếu có
+                $dbPassword = trim($admin['password']); 
 
-                // Kiểm tra mật khẩu (hỗ trợ hash bảo mật VÀ cả chuỗi plain text tạm thời)
+               
                 if (password_verify($password, $dbPassword) || $password === $dbPassword) {
 
-                    // CHỨC NĂNG NÂNG CẤP: Nếu mật khẩu vẫn là plain text '12345', tự động mã hóa Hash và lưu đè lại vào CSDL!
+                   
                     if ($password === $dbPassword) {
                         $newHash = password_hash($password, PASSWORD_DEFAULT);
                         $adminModel->updateAdminPassword($admin['id'], $newHash);
@@ -106,7 +106,7 @@ class AuthController
         }
     }
 
-    // --- CÁC PHƯƠNG THỨC CHO QUÊN MẬT KHẨU (CHUẨN MVC) ---
+    // ---  PHƯƠNG THỨC CHO QUÊN MẬT KHẨU  ---
 
     public function forgotPassword()
     {
@@ -158,7 +158,7 @@ class AuthController
                         header("Location: " . BASE_URL . "index.php?url=auth/verifyOtp");
                         exit;
                     } catch (Exception $e) {
-                        // Hiển thị lỗi chi tiết từ Google để biết đường sửa
+                        // Hiển thị lỗi chi tiết từ Google 
                         $error = 'Lỗi SMTP: ' . $mail->ErrorInfo;
                         unset($_SESSION['reset_email'], $_SESSION['reset_otp'], $_SESSION['otp_expire']);
                     }
@@ -252,7 +252,7 @@ class AuthController
         // Redirect về trang trước đó (hoặc trang chủ nếu không có)
         $redirect = $_SERVER['HTTP_REFERER'] ?? BASE_URL;
 
-        // An toàn hơn: Nếu trang trước đó là trang cần đăng nhập, chuyển về trang chủ
+        //  Nếu trang trước đó là trang cần đăng nhập, chuyển về trang chủ
         if (strpos($redirect, 'TaiKhoan.php') !== false || strpos($redirect, 'CapNhatTaiKhoan.php') !== false || strpos($redirect, 'ThanhToan.php') !== false) {
             $redirect = BASE_URL;
         }

@@ -1,5 +1,5 @@
 <?php
-// admin/staffs.php (Đóng vai trò View trong MVC)
+// admin/staffs.php 
 
 if (!isset($staffs)) {
     require_once __DIR__ . '/../config.php';
@@ -12,7 +12,7 @@ $current_role = $_SESSION['admin_role'] ?? 'Staff';
 ?>
 
 <style>
-    /* --- STYLES CHO MODAL XÁC NHẬN XÓA (Chuẩn hóa) --- */
+    /* S CHO MODAL XÁC NHẬN XÓA  */
     .custom-modal {
         display: none;
         position: fixed;

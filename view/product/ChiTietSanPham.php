@@ -1,7 +1,7 @@
 <?php
 // views/product/ChiTietSanPham.php
 
-// Nếu truy cập trực tiếp file này thay vì qua MVC, tự động Redirect về Router chuẩn
+
 if (!isset($product)) {
     require_once __DIR__ . '/../../config.php';
     header("Location: " . BASE_URL . "index.php?url=product/detail&id=" . ($_GET['id'] ?? 0));
@@ -15,13 +15,97 @@ require_once __DIR__ . '/../../includes/header.php';
 <ul class="breadcrumb">
     <li><a href="<?= BASE_URL ?>">Trang chủ</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>
-    <li><a href="<?= BASE_URL ?>view/product/DanhMucSanPham.php">Sản phẩm</a></li>
+    <li><a href="<?= BASE_URL ?>index.php?url=product">Sản phẩm</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>
     <li><?= htmlspecialchars($product['ten_sp'] ?? 'Chi tiết sản phẩm') ?></li>
 </ul>
 
 <style>
-    /* --- STYLES CHO MODAL THÔNG BÁO --- */
+    /* ---  LIGHTBOX PHÓNG TO ẢNH --- */
+    .lightbox {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        padding-top: 50px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.85);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .lightbox-content {
+        margin: auto;
+        display: block;
+        max-width: 90%;
+        max-height: 90vh;
+        animation-name: zoom;
+        animation-duration: 0.4s;
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 25px;
+        right: 45px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        transition: 0.3s;
+        cursor: pointer;
+    }
+
+    .lightbox-close:hover,
+    .lightbox-close:focus {
+        color: #bbb;
+        text-decoration: none;
+    }
+
+    /* ---  KHUNG ẢNH CHÍNH --- */
+    .product__image {
+        position: relative;
+        cursor: zoom-in;
+        overflow: hidden;
+        border-radius: 12px;
+        border: 1px solid #eee;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .product__image img {
+        width: 100%;
+        display: block;
+        transition: transform 0.4s ease;
+    }
+
+    .product__image:hover img {
+        transform: scale(1.05);
+    }
+
+    .zoom-icon {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: rgba(255, 255, 255, 0.8);
+        color: #333;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+    }
+
+    .product__image:hover .zoom-icon {
+        opacity: 1;
+    }
+
+    /* ---  MODAL THÔNG BÁO --- */
     .custom-notification-modal {
         display: none;
         position: fixed;
@@ -73,27 +157,59 @@ require_once __DIR__ . '/../../includes/header.php';
         color: white;
     }
 
-    .btn-success-modal { background-color: #28a745; }
-    .btn-success-modal:hover { background-color: #218838; }
-    .btn-error-modal { background-color: #dc3545; }
-    .btn-error-modal:hover { background-color: #c82333; }
+    .btn-success-modal {
+        background-color: #28a745;
+    }
+
+    .btn-success-modal:hover {
+        background-color: #218838;
+    }
+
+    .btn-error-modal {
+        background-color: #dc3545;
+    }
+
+    .btn-error-modal:hover {
+        background-color: #c82333;
+    }
 
     /* Animation */
     @keyframes animatetop {
         from {
-            top: -300px;
+            transform: scale(0.5);
             opacity: 0
         }
+
         to {
-            top: 0;
+            transform: scale(1);
             opacity: 1
         }
+    }
+
+   
+    .product__quantity-value,
+    .product__mobile-quantity-value {
+        padding: 0 5px !important;
+        text-align: center;
+        transition: width 0.2s ease-out;
+        box-sizing: border-box;
+        height: 40px !important;
+        font-weight: 400 !important;
+        vertical-align: middle;
+        margin: 0;
+    }
+
+    .product__quantity-btn,
+    .product__mobile-quantity-btn {
+        height: 40px !important;
+        box-sizing: border-box;
+        vertical-align: middle;
     }
 </style>
 <?php if (!$product): ?>
     <p style="text-align: center; padding: 50px; font-size: 1.2rem;">Sản phẩm không tồn tại hoặc đã bị ẩn.</p>
     <?php require_once __DIR__ . '/../../includes/footer.php';
-    exit; // Dừng không hiển thị phần còn lại ?>
+    exit;  ?>
 <?php endif; ?>
 
 <!-- CONTENT -->
@@ -102,21 +218,16 @@ require_once __DIR__ . '/../../includes/header.php';
     <div class="product__left">
         <!-- Gallery -->
         <div class="product__gallery">
-            <div class="product__image">
+            <div class="product__image" id="product-image-container">
                 <?php if ($product && $product['anh']): ?>
-                    <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($product['anh']) ?>"
+                    <img id="main-product-image" src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($product['anh']) ?>"
                         alt="<?= htmlspecialchars($product['ten_sp']) ?>">
                 <?php else: ?>
-                    <img src="<?= BASE_URL ?>assets/img/no-image.png" alt="Chưa có ảnh">
+                    <img id="main-product-image" src="<?= BASE_URL ?>assets/img/no-image.png" alt="Chưa có ảnh">
                 <?php endif; ?>
+                <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
             </div>
-            <div class="product__thumbnails">
-                <!-- Hiện tại chỉ 1 ảnh chính, sau này có thể thêm nhiều ảnh thumbnail từ DB -->
-                <?php if ($product && $product['anh']): ?>
-                    <img class="product__thumbnail product__thumbnail--active"
-                        src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($product['anh']) ?>" alt="Thumbnail">
-                <?php endif; ?>
-            </div>
+            
         </div>
 
         <!-- SIDEBAR__MOBILE -->
@@ -130,7 +241,8 @@ require_once __DIR__ . '/../../includes/header.php';
                             <?php if ($i <= floor($avg_rating)): ?>
                                 <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star">
                             <?php else: ?>
-                                <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star off" style="filter: grayscale(100%) opacity(30%);">
+                                <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star off"
+                                    style="filter: grayscale(100%) opacity(30%);">
                             <?php endif; ?>
                         <?php endfor; ?>
                     </span>
@@ -141,7 +253,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <div class="product__mobile-price">
                 <?php if ($product): ?>
                     <span
-                        class="product__mobile-price-old"><?= $product['gia_cu'] ? number_format($product['gia_cu']) . 'đ' : '' ?></span>
+                        class="product__mobile-price-old"><?= $product['gia_cu'] > $product['gia'] ? number_format($product['gia_cu']) . 'đ' : '' ?></span>
                     <span class="product__mobile-price-new" id="mobile-price"><?= number_format($product['gia']) ?>đ</span>
                     <?php if ($product['gia_cu'] > $product['gia']): ?>
                         <span
@@ -150,69 +262,47 @@ require_once __DIR__ . '/../../includes/header.php';
                 <?php endif; ?>
             </div>
 
-            <!-- Các tùy chọn màu sắc, kích thước này là giao diện tĩnh, chưa có logic -->
-            <div class="product__mobile-options">
-                <div class="product__mobile-colors">
-                    <p class="product__mobile-label">Màu</p>
-                    <button class="product__mobile-color product__mobile-color--white"></button>
-                    <button class="product__mobile-color product__mobile-color--green"></button>
-                    <button class="product__mobile-color product__mobile-color--orange"></button>
+            <!-- Form thêm vào giỏ hàng -->
+            <form id="form-add-to-cart-mobile" class="product__mobile-actions-form">
+                <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                <div class="product__mobile-quantity">
+                    <p class="product__mobile-label">Số lượng</p>
+                    <?php if ($product['so_luong_ton'] > 0): ?>
+                        <button type="button" class="product__mobile-quantity-btn"
+                            onclick="changeQty('mobile-quantity', -1)">−</button>
+                        <input id="mobile-quantity" name="quantity" class="product__mobile-quantity-value" type="number"
+                            value="1" min="1" max="<?= $product['so_luong_ton'] ?>">
+                        <button type="button" class="product__mobile-quantity-btn"
+                            onclick="changeQty('mobile-quantity', 1)">+</button>
+                    <?php else: ?>
+                        <span style="color: #e74c3c; font-weight: bold; font-size: 16px;">Hết hàng</span>
+                    <?php endif; ?>
                 </div>
 
-                <div class="product__mobile-sizes">
-                    <p class="product__mobile-label">Kích thước</p>
-                    <button class="product__mobile-size">20cm</button>
-                    <button class="product__mobile-size">24cm</button>
-                    <button class="product__mobile-size">28cm</button>
+                <div class="product__mobile-actions">
+                    <?php if ($product['so_luong_ton'] > 0): ?>
+                        <button type="submit" name="action" value="buy_now" class="product__mobile-buy">MUA NGAY</button>
+                        <button type="submit" name="action" value="add_to_cart" class="product__mobile-cart">
+                            <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                        </button>
+                    <?php else: ?>
+                        <button type="button" disabled class="product__mobile-buy"
+                            style="background: #ccc; cursor: not-allowed; width: 100%;">HẾT HÀNG</button>
+                    <?php endif; ?>
                 </div>
-
-                <!-- Form thêm vào giỏ hàng -->
-                <form id="form-add-to-cart-mobile" class="product__mobile-actions-form">
-                    <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                    <div class="product__mobile-quantity">
-                        <p class="product__mobile-label">Số lượng</p>
-                        <?php if ($product['so_luong_ton'] > 0): ?>
-                            <button type="button" class="product__mobile-quantity-btn"
-                                onclick="this.nextElementSibling.stepDown(); updatePrice('mobile-quantity', 'mobile-price')">−</button>
-                            <input id="mobile-quantity" name="quantity" class="product__mobile-quantity-value" type="number"
-                                value="1" min="1" max="<?= $product['so_luong_ton'] ?>" readonly>
-                            <button type="button" class="product__mobile-quantity-btn"
-                                onclick="this.previousElementSibling.stepUp(); updatePrice('mobile-quantity', 'mobile-price')">+</button>
-                        <?php else: ?>
-                            <span style="color: #e74c3c; font-weight: bold; font-size: 16px;">Hết hàng</span>
-                        <?php endif; ?>
-                    </div>
-            </div>
-
-            <div class="product__mobile-actions">
-                <?php if ($product['so_luong_ton'] > 0): ?>
-                    <button type="submit" name="action" value="buy_now" class="product__mobile-buy">MUA NGAY</button>
-                    <button type="submit" name="action" value="add_to_cart" class="product__mobile-cart">
-                        <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
-                    </button>
-                <?php else: ?>
-                    <button type="button" disabled class="product__mobile-buy" style="background: #ccc; cursor: not-allowed; width: 100%;">HẾT HÀNG</button>
-                <?php endif; ?>
-            </div>
             </form>
         </div>
 
         <!-- Mô Tả Sản Phẩm -->
         <div class="product__description">
             <div class="product__description-title">Mô Tả</div>
-            <?php if ($product && $product['mo_ta']): ?>
-                <p class="product__description-text">
+            <?php if ($product && !empty($product['mo_ta'])): ?>
+                <div class="product__description-text" style="line-height: 1.7; font-size: 16px;">
                     <?= nl2br(htmlspecialchars($product['mo_ta'])) ?>
-                </p>
+                </div>
             <?php else: ?>
                 <p class="product__description-text">Chưa có mô tả cho sản phẩm này.</p>
             <?php endif; ?>
-
-            <!-- Các phần mô tả chi tiết khác giữ nguyên tĩnh hoặc thêm từ DB nếu cần -->
-            <div class="product__description-subtitle">• Thiết kế tiện dụng</div>
-            <p class="product__description-text">
-                Sản phẩm được thiết kế đơn giản nhưng tiện lợi, dễ sử dụng cho mọi gia đình.
-            </p>
         </div>
 
         <!-- Đánh Giá -->
@@ -275,10 +365,23 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <?php if ($i < $review['rating']): ?>
                                         <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star">
                                     <?php else: ?>
-                                        <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star off" style="filter: grayscale(100%) opacity(30%);">
+                                        <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star off"
+                                            style="filter: grayscale(100%) opacity(30%);">
                                     <?php endif; ?>
                                 <?php endfor; ?>
                                 <p class="review__text"><?= nl2br(htmlspecialchars($review['comment'])) ?></p>
+
+                                <?php if ($is_logged_in && isset($_SESSION['user_id']) && $_SESSION['user_id'] == $review['user_id']): ?>
+                                    <div style="margin-top: 10px;">
+                                        <button
+                                            onclick="editReview(<?= $review['id'] ?>, <?= $review['rating'] ?>, '<?= htmlspecialchars(addslashes($review['comment'])) ?>')"
+                                            style="background: none; border: none; color: #2e5932; cursor: pointer; font-size: 13px; font-weight: bold; padding: 0; margin-right: 15px;"><i
+                                                class="fas fa-edit"></i> Sửa</button>
+                                        <button onclick="deleteReview(<?= $review['id'] ?>)"
+                                            style="background: none; border: none; color: #2e5932; cursor: pointer; font-size: 13px; font-weight: bold; padding: 0;"><i
+                                                class="fas fa-trash"></i> Xóa</button>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -304,7 +407,8 @@ require_once __DIR__ . '/../../includes/header.php';
                         <?php if ($i <= floor($avg_rating)): ?>
                             <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star">
                         <?php else: ?>
-                            <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star off" style="filter: grayscale(100%) opacity(30%);">
+                            <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star off"
+                                style="filter: grayscale(100%) opacity(30%);">
                         <?php endif; ?>
                     <?php endfor; ?>
                 </span>
@@ -315,7 +419,7 @@ require_once __DIR__ . '/../../includes/header.php';
         <div class="product__price">
             <?php if ($product): ?>
                 <span
-                    class="product__price-old"><?= $product['gia_cu'] ? number_format($product['gia_cu']) . 'đ' : '' ?></span>
+                    class="product__price-old"><?= $product['gia_cu'] > $product['gia'] ? number_format($product['gia_cu']) . 'đ' : '' ?></span>
                 <span class="product__price-new" id="desktop-price"><?= number_format($product['gia']) ?>đ</span>
                 <?php if ($product['gia_cu'] > $product['gia']): ?>
                     <span
@@ -328,35 +432,18 @@ require_once __DIR__ . '/../../includes/header.php';
         <form id="form-add-to-cart-desktop" class="product__actions-form">
             <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
 
-            <!-- Các tùy chọn màu sắc, kích thước này là giao diện tĩnh, chưa có logic -->
-            <div class="product__options">
-                <div class="product__colors">
-                    <p class="product__label">Màu</p>
-                    <button type="button" class="product__color product__color--white"></button>
-                    <button type="button" class="product__color product__color--green"></button>
-                    <button type="button" class="product__color product__color--orange"></button>
-                </div>
-
-                <div class="product__sizes">
-                    <p class="product__label">Kích thước</p>
-                    <button type="button" class="product__size">20cm</button>
-                    <button type="button" class="product__size">24cm</button>
-                    <button type="button" class="product__size">28cm</button>
-                </div>
-
-                <div class="product__quantity">
-                    <p class="product__label">Số lượng</p>
-                    <?php if ($product['so_luong_ton'] > 0): ?>
-                        <button type="button" class="product__quantity-btn"
-                            onclick="this.nextElementSibling.stepDown(); updatePrice('desktop-quantity', 'desktop-price')">−</button>
-                        <input id="desktop-quantity" name="quantity" class="product__quantity-value" type="number" value="1"
-                            min="1" max="<?= $product['so_luong_ton'] ?>" readonly>
-                        <button type="button" class="product__quantity-btn"
-                            onclick="this.previousElementSibling.stepUp(); updatePrice('desktop-quantity', 'desktop-price')">+</button>
-                    <?php else: ?>
-                        <span style="color: #e74c3c; font-weight: bold; font-size: 16px;">Hết hàng</span>
-                    <?php endif; ?>
-                </div>
+            <div class="product__quantity">
+                <p class="product__label">Số lượng</p>
+                <?php if ($product['so_luong_ton'] > 0): ?>
+                    <button type="button" class="product__quantity-btn"
+                        onclick="changeQty('desktop-quantity', -1)">−</button>
+                    <input id="desktop-quantity" name="quantity" class="product__quantity-value" type="number" value="1"
+                        min="1" max="<?= $product['so_luong_ton'] ?>">
+                    <button type="button" class="product__quantity-btn"
+                        onclick="changeQty('desktop-quantity', 1)">+</button>
+                <?php else: ?>
+                    <span style="color: #e74c3c; font-weight: bold; font-size: 16px;">Hết hàng</span>
+                <?php endif; ?>
             </div>
 
             <div class="product__actions">
@@ -366,7 +453,8 @@ require_once __DIR__ . '/../../includes/header.php';
                         <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
                     </button>
                 <?php else: ?>
-                    <button type="button" disabled class="product__buy" style="background: #ccc; cursor: not-allowed; width: 100%;">HẾT HÀNG</button>
+                    <button type="button" disabled class="product__buy"
+                        style="background: #ccc; cursor: not-allowed; width: 100%;">HẾT HÀNG</button>
                 <?php endif; ?>
             </div>
         </form>
@@ -381,7 +469,7 @@ require_once __DIR__ . '/../../includes/header.php';
         <?php if (!empty($similar_products)): ?>
             <?php foreach ($similar_products as $item): ?>
                 <div class="product__card">
-                    <a href="<?= BASE_URL ?>view/product/ChiTietSanPham.php?id=<?= $item['id'] ?>">
+                    <a href="<?= BASE_URL ?>index.php?url=product/detail&id=<?= $item['id'] ?>">
                         <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['anh']) ?>"
                             alt="<?= htmlspecialchars($item['ten_sp']) ?>" class="product__card-image">
                     </a>
@@ -401,7 +489,9 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
                             </a>
                         <?php else: ?>
-                            <span class="product__card-cart" style="border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; text-decoration: none;" title="Hết hàng">Hết hàng</span>
+                            <span class="product__card-cart"
+                                style="border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; text-decoration: none;"
+                                title="Hết hàng">Hết hàng</span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -438,16 +528,19 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="review__modal js__rating-modal">
     <div class="review__modal-content js__rating-content">
         <div class="review__modal-title">Đánh Giá</div>
-        
+
         <?php if ($is_logged_in && $user_info): ?>
             <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 24px;">
-                <img src="<?= !empty($user_info['avatar']) ? BASE_URL . htmlspecialchars($user_info['avatar']) : BASE_URL . 'assets/icon/icon-user-black.svg' ?>" alt="avatar" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #355F2E;">
+                <img src="<?= !empty($user_info['avatar']) ? BASE_URL . htmlspecialchars($user_info['avatar']) : BASE_URL . 'assets/icon/icon-user-black.svg' ?>"
+                    alt="avatar"
+                    style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #355F2E;">
                 <strong style="font-size: 20px; color: #333;"><?= htmlspecialchars($user_info['ho_ten']) ?></strong>
             </div>
         <?php endif; ?>
 
         <form id="review-form" class="review__modal-form">
             <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+            <input type="hidden" name="review_id" id="review-id-input" value="">
             <input type="hidden" name="rating" id="review-rating-input" value="5">
 
             <div class="review__modal-stars" id="review-star-selector">
@@ -476,139 +569,222 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
+<!-- Lightbox Modal HTML -->
+<div id="imageLightbox" class="lightbox">
+    <span class="lightbox-close" id="closeLightbox">&times;</span>
+    <img class="lightbox-content" id="lightboxImage">
+</div>
 
-<a href="javascript:void(0)" id="hidden-cart-trigger" class="js__add-to-cart" style="display:none;"
-    data-product-id="<?= $product['id'] ?>"></a>
-
-<!-- SCRIPT CHUNG CHO TRANG -->
 <script>
-    // --- LOGIC MODAL THÔNG BÁO TÙY CHỈNH ---
-    function showNotification(message, isSuccess) {
-        const modal = document.getElementById('notificationModal');
-        const icon = document.getElementById('notificationIcon');
-        const msg = document.getElementById('notificationMessage');
-        const btn = document.getElementById('notificationCloseBtn');
-
-        msg.innerText = message;
-
-        // Xóa các class cũ để reset
-        icon.className = 'fas';
-        btn.className = 'btn';
-
-        if (isSuccess) {
-            icon.classList.add('fa-check-circle');
-            icon.style.color = '#28a745';
-            btn.classList.add('btn-success-modal');
-        } else {
-            icon.classList.add('fa-times-circle');
-            icon.style.color = '#dc3545';
-            btn.classList.add('btn-error-modal');
-        }
-
-        modal.style.display = 'flex';
-
-        const closeModal = () => {
-            modal.style.display = 'none';
-            if (isSuccess) {
-                window.location.reload(); // Tải lại trang chỉ khi thành công
-            }
-        };
-
-        btn.onclick = closeModal;
-
-        // Đóng modal khi click ra ngoài
-        modal.onclick = function (event) {
-            if (event.target === modal) {
-                closeModal();
-            }
-        }
-
-        // Đóng modal khi nhấn phím Escape
-        document.addEventListener('keydown', function(event) {
-            if (event.key === "Escape") {
-                closeModal();
-            }
-        });
-    }
-
-    // Cập nhật giá theo số lượng
-    const productPrice = <?= $product['gia'] ?? 0 ?>;
-
-    function updatePrice(inputId, priceId) {
-        const qtyInput = document.getElementById(inputId);
-        const priceEl = document.getElementById(priceId);
-        if (qtyInput && priceEl) {
-            const qty = parseInt(qtyInput.value) || 1;
-            const newPrice = productPrice * qty;
-            priceEl.innerText = newPrice.toLocaleString('vi-VN') + 'đ';
-        }
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
+        const productPrice = <?= $product['gia'] ?? 0 ?>;
+
+        // SCRIPT CHO LIGHTBOX 
+        const lightbox = document.getElementById('imageLightbox');
+        const lightboxImg = document.getElementById('lightboxImage');
+        const mainImgContainer = document.getElementById('product-image-container');
+        const closeBtn = document.getElementById('closeLightbox');
+
+        if (mainImgContainer) {
+            mainImgContainer.addEventListener('click', function () {
+                lightbox.style.display = 'flex';
+                lightboxImg.src = document.getElementById('main-product-image').src;
+            });
+        }
+
+        const closeLightbox = () => lightbox.style.display = 'none';
+        if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+        if (lightbox) {
+            lightbox.addEventListener('click', function (e) {
+                if (e.target === lightbox) closeLightbox();
+            });
+        }
+
+        // LOGIC TĂNG GIẢM SỐ LƯỢNG 
+        window.changeQty = function (inputId, amount) {
+            const qtyInput = document.getElementById(inputId);
+            if (!qtyInput) return;
+            let currentValue = parseInt(qtyInput.value);
+            let newValue = currentValue + amount;
+            const max = parseInt(qtyInput.max);
+            if (newValue < 1) newValue = 1;
+            if (newValue > max) newValue = max;
+            qtyInput.value = newValue;
+            updatePrice(inputId);
+
+            // Hiệu ứng mở rộng ô nhập theo số lượng chữ số
+            updateInputWidth(qtyInput);
+        }
+
+        // Hàm cập nhật độ rộng ô input
+        function updateInputWidth(inputEl) {
+            if (inputEl) {
+                const numLength = inputEl.value.toString().length;
+                inputEl.style.width = (35 + numLength * 10) + 'px';
+            }
+        }
+
+
+        function setupManualInput(inputId) {
+            const inputEl = document.getElementById(inputId);
+            if (!inputEl) return;
+
+            inputEl.addEventListener('keydown', function (e) {
+                if (['e', 'E', '+', '-', '.', ','].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+
+            inputEl.addEventListener('input', function () {
+                if (this.value !== '') {
+                    let val = parseInt(this.value);
+                    const max = parseInt(this.getAttribute('max'));
+
+                    if (val > max) {
+                        this.value = max;
+
+
+                        setTimeout(() => {
+                            this.setSelectionRange(this.value.length, this.value.length);
+                        }, 0);
+                    }
+                }
+
+                updateInputWidth(this); ô
+                updatePrice(inputId);
+            });
+
+
+            inputEl.addEventListener('blur', function () {
+                let val = parseInt(this.value);
+                if (isNaN(val) || val < 1) {
+                    this.value = 1; // Nếu để trống hoặc nhập số < 1, tự đưa về 1
+                }
+                updateInputWidth(this);
+                updatePrice(inputId);
+            });
+        }
+
+        // --- LOGIC CẬP NHẬT GIÁ ---
+        window.updatePrice = function (inputId) {
+            const qtyInput = document.getElementById(inputId);
+            const priceId = inputId.includes('mobile') ? 'mobile-price' : 'desktop-price';
+            const priceEl = document.getElementById(priceId);
+            if (qtyInput && priceEl) {
+                const qty = parseInt(qtyInput.value) || 1;
+                const newPrice = productPrice * qty;
+                priceEl.innerText = newPrice.toLocaleString('vi-VN') + 'đ';
+            }
+        }
+
+        // --- LOGIC MODAL THÔNG BÁO ---
+        function showNotification(message, isSuccess) {
+            const modal = document.getElementById('notificationModal');
+            const icon = document.getElementById('notificationIcon');
+            const msg = document.getElementById('notificationMessage');
+            const btn = document.getElementById('notificationCloseBtn');
+            msg.innerText = message;
+            icon.className = 'fas';
+            btn.className = 'btn';
+            if (isSuccess) {
+                icon.classList.add('fa-check-circle');
+                icon.style.color = '#28a745';
+                btn.classList.add('btn-success-modal');
+            } else {
+                icon.classList.add('fa-times-circle');
+                icon.style.color = '#dc3545';
+                btn.classList.add('btn-error-modal');
+            }
+            modal.style.display = 'flex';
+            const closeModal = () => {
+                modal.style.display = 'none';
+                if (isSuccess) window.location.reload();
+            };
+            btn.onclick = closeModal;
+            modal.onclick = (event) => { if (event.target === modal) closeModal(); };
+            document.addEventListener('keydown', (event) => { if (event.key === "Escape") closeModal(); }, { once: true });
+        }
 
         // --- LOGIC MODAL ĐÁNH GIÁ ---
         const ratingBtn = document.querySelector('.js__rating-btn');
         const modalRating = document.querySelector('.js__rating-modal');
         const modalRatingContent = document.querySelector('.js__rating-content');
-        const reviewForm = document.getElementById('review-form');
+
+        window.openReviewModal = function (reviewId = '', rating = 5, comment = '') {
+            document.getElementById('review-id-input').value = reviewId;
+            document.getElementById('review-rating-input').value = rating;
+            document.querySelector('.review__modal-textarea').value = comment;
+
+            const starSelector = document.getElementById('review-star-selector');
+            if (starSelector) {
+                starSelector.querySelectorAll('.review__modal-star').forEach((star, index) => {
+                    star.src = index < rating ? '<?= BASE_URL ?>assets/icon/icon-sao-to.svg' : '<?= BASE_URL ?>assets/icon/icon-sao-to-off.svg';
+                });
+            }
+            if (modalRating) modalRating.classList.add('open');
+        }
+
+        if (ratingBtn) ratingBtn.addEventListener('click', () => openReviewModal());
+        if (modalRating) modalRating.addEventListener('click', () => modalRating.classList.remove('open'));
+        if (modalRatingContent) modalRatingContent.addEventListener('click', e => e.stopPropagation());
+
         const starSelector = document.getElementById('review-star-selector');
-        const ratingInput = document.getElementById('review-rating-input');
-
-        if (ratingBtn) {
-            ratingBtn.addEventListener('click', () => modalRating.classList.add('open'));
-        }
-        if (modalRating) {
-            modalRating.addEventListener('click', () => modalRating.classList.remove('open'));
-        }
-        if (modalRatingContent) {
-            modalRatingContent.addEventListener('click', e => e.stopPropagation());
-        }
-
-        // Star rating logic
         if (starSelector) {
-            const stars = starSelector.querySelectorAll('.review__modal-star');
             starSelector.addEventListener('click', function (e) {
                 if (e.target.classList.contains('review__modal-star')) {
                     const ratingValue = e.target.dataset.value;
-                    ratingInput.value = ratingValue;
-                    stars.forEach((star, index) => {
-                        if (index < ratingValue) {
-                            star.src = '<?= BASE_URL ?>assets/icon/icon-sao-to.svg';
-                        } else {
-                            star.src = '<?= BASE_URL ?>assets/icon/icon-sao-to-off.svg';
-                        }
+                    document.getElementById('review-rating-input').value = ratingValue;
+                    starSelector.querySelectorAll('.review__modal-star').forEach((star, index) => {
+                        star.src = index < ratingValue ? '<?= BASE_URL ?>assets/icon/icon-sao-to.svg' : '<?= BASE_URL ?>assets/icon/icon-sao-to-off.svg';
                     });
                 }
             });
         }
 
-        // AJAX Submit Review
+        const reviewForm = document.getElementById('review-form');
         if (reviewForm) {
             reviewForm.addEventListener('submit', function (e) {
                 e.preventDefault();
-                const formData = new FormData(reviewForm);
-                fetch('<?= BASE_URL ?>index.php?url=review/add', {
+                const reviewId = document.getElementById('review-id-input').value;
+                const actionUrl = reviewId ? '<?= BASE_URL ?>index.php?url=review/update' : '<?= BASE_URL ?>index.php?url=review/add';
+
+                fetch(actionUrl, {
                     method: 'POST',
-                    body: formData
+                    body: new FormData(reviewForm)
                 })
                     .then(res => res.json())
                     .then(res => {
                         const isSuccess = res.status === 'success';
-                        if (isSuccess) {
-                            modalRating.classList.remove('open');
-                        }
+                        if (isSuccess) modalRating.classList.remove('open');
                         showNotification(res.msg, isSuccess);
                     })
-                    .catch(err => {
-                        showNotification('Lỗi kết nối, không thể gửi đánh giá.', false);
-                    });
+                    .catch(() => showNotification('Lỗi kết nối, không thể gửi đánh giá.', false));
             });
         }
+
+        window.editReview = function (id, rating, comment) {
+            openReviewModal(id, rating, comment);
+        };
+
+        window.deleteReview = function (id) {
+            if (confirm('Bạn có chắc chắn muốn xóa đánh giá này không?')) {
+                fetch('<?= BASE_URL ?>index.php?url=review/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ review_id: id })
+                })
+                    .then(res => res.json())
+                    .then(res => {
+                        showNotification(res.msg, res.status === 'success');
+                    })
+                    .catch(() => showNotification('Lỗi kết nối, không thể xóa đánh giá.', false));
+            }
+        };
 
         // --- LOGIC XEM THÊM ĐÁNH GIÁ ---
         const loadMoreBtn = document.querySelector('.js__load-more-reviews');
         if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', function() {
+            loadMoreBtn.addEventListener('click', function () {
                 const hiddenReviews = document.querySelectorAll('.js__review-item[style*="display: none"]');
                 for (let i = 0; i < 3 && i < hiddenReviews.length; i++) {
                     hiddenReviews[i].style.display = 'block';
@@ -623,60 +799,46 @@ require_once __DIR__ . '/../../includes/header.php';
         function handleAddToCart(event) {
             event.preventDefault();
             const form = event.target.closest('form');
-            const action = event.submitter.value; // Lấy value của nút bấm (buy_now hoặc add_to_cart)
+            const action = event.submitter.value;
             const productId = form.querySelector('input[name="product_id"]').value;
             const qtyInput = form.querySelector('input[name="quantity"]');
             const quantity = qtyInput ? parseInt(qtyInput.value) : 1;
 
-            if (action === 'buy_now') {
-                const formData = new FormData(form);
-                formData.append('action', 'buy_now');
-                fetch('<?= BASE_URL ?>index.php?url=cart/add', {
-                    method: 'POST',
-                    body: formData
-                })
-                    .then(res => res.json())
-                    .then(res => {
-                        if (res.status === 'success') {
-                            window.location.href = '<?= BASE_URL ?>view/order/ThanhToan.php';
+            const formData = new FormData();
+            formData.append('product_id', productId);
+            formData.append('quantity', quantity);
+
+            fetch('<?= BASE_URL ?>index.php?url=cart/add', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 'success') {
+                        if (action === 'buy_now') {
+                            window.location.href = '<?= BASE_URL ?>index.php?url=order/checkout';
                         } else {
-                            alert(res.msg || 'Thêm vào giỏ hàng thất bại!');
+                            // Kích hoạt script cart.js gốc để mở modal giỏ hàng
+                            const cartBtn = document.querySelector('.js__cart-btn');
+                            if (cartBtn) cartBtn.click();
                         }
-                    })
-                    .catch(err => alert('Lỗi kết nối, vui lòng thử lại sau.'));
-                return;
-            }
-
-            // Kích hoạt script gốc của hệ thống để mở giỏ hàng chuẩn xác
-            const triggerGlobalCart = () => {
-                const hiddenBtn = document.getElementById('hidden-cart-trigger');
-                if (hiddenBtn) {
-                    hiddenBtn.setAttribute('data-product-id', productId);
-                    hiddenBtn.click();
-                }
-            };
-
-            if (quantity > 1) {
-                // Vì script gốc mặc định thêm 1, ta gửi trước (quantity - 1) lên server
-                const formData = new FormData();
-                formData.append('product_id', productId);
-                formData.append('quantity', quantity - 1);
-                formData.append('action', 'add_to_cart');
-
-                fetch('<?= BASE_URL ?>index.php?url=cart/add', {
-                    method: 'POST',
-                    body: formData
+                    } else {
+                        alert(res.msg || 'Thêm vào giỏ hàng thất bại!');
+                    }
                 })
-                    .then(() => triggerGlobalCart())
-                    .catch(() => alert('Lỗi kết nối!'));
-            } else {
-                // Nếu khách chỉ mua 1 cái, nhường toàn quyền cho script hệ thống tự làm
-                triggerGlobalCart();
-            }
+                .catch(() => alert('Lỗi kết nối, vui lòng thử lại sau.'));
         }
 
         document.getElementById('form-add-to-cart-desktop').addEventListener('submit', handleAddToCart);
         document.getElementById('form-add-to-cart-mobile').addEventListener('submit', handleAddToCart);
+
+        // Khởi tạo kích thước chuẩn cho ô input ngay khi vừa load trang
+        updateInputWidth(document.getElementById('desktop-quantity'));
+        updateInputWidth(document.getElementById('mobile-quantity'));
+
+        // Kích hoạt chức năng nhập tay
+        setupManualInput('desktop-quantity');
+        setupManualInput('mobile-quantity');
     });
 </script>
 

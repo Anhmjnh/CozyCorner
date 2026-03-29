@@ -184,14 +184,14 @@ class AdminModel extends Model
         return $res->fetch_assoc()['total'];
     }
 
-    public function addProduct($ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh)
+    public function addProduct($ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh, $mo_ta)
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $ten_sp)));
-        $sql = "INSERT INTO products (ten_sp, slug, gia, gia_cu, danh_muc, so_luong_ton, trang_thai, anh) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO products (ten_sp, slug, gia, gia_cu, danh_muc, so_luong_ton, trang_thai, anh, mo_ta) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->conn->prepare($sql);
-        // 8 biến: ten(s), slug(s), gia(d), gia_cu(d), danh_muc(s), so_luong(i), trang_thai(s), anh(s)
-        $stmt->bind_param("ssddsiss", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh);
+        // 9 biến: ten(s), slug(s), gia(d), gia_cu(d), danh_muc(s), so_luong(i), trang_thai(s), anh(s), mo_ta(s)
+        $stmt->bind_param("ssddsisss", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh, $mo_ta);
         return $stmt->execute();
     }
 
@@ -210,17 +210,17 @@ class AdminModel extends Model
         return $stmt->get_result()->fetch_assoc();
     }
 
-    public function updateProduct($id, $ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh = null)
+    public function updateProduct($id, $ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh = null, $mo_ta)
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $ten_sp)));
-        $sql = "UPDATE products SET ten_sp = ?, slug = ?, gia = ?, gia_cu = ?, danh_muc = ?, so_luong_ton = ?, trang_thai = ?" . ($anh ? ", anh = ?" : "") . " WHERE id = ?";
+        $sql = "UPDATE products SET ten_sp = ?, slug = ?, gia = ?, gia_cu = ?, danh_muc = ?, so_luong_ton = ?, trang_thai = ?, mo_ta = ?" . ($anh ? ", anh = ?" : "") . " WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
-        // Có ảnh (9 biến): ten(s), slug(s), gia(d), gia_cu(d), danh_muc(s), so_luong(i), trang_thai(s), anh(s), id(i)
+        // Có ảnh (10 biến)
         if ($anh)
-            $stmt->bind_param("ssddsissi", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh, $id);
-        // Không ảnh (8 biến): ten(s), slug(s), gia(d), gia_cu(d), danh_muc(s), so_luong(i), trang_thai(s), id(i)
+            $stmt->bind_param("ssddsisssi", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $mo_ta, $anh, $id);
+        // Không ảnh (9 biến)
         else
-            $stmt->bind_param("ssddsisi", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $id);
+            $stmt->bind_param("ssddsisssi", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $mo_ta, $id);
         return $stmt->execute();
     }
 
@@ -465,10 +465,5 @@ class AdminModel extends Model
         }
     }
 
-    // --- QUẢN LÝ TIN TỨC (Chưa triển khai) ---
-
-    public function close()
-    {
-        $this->conn->close();
-    }
+    
 }

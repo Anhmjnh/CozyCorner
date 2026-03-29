@@ -5,27 +5,26 @@ require_once __DIR__ . '/../../includes/header.php';
 
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COZY CORNER</title>
 
-    <!-- Reset CSS -->
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
 
-    <!-- Font Open Sans -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+        rel="stylesheet">
 
-    <!-- CSS chính (chung cho toàn site) -->
+
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/ChiTietTinTuc.css">
 
-    <!-- CSS riêng cho từng trang - chỉ include ở view cụ thể, không nên include hết ở header -->
-    <!-- Ví dụ: nếu trang chủ cần CSS riêng, include ở TrangChu.php thay vì ở đây -->
 
-    <!-- Font Awesome (cho icon save, user, v.v. nếu cần sau này) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
@@ -36,37 +35,48 @@ require_once __DIR__ . '/../../includes/header.php';
         grid-template-columns: repeat(3, 1fr);
         gap: 30px;
     }
+
     .news__item {
         display: flex;
         flex-direction: column;
         height: 100%;
     }
-    .news__item > a {
+
+    .news__item>a {
         display: block;
         width: 100%;
     }
+
     .news__image {
         width: 100%;
         height: 240px;
         object-fit: cover;
         border-radius: 8px;
     }
+
     .news__headline {
         margin-top: 10px;
         flex-grow: 1;
     }
+
     @media (max-width: 992px) {
-        .news__list { grid-template-columns: repeat(2, 1fr); }
+        .news__list {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
+
     @media (max-width: 768px) {
-        .news__list { grid-template-columns: 1fr; }
+        .news__list {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
 <!-- CONTENT -->
 <div class="post">
     <?php if ($news): ?>
-        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($news['anh']) ?>" alt="<?= htmlspecialchars($news['tieu_de']) ?>" class="post__image">
+        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($news['anh']) ?>"
+            alt="<?= htmlspecialchars($news['tieu_de']) ?>" class="post__image">
 
         <div class="post__content">
             <span class="post__category">Tin tức</span>
@@ -101,7 +111,8 @@ require_once __DIR__ . '/../../includes/header.php';
             <?php foreach ($related_news as $item): ?>
                 <article class="news__item">
                     <a href="<?= BASE_URL ?>index.php?url=news/chiTiet&id=<?= $item['id'] ?>">
-                        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['anh']) ?>" alt="<?= htmlspecialchars($item['tieu_de']) ?>" class="news__image">
+                        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['anh']) ?>"
+                            alt="<?= htmlspecialchars($item['tieu_de']) ?>" class="news__image">
                     </a>
                     <div class="news__content">
                         <div class="news__date"><?= date('d/m/Y', strtotime($item['created_at'])) ?></div>

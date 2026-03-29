@@ -4,13 +4,13 @@ require_once __DIR__ . '/../core/Model.php';
 
 class OrderModel extends Model {
 
-    public function createOrder($user_id, $tong_tien_cuoi, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen) {
-        // Bắt đầu Transaction (Đảm bảo nếu lỗi ở bước nào thì sẽ hoàn tác toàn bộ)
+    public function createOrder($user_id, $tong_tien_cuoi, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen, $giam_gia_thanh_vien = 0, $ma_voucher = null, $giam_gia_voucher = 0) {
+       
         $this->conn->begin_transaction();
         try {
             // 1. Lưu thông tin Đơn hàng chung
-            $stmt = $this->conn->prepare("INSERT INTO orders (user_id, ghn_order_code, tong_tien, phi_van_chuyen, dia_chi_giao, phuong_thuc_thanh_toan, ghi_chu) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("isddsss", $user_id, $ghn_order_code, $tong_tien_cuoi, $phi_van_chuyen, $dia_chi_giao, $phuong_thuc, $ghi_chu);
+            $stmt = $this->conn->prepare("INSERT INTO orders (user_id, ghn_order_code, tong_tien, phi_van_chuyen, dia_chi_giao, phuong_thuc_thanh_toan, ghi_chu, giam_gia_thanh_vien, ma_voucher, giam_gia_voucher) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("isddsssisi", $user_id, $ghn_order_code, $tong_tien_cuoi, $phi_van_chuyen, $dia_chi_giao, $phuong_thuc, $ghi_chu, $giam_gia_thanh_vien, $ma_voucher, $giam_gia_voucher);
             $stmt->execute();
             $order_id = $this->conn->insert_id;
             $stmt->close();
@@ -47,9 +47,7 @@ class OrderModel extends Model {
 
     public function cancelOrder($order_id, $user_id)
     {
-        // BẢO MẬT LOGIC: Chỉ cho phép hủy nếu:
-        // 1. Đang ở 'ChoXacNhan'
-        // 2. Hoặc đang ở 'DangGiao' NHƯNG phương thức phải là 'COD'
+        
         $stmt = $this->conn->prepare("
             UPDATE orders 
             SET trang_thai = 'Huy' 
@@ -61,7 +59,7 @@ class OrderModel extends Model {
         $stmt->bind_param("ii", $order_id, $user_id);
         $stmt->execute();
 
-        // execute() trả về true/false, nhưng affected_rows là cách chắc chắn nhất để biết có dòng nào được cập nhật không
+        
         $affected_rows = $stmt->affected_rows;
         $stmt->close();
 

@@ -71,8 +71,8 @@ class ContactController {
             $mail->CharSet    = 'UTF-8';
 
             $mail->setFrom(SMTP_USERNAME, 'COZY CORNER SYSTEM');
-            $mail->addAddress(SMTP_USERNAME); // Gửi về chính email cấu hình của shop (Admin)
-            $mail->addReplyTo($email, $ho_ten); // Để Admin có thể bấm "Trả lời" thẳng cho khách trong Gmail
+            $mail->addAddress(SMTP_USERNAME); 
+            $mail->addReplyTo($email, $ho_ten); 
 
             $mail->isHTML(true);
             $mail->Subject = "Khách hàng liên hệ: " . $tieu_de;

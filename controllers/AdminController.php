@@ -9,7 +9,7 @@ class AdminController extends Controller {
         if (session_status() === PHP_SESSION_NONE) session_start();
         $this->model = $this->model('AdminModel');
         
-        // Middleware Check Login: Bắt buộc phải có session admin mới được gọi các action bên dưới
+        // Middleware Check Login
         if (!isset($_SESSION['admin_id'])) {
             header("Location: " . BASE_URL . "view/user/DangNhap.php");
             exit;
@@ -17,7 +17,7 @@ class AdminController extends Controller {
     }
 
     public function logout() {
-        // Chỉ hủy session của admin, giữ nguyên session của user
+
         unset($_SESSION['admin_id']);
         unset($_SESSION['admin_name']);
         unset($_SESSION['admin_avatar']);
@@ -157,6 +157,31 @@ class AdminController extends Controller {
         ]);
     }
 
+    public function vouchers() {
+        $voucherModel = $this->model('VoucherModel');
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+
+        $search = trim($_GET['search'] ?? '');
+        $loai_voucher = trim($_GET['loai_voucher'] ?? '');
+        $trang_thai = trim($_GET['trang_thai'] ?? '');
+
+        $vouchers = $voucherModel->getVouchersList($limit, $offset, $search, $loai_voucher, $trang_thai);
+        $total = $voucherModel->getTotalVouchersCount($search, $loai_voucher, $trang_thai);
+        $totalPages = ceil($total / $limit);
+
+        $this->view('../admin/vouchers', [
+            'vouchers' => $vouchers,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'search' => $search,
+            'loai_voucher' => $loai_voucher,
+            'trang_thai' => $trang_thai,
+            'page' => $page
+        ]);
+    }
+
     public function news() {
         $newsModel = $this->model('NewsModel');
 
@@ -285,6 +310,7 @@ class AdminController extends Controller {
             $danh_muc = $_POST['danh_muc'] ?? 'Khac';
             $so_luong = $_POST['so_luong'] ?? 0;
             $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
+            $mo_ta = $_POST['mo_ta'] ?? '';
             
             // Xử lý upload ảnh
             $anh = '';
@@ -297,7 +323,7 @@ class AdminController extends Controller {
                 }
             }
 
-            if ($this->model->addProduct($ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh)) {
+            if ($this->model->addProduct($ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh, $mo_ta)) {
                 echo json_encode(['status' => 'success', 'msg' => 'Thêm sản phẩm thành công!']);
             } else {
                 echo json_encode(['status' => 'error', 'msg' => 'Lỗi khi thêm vào CSDL.']);
@@ -550,7 +576,7 @@ class AdminController extends Controller {
         exit;
     }
 
-    // --- API QUẢN LÝ SẢN PHẨM (từ api.php) ---
+    // --- API QUẢN LÝ SẢN PHẨM  ---
     public function api_get_product() {
         header('Content-Type: application/json');
         $id = $_GET['id'] ?? 0;
@@ -573,6 +599,7 @@ class AdminController extends Controller {
             $danh_muc = $_POST['danh_muc'] ?? 'Khac';
             $so_luong = $_POST['so_luong'] ?? 0;
             $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
+            $mo_ta = $_POST['mo_ta'] ?? '';
 
             $anh = null;
             if (isset($_FILES['anh']) && $_FILES['anh']['tmp_name'] != '') {
@@ -585,7 +612,7 @@ class AdminController extends Controller {
                 $anh = $_POST['current_anh'];
             }
 
-            if ($this->model->updateProduct($id, $ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh)) {
+            if ($this->model->updateProduct($id, $ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh, $mo_ta)) {
                 echo json_encode(['status' => 'success', 'msg' => 'Cập nhật sản phẩm thành công!']);
             } else {
                 echo json_encode(['status' => 'error', 'msg' => 'Lỗi khi cập nhật sản phẩm.']);
@@ -594,7 +621,7 @@ class AdminController extends Controller {
         exit;
     }
 
-    // --- API QUẢN LÝ DANH MỤC (từ api.php) ---
+    // --- API QUẢN LÝ DANH MỤC  ---
     public function api_get_category() {
         header('Content-Type: application/json');
         $id = $_GET['id'] ?? 0;
@@ -659,7 +686,7 @@ class AdminController extends Controller {
         exit;
     }
 
-    // --- API QUẢN LÝ ĐƠN HÀNG (từ api.php) ---
+    // --- API QUẢN LÝ ĐƠN HÀNG  ---
     public function api_get_order() {
         header('Content-Type: application/json');
         $id = $_GET['id'] ?? 0;
@@ -698,9 +725,78 @@ class AdminController extends Controller {
         exit;
     }
 
-    public function __destruct() {
-        if ($this->model) {
-            $this->model->close();
+    // --- API QUẢN LÝ VOUCHER ---
+    public function api_get_voucher() {
+        header('Content-Type: application/json');
+        $id = $_GET['id'] ?? 0;
+        $voucherModel = $this->model('VoucherModel');
+        $voucher = $voucherModel->getVoucherById($id);
+        if ($voucher) {
+            // Format lại ngày tháng để input datetime-local có thể nhận
+            if ($voucher['ngay_bat_dau']) {
+                $voucher['ngay_bat_dau'] = date('Y-m-d\TH:i', strtotime($voucher['ngay_bat_dau']));
+            }
+            if ($voucher['ngay_het_han']) {
+                $voucher['ngay_het_han'] = date('Y-m-d\TH:i', strtotime($voucher['ngay_het_han']));
+            }
+            echo json_encode(['status' => 'success', 'data' => $voucher]);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy voucher.']);
         }
+        exit;
+    }
+
+    public function api_save_voucher() {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'] ?? '';
+            
+            $data = [
+                'ma_voucher' => strtoupper(trim($_POST['ma_voucher'] ?? '')),
+                'loai_voucher' => $_POST['loai_voucher'] ?? 'TienMat',
+                'gia_tri' => intval($_POST['gia_tri'] ?? 0),
+                'giam_toi_da' => intval($_POST['giam_toi_da'] ?? 0),
+                'don_toi_thieu' => intval($_POST['don_toi_thieu'] ?? 0),
+                'so_luong' => intval($_POST['so_luong'] ?? 0),
+                'ngay_bat_dau' => !empty($_POST['ngay_bat_dau']) ? date('Y-m-d H:i:s', strtotime($_POST['ngay_bat_dau'])) : null,
+                'ngay_het_han' => !empty($_POST['ngay_het_han']) ? date('Y-m-d H:i:s', strtotime($_POST['ngay_het_han'])) : null,
+                'trang_thai' => $_POST['trang_thai'] ?? 'HoatDong'
+            ];
+
+            if (empty($data['ma_voucher']) || $data['gia_tri'] <= 0) {
+                echo json_encode(['status' => 'error', 'msg' => 'Mã voucher và Giá trị là bắt buộc.']);
+                exit;
+            }
+
+            $voucherModel = $this->model('VoucherModel');
+            if (empty($id)) { // Thêm mới
+                if ($voucherModel->addVoucher($data)) {
+                    echo json_encode(['status' => 'success', 'msg' => 'Thêm voucher thành công!']);
+                } else {
+                    echo json_encode(['status' => 'error', 'msg' => 'Thêm thất bại. Mã voucher có thể đã tồn tại.']);
+                }
+            } else { // Cập nhật
+                if ($voucherModel->updateVoucher($id, $data)) {
+                    echo json_encode(['status' => 'success', 'msg' => 'Cập nhật voucher thành công!']);
+                } else {
+                    echo json_encode(['status' => 'error', 'msg' => 'Cập nhật thất bại. Mã voucher có thể đã tồn tại.']);
+                }
+            }
+        }
+        exit;
+    }
+
+    public function api_delete_voucher() {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (isset($data['id'])) {
+            $voucherModel = $this->model('VoucherModel');
+            if ($voucherModel->deleteVoucher($data['id'])) {
+                echo json_encode(['status' => 'success', 'msg' => 'Xóa voucher thành công!']);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa voucher.']);
+            }
+        }
+        exit;
     }
 }
