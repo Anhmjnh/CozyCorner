@@ -566,5 +566,56 @@ class AdminModel extends Model
         return $result->fetch_all(MYSQLI_ASSOC);
     }
 
+    // --- QUẢN LÝ CHATBOT FAQ ---
+    public function getFaqsList($limit = 10, $offset = 0, $search = '')
+    {
+        $sql = "SELECT * FROM chatbot_faq WHERE 1=1";
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (keywords LIKE '%$search_esc%' OR answer LIKE '%$search_esc%')";
+        }
+        $sql .= " ORDER BY id DESC LIMIT ? OFFSET ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $limit, $offset);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getTotalFaqsCount($search = '')
+    {
+        $sql = "SELECT COUNT(id) as total FROM chatbot_faq WHERE 1=1";
+        if (!empty($search)) {
+            $search_esc = $this->conn->real_escape_string($search);
+            $sql .= " AND (keywords LIKE '%$search_esc%' OR answer LIKE '%$search_esc%')";
+        }
+        return $this->conn->query($sql)->fetch_assoc()['total'];
+    }
+
+    public function getFaqById($id)
+    {
+        $stmt = $this->conn->prepare("SELECT * FROM chatbot_faq WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+
+    public function saveFaq($id, $keywords, $answer, $status)
+    {
+        if (empty($id)) { // Add
+            $stmt = $this->conn->prepare("INSERT INTO chatbot_faq (keywords, answer, status) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $keywords, $answer, $status);
+        } else { // Update
+            $stmt = $this->conn->prepare("UPDATE chatbot_faq SET keywords = ?, answer = ?, status = ? WHERE id = ?");
+            $stmt->bind_param("sssi", $keywords, $answer, $status, $id);
+        }
+        return $stmt->execute();
+    }
+
+    public function deleteFaq($id)
+    {
+        $stmt = $this->conn->prepare("DELETE FROM chatbot_faq WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
     
 }

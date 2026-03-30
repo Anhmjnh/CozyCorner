@@ -50,6 +50,25 @@ class ChatbotModel extends Model
         return 'OTHER';
     }
 
+    // [MỚI] Quét bảng FAQ để tìm câu trả lời nhanh
+    private function checkFaqRules($userMessage)
+    {
+        $faqs = $this->conn->query("SELECT keywords, answer FROM chatbot_faq WHERE status = 'HoatDong'");
+        if ($faqs && $faqs->num_rows > 0) {
+            $userMsgLower = mb_strtolower($userMessage, 'UTF-8');
+            while ($faq = $faqs->fetch_assoc()) {
+                $keywords = explode(',', $faq['keywords']);
+                foreach ($keywords as $keyword) {
+                    $trimmedKeyword = trim(mb_strtolower($keyword, 'UTF-8'));
+                    if (!empty($trimmedKeyword) && strpos($userMsgLower, $trimmedKeyword) !== false) {
+                        return $faq['answer']; // Match found, return answer
+                    }
+                }
+            }
+        }
+        return null; // No match
+    }
+
     // Hàm thu thập từ Database (Lọc theo Intent)
     private function getStoreKnowledge($userMessage, $user_id = null)
     {
@@ -172,17 +191,25 @@ class ChatbotModel extends Model
             return "Lỗi: Hệ thống chưa được cấu hình API Key của AI.";
         }
 
+        $base_url = defined('BASE_URL') ? BASE_URL : 'http://localhost/cozycorner/';
+
+        // ==========================================
+        // 1. HỆ THỐNG HYBRID (FAQ RULE-BASED) - ƯU TIÊN CAO NHẤT
+        // ==========================================
+        $faqAnswer = $this->checkFaqRules($userMessage);
+        if ($faqAnswer !== null) {
+            return $faqAnswer;
+        }
+
         $url = $this->apiUrl . '?key=' . $this->apiKey;
 
         $storeData = $this->getStoreKnowledge($userMessage, $user_id);
         $intent = $storeData['intent'];
         $knowledge = $storeData['knowledge'];
-        $base_url = defined('BASE_URL') ? BASE_URL : 'http://localhost/cozycorner/';
 
 
-        // 1. HỆ THỐNG HYBRID (RULE-BASED)
-
-
+        // 2. HỆ THỐNG HYBRID (RULE-BASED CỨNG)
+        
         if ($intent === 'INFO') {
             return "Chào bạn, đây là thông tin của COZY CORNER:\n" .
                 "- **Địa chỉ:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. HCM\n" .
@@ -241,7 +268,7 @@ class ChatbotModel extends Model
             return "Dạ hiện tại shop đang cập nhật sản phẩm ạ.";
         }
 
-        // 2. AI FALLBACK 
+        // 3. AI FALLBACK 
 
 
 

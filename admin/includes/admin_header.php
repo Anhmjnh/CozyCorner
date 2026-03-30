@@ -33,6 +33,7 @@
             <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/users') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/users"><i class="fas fa-users"></i> <span>Người dùng</span></a></li>
             <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/staffs') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/staffs"><i class="fas fa-user-tie"></i> <span>Nhân sự</span></a></li>
             <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/news') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/news"><i class="fas fa-newspaper"></i> <span>Tin tức</span></a></li>
+            <li class="<?= strpos($_SERVER['REQUEST_URI'], 'url=admin/chatbot_faq') ? 'active' : '' ?>"><a href="<?= BASE_URL ?>index.php?url=admin/chatbot_faq"><i class="fas fa-robot"></i> <span>Chatbot</span></a></li>
         </ul>
     </aside>
 

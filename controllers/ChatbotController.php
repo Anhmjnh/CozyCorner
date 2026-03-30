@@ -19,6 +19,8 @@ class ChatbotController extends Controller {
             if (isset($input['action']) && $input['action'] === 'clear') {
                 if ($user_id) {
                     $chatbotModel->clearChatHistory($user_id, $session_id);
+                } else {
+                    unset($_SESSION['guest_chat_history']);
                 }
                 echo json_encode(['status' => 'success', 'reply' => 'Đã làm mới cuộc hội thoại.']);
                 exit;
@@ -109,6 +111,18 @@ class ChatbotController extends Controller {
                 if ($user_id) {
                     $chatbotModel->saveMessage($user_id, $session_id, 'user', $message);
                     $chatbotModel->saveMessage($user_id, $session_id, 'bot', $reply);
+                } else {
+                    // Khách chưa đăng nhập -> Lưu vào Session
+                    if (!isset($_SESSION['guest_chat_history'])) {
+                        $_SESSION['guest_chat_history'] = [];
+                    }
+                    $_SESSION['guest_chat_history'][] = ['role' => 'user', 'content' => $message];
+                    $_SESSION['guest_chat_history'][] = ['role' => 'bot', 'content' => $reply];
+
+                    // Giới hạn lịch sử session để tránh quá tải
+                    if (count($_SESSION['guest_chat_history']) > 10) {
+                        $_SESSION['guest_chat_history'] = array_slice($_SESSION['guest_chat_history'], -10);
+                    }
                 }
             }
 
@@ -128,6 +142,8 @@ class ChatbotController extends Controller {
         $chatHistory = [];
         if ($user_id) {
             $chatHistory = $chatbotModel->getChatHistory($user_id, $session_id, 50); 
+        } else {
+            $chatHistory = $_SESSION['guest_chat_history'] ?? [];
         }
         
         echo json_encode(['status' => 'success', 'data' => $chatHistory]);

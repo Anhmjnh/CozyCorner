@@ -167,6 +167,11 @@ class AdminController extends Controller
         ]);
     }
 
+    public function chatbot_faq()
+    {
+        $this->view('../admin/chatbot_faq');
+    }
+
     public function export_orders_to_csv()
     {
         // Lấy các tham số lọc tương tự trang danh sách đơn hàng
@@ -777,6 +782,82 @@ class AdminController extends Controller
                 echo json_encode(['status' => 'success', 'msg' => 'Cập nhật trạng thái thành công!']);
             } else {
                 echo json_encode(['status' => 'error', 'msg' => 'Không thể cập nhật.']);
+            }
+        }
+        exit;
+    }
+
+    public function api_get_faqs_list()
+    {
+        header('Content-Type: application/json');
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
+        $search = trim($_GET['search'] ?? '');
+
+        $faqs = $this->model->getFaqsList($limit, $offset, $search);
+        $total = $this->model->getTotalFaqsCount($search);
+        $totalPages = ceil($total / $limit);
+
+        echo json_encode([
+            'status' => 'success',
+            'data' => $faqs,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total,
+                'totalPages' => $totalPages
+            ]
+        ]);
+        exit;
+    }
+
+    public function api_get_faq()
+    {
+        header('Content-Type: application/json');
+        $id = intval($_GET['id'] ?? 0);
+        $faq = $this->model->getFaqById($id);
+        if ($faq) {
+            echo json_encode(['status' => 'success', 'data' => $faq]);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy câu hỏi.']);
+        }
+        exit;
+    }
+
+    public function api_save_faq()
+    {
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id = $_POST['id'] ?? '';
+            $keywords = trim($_POST['keywords'] ?? '');
+            $answer = trim($_POST['answer'] ?? '');
+            $status = $_POST['status'] ?? 'HoatDong';
+
+            if (empty($keywords) || empty($answer)) {
+                echo json_encode(['status' => 'error', 'msg' => 'Từ khóa và câu trả lời không được để trống.']);
+                exit;
+            }
+
+            if ($this->model->saveFaq($id, $keywords, $answer, $status)) {
+                $msg = empty($id) ? 'Thêm FAQ thành công!' : 'Cập nhật FAQ thành công!';
+                echo json_encode(['status' => 'success', 'msg' => $msg]);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Lưu thất bại. Vui lòng thử lại.']);
+            }
+        }
+        exit;
+    }
+
+    public function api_delete_faq()
+    {
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (isset($data['id'])) {
+            if ($this->model->deleteFaq($data['id'])) {
+                echo json_encode(['status' => 'success', 'msg' => 'Xóa FAQ thành công!']);
+            } else {
+                echo json_encode(['status' => 'error', 'msg' => 'Không thể xóa.']);
             }
         }
         exit;

@@ -126,6 +126,20 @@ INSERT INTO `categories` (`id`, `ten_danh_muc`, `slug`, `trang_thai`, `created_a
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `chatbot_faq`
+--
+
+CREATE TABLE `chatbot_faq` (
+  `id` int(11) NOT NULL,
+  `keywords` text NOT NULL COMMENT 'Các từ khóa, cách nhau bởi dấu phẩy',
+  `answer` text NOT NULL COMMENT 'Câu trả lời, hỗ trợ Markdown',
+  `status` enum('HoatDong','Khoa') DEFAULT 'HoatDong',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `contacts`
 --
 
@@ -477,6 +491,12 @@ ALTER TABLE `admins`
   ADD UNIQUE KEY `username` (`username`);
 
 --
+-- Chỉ mục cho bảng `chatbot_faq`
+--
+ALTER TABLE `chatbot_faq`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Chỉ mục cho bảng `carts`
 --
 ALTER TABLE `carts`
@@ -562,6 +582,12 @@ ALTER TABLE `vouchers`
 --
 ALTER TABLE `admins`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT cho bảng `chatbot_faq`
+--
+ALTER TABLE `chatbot_faq`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 
 --
 -- AUTO_INCREMENT cho bảng `carts`
