@@ -239,7 +239,7 @@ require_once __DIR__ . '/includes/admin_header.php';
                     <option value="Huy">Đã Hủy</option>
                 </select>
             </div>
-            <button type="button" class="btn btn-primary w-100" onclick="saveOrderStatus()"
+            <button type="button" id="btn_save_status" class="btn btn-primary w-100" onclick="saveOrderStatus()"
                 style="margin-top: 10px;">LƯU TRẠNG THÁI</button>
         </form>
     </div>
@@ -297,7 +297,25 @@ require_once __DIR__ . '/includes/admin_header.php';
     function openUpdateStatus(id, currentStatus) {
         document.getElementById('status_order_id').value = id;
         document.getElementById('status_order_id_display').innerText = id;
-        document.getElementById('status_select').value = currentStatus;
+        
+        const selectStatus = document.getElementById('status_select');
+        const btnSave = document.getElementById('btn_save_status');
+        
+        selectStatus.value = currentStatus;
+
+        // Khóa cứng nếu đơn hàng đã Hoàn Thành hoặc Hủy
+        if (currentStatus === 'HoanThanh' || currentStatus === 'Huy') {
+            selectStatus.disabled = true;
+            btnSave.disabled = true;
+            btnSave.style.opacity = '0.5';
+            btnSave.style.cursor = 'not-allowed';
+        } else {
+            selectStatus.disabled = false;
+            btnSave.disabled = false;
+            btnSave.style.opacity = '1';
+            btnSave.style.cursor = 'pointer';
+        }
+
         document.getElementById('statusModal').style.display = 'flex';
     }
 

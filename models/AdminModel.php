@@ -503,7 +503,7 @@ class AdminModel extends Model
 
     public function addUser($ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $hang, $trang_thai, $mat_khau)
     {
-        $sql = "INSERT INTO users (ho_ten, email, so_dien_thoai, dia_chi, gioi_tinh, ngay_sinh, hang, trang_thai, mat_khau) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO users (ho_ten, email, so_dien_thoai, dia_chi, gioi_tinh, ngay_sinh, hang, trang_thai, mat_khau, last_chat_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE())";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("sssssssss", $ho_ten, $email, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $hang, $trang_thai, $mat_khau);
         return $stmt->execute();

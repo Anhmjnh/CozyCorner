@@ -1102,6 +1102,8 @@ class AdminController extends Controller
             $trang_thai = $_POST['trang_thai'] ?? '';
 
             if ($id > 0 && in_array($trang_thai, ['ChoXacNhan', 'DangGiao', 'HoanThanh', 'Huy'])) {
+                
+
                 if ($this->model->updateOrderStatus($id, $trang_thai)) {
                     $user_id = $this->model->getUserIdByOrderId($id);
                     if ($user_id) {

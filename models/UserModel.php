@@ -62,6 +62,24 @@ class UserModel extends Model {
         return $user;
     }
 
+    public function incrementUserChatCount($user_id) {
+        $stmt = $this->conn->prepare("UPDATE users SET chat_daily_count = chat_daily_count + 1 WHERE id = ?");
+        if ($stmt) {
+            $stmt->bind_param("i", $user_id);
+            return $stmt->execute();
+        }
+        return false;
+    }
+
+    public function resetUserChatCount($user_id) {
+        $stmt = $this->conn->prepare("UPDATE users SET chat_daily_count = 0, last_chat_date = CURDATE() WHERE id = ?");
+        if ($stmt) {
+            $stmt->bind_param("i", $user_id);
+            return $stmt->execute();
+        }
+        return false;
+    }
+
     public function updateUserProfile($id, $ho_ten, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh, $avatar = null, $mat_khau = null) {
         $sql = "UPDATE users SET ho_ten = ?, so_dien_thoai = ?, dia_chi = ?, gioi_tinh = ?, ngay_sinh = ?";
         $params = [$ho_ten, $so_dien_thoai, $dia_chi, $gioi_tinh, $ngay_sinh];
