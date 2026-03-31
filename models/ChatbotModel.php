@@ -166,16 +166,19 @@ class ChatbotModel extends Model
             }
             $knowledge .= "SẢN PHẨM (GIỚI HẠN 4 SẢN PHẨM):\n";
             if ($search_keyword) {
-                $stmt = $this->conn->prepare("SELECT id, ten_sp, gia, so_luong_ton FROM products WHERE trang_thai = 'HienThi' AND ten_sp LIKE ? LIMIT 4");
+                $stmt = $this->conn->prepare("SELECT id, ten_sp, gia, so_luong_ton, trang_thai FROM products WHERE trang_thai IN ('HienThi', 'HetHang') AND ten_sp LIKE ? LIMIT 4");
                 $like = "%" . $search_keyword . "%";
                 $stmt->bind_param("s", $like);
             } else {
-                $stmt = $this->conn->prepare("SELECT id, ten_sp, gia, so_luong_ton FROM products WHERE trang_thai = 'HienThi' ORDER BY luot_ban DESC LIMIT 4");
+                $stmt = $this->conn->prepare("SELECT id, ten_sp, gia, so_luong_ton, trang_thai FROM products WHERE trang_thai IN ('HienThi', 'HetHang') ORDER BY luot_ban DESC LIMIT 4");
             }
             $stmt->execute();
             $prodQuery = $stmt->get_result();
             if ($prodQuery && $prodQuery->num_rows > 0) {
                 while ($p = $prodQuery->fetch_assoc()) {
+                    if ($p['trang_thai'] === 'HetHang') {
+                        $p['so_luong_ton'] = 0;
+                    }
                     $trangThai = $p['so_luong_ton'] > 0 ? 'Còn hàng' : 'Hết hàng';
                     $gia = number_format($p['gia'], 0, ',', '.') . 'đ';
                     $link = $base_url . "index.php?url=product/detail&id=" . $p['id'];

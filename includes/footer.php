@@ -225,7 +225,8 @@ require_once __DIR__ . '/../config.php';  // Include config để lấy BASE_URL
     }
 
     /* Fix lỗi thụt lề lộn xộn của Markdown */
-    .msg-bot ul, .msg-bot ol {
+    .msg-bot ul,
+    .msg-bot ol {
         margin: 6px 0 6px 25px !important;
         padding: 0 !important;
         list-style-position: outside;
@@ -240,9 +241,10 @@ require_once __DIR__ . '/../config.php';  // Include config để lấy BASE_URL
         margin: 0 0 8px 0;
         text-align: left;
     }
-    
+
     .msg-bot a {
-        color: #d84b24; /* Màu cam Shopee để nổi bật link */
+        color: #d84b24;
+        /* Màu cam Shopee để nổi bật link */
         text-decoration: underline;
         font-weight: bold;
     }
@@ -407,8 +409,9 @@ require_once __DIR__ . '/../config.php';  // Include config để lấy BASE_URL
 
         <div class="cozy-chat-body" id="aiChatBody">
             <div class="msg-bubble msg-bot">
-                Xin chào 👋 Mình là <strong>Cozy Bot</strong> – trợ lý siêu trí tuệ  tại CozyCorner.<br><br>
-                Mình có thể giúp bạn kiểm tra <strong>đơn hàng</strong>, tìm <strong>sản phẩm</strong>, tư vấn lựa chọn hoặc cung cấp <strong>link mua hàng</strong> và mã giảm giá.<br><br>Bạn đang cần gì hôm nay?
+                Xin chào 👋 Mình là <strong>Cozy Bot</strong> – trợ lý siêu trí tuệ tại CozyCorner.<br><br>
+                Mình có thể giúp bạn kiểm tra <strong>đơn hàng</strong>, tìm <strong>sản phẩm</strong>, tư vấn lựa chọn
+                hoặc cung cấp <strong>link mua hàng</strong> và mã giảm giá.<br><br>Bạn đang cần gì hôm nay?
             </div>
             <div class="cozy-typing" id="aiTyping">
                 Đang suy nghĩ <div class="dot-typing"><span></span><span></span><span></span></div>
@@ -482,7 +485,7 @@ require_once __DIR__ . '/../view/cart_modal.php'; ?>
                 if (data.status === 'success' && data.data.length > 0) {
                     const defaultMsg = body.querySelector('.msg-bot');
                     if (defaultMsg) defaultMsg.remove(); // Ẩn câu chào mặc định
-                    
+
                     data.data.forEach(msg => {
                         if (msg.role === 'user') {
                             appendMsg('user', msg.content);

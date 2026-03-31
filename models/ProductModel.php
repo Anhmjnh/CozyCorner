@@ -11,39 +11,65 @@ class ProductModel extends Model {
      * @return array|null Trả về mảng thông tin sản phẩm hoặc null nếu không tìm thấy.
      */
     public function findById(int $id): ?array {
-        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id = ? AND trang_thai = 'HienThi'");
+        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id = ? AND trang_thai IN ('HienThi', 'HetHang')");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
         $product = $result->fetch_assoc();
         $stmt->close();
+        
+        if ($product && $product['trang_thai'] === 'HetHang') {
+            $product['so_luong_ton'] = 0;
+        }
+        
         return $product;
     }
 
     public function getSimilarProducts($id, $limit = 4) {
-        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id != ? AND trang_thai = 'HienThi' ORDER BY created_at DESC LIMIT ?");
+        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id != ? AND trang_thai IN ('HienThi', 'HetHang') ORDER BY created_at DESC LIMIT ?");
         $stmt->bind_param("ii", $id, $limit);
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
+        
+        foreach ($result as &$product) {
+            if ($product['trang_thai'] === 'HetHang') {
+                $product['so_luong_ton'] = 0;
+            }
+        }
+        
         return $result;
     }
 
     public function getBestsellerProducts($limit = 9) {
-        $stmt = $this->conn->prepare("SELECT * FROM products WHERE trang_thai = 'HienThi' ORDER BY luot_ban DESC LIMIT ?");
+        $stmt = $this->conn->prepare("SELECT * FROM products WHERE trang_thai IN ('HienThi', 'HetHang') ORDER BY luot_ban DESC LIMIT ?");
         $stmt->bind_param("i", $limit);
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
+        
+        foreach ($result as &$product) {
+            if ($product['trang_thai'] === 'HetHang') {
+                $product['so_luong_ton'] = 0;
+            }
+        }
+        
         return $result;
     }
 
     public function getNewProducts($limit = 9) {
-        $stmt = $this->conn->prepare("SELECT * FROM products WHERE trang_thai = 'HienThi' ORDER BY created_at DESC LIMIT ?");
+        $stmt = $this->conn->prepare("SELECT * FROM products WHERE trang_thai IN ('HienThi', 'HetHang') ORDER BY created_at DESC LIMIT ?");
         $stmt->bind_param("i", $limit);
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
+        
+        foreach ($result as &$product) {
+            if ($product['trang_thai'] === 'HetHang') {
+                $product['so_luong_ton'] = 0;
+            }
+        }
+        
         return $result;
     }
 
@@ -54,7 +80,7 @@ class ProductModel extends Model {
     }
 
     public function getFilteredProducts($filters, $limit, $offset) {
-        $where = ["trang_thai = 'HienThi'"];
+        $where = ["trang_thai IN ('HienThi', 'HetHang')"];
         $params = [];
         $types = "";
 
@@ -104,6 +130,12 @@ class ProductModel extends Model {
         $result = $stmt->get_result();
         $products = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
+        
+        foreach ($products as &$product) {
+            if ($product['trang_thai'] === 'HetHang') {
+                $product['so_luong_ton'] = 0;
+            }
+        }
         
         return ['products' => $products, 'total' => $total];
     }
