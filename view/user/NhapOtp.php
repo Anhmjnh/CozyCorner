@@ -33,7 +33,7 @@ require_once __DIR__ . '/../../config.php';
 <ul class="breadcrumb">
     <li><a href="<?= BASE_URL ?>">Trang chủ</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>
-    <li><a href="<?= BASE_URL ?>view/user/DangNhap.php">Đăng nhập</a></li>
+    <li><a href="<?= BASE_URL ?>index.php?url=auth/showLogin">Đăng nhập</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>
     <li><a href="<?= BASE_URL ?>index.php?url=auth/forgotPassword">Quên mật khẩu</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>

@@ -22,42 +22,48 @@ require_once __DIR__ . '/../includes/header.php';
 
 <!-- LABEL (danh mục icon) -->
 <div class="label__icon-list">
-    <div class="label__icon-list__item">
+    <a href="<?= BASE_URL ?>index.php?url=product&category=n-i" class="label__icon-list__item"
+        style="text-decoration: none; color: inherit;">
         <div class="label__icon-list--background">
             <img class="label__icon-list__image" src="<?= BASE_URL ?>assets/icon/icon-noi.svg" alt="Nồi">
         </div>
         <p class="label__icon-list__text">NỒI</p>
-    </div>
-    <div class="label__icon-list__item">
+    </a>
+    <a href="<?= BASE_URL ?>index.php?url=product&category=ch-o" class="label__icon-list__item"
+        style="text-decoration: none; color: inherit;">
         <div class="label__icon-list--background">
             <img class="label__icon-list__image" src="<?= BASE_URL ?>assets/icon/icon-chao.svg" alt="Chảo">
         </div>
         <p class="label__icon-list__text">CHẢO</p>
-    </div>
-    <div class="label__icon-list__item">
+    </a>
+    <a href="<?= BASE_URL ?>index.php?url=product&category=ch-n" class="label__icon-list__item"
+        style="text-decoration: none; color: inherit;">
         <div class="label__icon-list--background">
             <img class="label__icon-list__image" src="<?= BASE_URL ?>assets/icon/icon-chen.svg" alt="Chén">
         </div>
         <p class="label__icon-list__text">CHÉN</p>
-    </div>
-    <div class="label__icon-list__item">
+    </a>
+    <a href="<?= BASE_URL ?>index.php?url=product&category=th-t" class="label__icon-list__item"
+        style="text-decoration: none; color: inherit;">
         <div class="label__icon-list--background">
             <img class="label__icon-list__image" src="<?= BASE_URL ?>assets/icon/icon-thot.svg" alt="Thớt">
         </div>
         <p class="label__icon-list__text">THỚT</p>
-    </div>
-    <div class="label__icon-list__item">
+    </a>
+    <a href="<?= BASE_URL ?>index.php?url=product&category=-i-n" class="label__icon-list__item"
+        style="text-decoration: none; color: inherit;">
         <div class="label__icon-list--background">
             <img class="label__icon-list__image" src="<?= BASE_URL ?>assets/icon/icon-mayxay.svg" alt="Đồ điện">
         </div>
         <p class="label__icon-list__text">ĐỒ ĐIỆN</p>
-    </div>
-    <div class="label__icon-list__item">
+    </a>
+    <a href="<?= BASE_URL ?>index.php?url=product&category=dao" class="label__icon-list__item"
+        style="text-decoration: none; color: inherit;">
         <div class="label__icon-list--background">
             <img class="label__icon-list__image" src="<?= BASE_URL ?>assets/icon/icon-dao.svg" alt="Dao">
         </div>
         <p class="label__icon-list__text">DAO</p>
-    </div>
+    </a>
 </div>
 
 <!-- SẢN PHẨM BÁN CHẠY -->

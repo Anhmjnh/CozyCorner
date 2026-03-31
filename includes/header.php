@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config.php';  // Include config để lấy BASE_URL
 
 // Kiểm tra trạng thái đăng nhập
 $is_logged_in = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
-$profile_link = $is_logged_in ? BASE_URL . 'index.php?url=user/account' : BASE_URL . 'view/user/DangNhap.php';
+$profile_link = $is_logged_in ? BASE_URL . 'index.php?url=user/account' : BASE_URL . 'index.php?url=auth/showLogin';
 $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăng ký';
 ?>
 

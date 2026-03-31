@@ -20,7 +20,7 @@ class OrderController extends Controller
 
         // 1. Kiểm tra trạng thái đăng nhập
         if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
-            header("Location: " . BASE_URL . "view/user/DangNhap.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
+            header("Location: " . BASE_URL . "index.php?url=auth/showLogin&redirect=" . urlencode($_SERVER['REQUEST_URI']));
             exit;
         }
 
@@ -71,7 +71,7 @@ class OrderController extends Controller
             session_start();
 
         if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . BASE_URL . 'view/user/DangNhap.php');
+            header('Location: ' . BASE_URL . 'index.php?url=auth/showLogin');
             exit;
         }
 
@@ -88,7 +88,7 @@ class OrderController extends Controller
 
             if (empty($ho_ten) || empty($so_dien_thoai) || empty($dia_chi) || empty($to_district_id) || empty($to_ward_code)) {
                 $_SESSION['error_message'] = 'Vui lòng điền đầy đủ thông tin giao hàng!';
-                header('Location: ' . BASE_URL . 'view/order/ThanhToan.php');
+                header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
                 exit;
             }
 
@@ -104,7 +104,7 @@ class OrderController extends Controller
 
             if (empty($cartItems)) {
                 $_SESSION['error_message'] = 'Giỏ hàng trống!';
-                header('Location: ' . BASE_URL . 'view/cart/ChiTietGioHang.php');
+                header('Location: ' . BASE_URL . 'index.php?url=cart');
                 exit;
             }
 
@@ -226,13 +226,13 @@ class OrderController extends Controller
                 } else {
                     // Lỗi nghiêm trọng: Đã tạo đơn trên GHN nhưng không lưu được vào DB
                     $_SESSION['error_message'] = 'Lỗi hệ thống! Đã tạo đơn trên GHN (' . $ghn_order_code . ') nhưng không thể lưu vào website. Vui lòng liên hệ admin.';
-                    header('Location: ' . BASE_URL . 'view/order/ThanhToan.php');
+                    header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
                 }
             } else {
                 // Lỗi từ API của GHN
                 $ghn_error_message = $ghnResponse['message'] ?? 'Lỗi không xác định từ Giao Hàng Nhanh.';
                 $_SESSION['error_message'] = 'Lỗi tạo đơn hàng: ' . $ghn_error_message;
-                header('Location: ' . BASE_URL . 'view/order/ThanhToan.php');
+                header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
             }
             exit;
         }
@@ -243,7 +243,7 @@ class OrderController extends Controller
         if (session_status() === PHP_SESSION_NONE)
             session_start();
         if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . BASE_URL . 'view/user/DangNhap.php');
+            header('Location: ' . BASE_URL . 'index.php?url=auth/showLogin');
             exit;
         }
 
@@ -261,7 +261,7 @@ class OrderController extends Controller
             $_SESSION['error_message'] = "Mã đơn hàng không hợp lệ.";
         }
 
-        header('Location: ' . BASE_URL . 'view/user/TaiKhoan.php?tab=orders');
+        header('Location: ' . BASE_URL . 'index.php?url=user/account&tab=orders');
         exit;
     }
 
@@ -271,7 +271,7 @@ class OrderController extends Controller
         if (session_status() === PHP_SESSION_NONE)
             session_start();
         if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . BASE_URL . 'view/user/DangNhap.php');
+            header('Location: ' . BASE_URL . 'index.php?url=auth/showLogin');
             exit;
         }
 

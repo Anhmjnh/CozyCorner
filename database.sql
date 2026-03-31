@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th3 29, 2026 lúc 12:43 PM
+-- Thời gian đã tạo: Th3 31, 2026 lúc 03:21 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -74,7 +74,19 @@ INSERT INTO `carts` (`id`, `user_id`, `session_id`, `created_at`) VALUES
 (10, NULL, 'eeo231cgp5rcms2pdc6ar4nuc1', '2026-03-19 09:44:17'),
 (16, 5, NULL, '2026-03-22 10:37:55'),
 (40, NULL, '579fr85nfvkhqrs82mef05mg35', '2026-03-24 10:29:55'),
-(47, NULL, 'iv2v9r899gp84npar8ca7uf9v2', '2026-03-26 15:36:03');
+(47, NULL, 'iv2v9r899gp84npar8ca7uf9v2', '2026-03-26 15:36:03'),
+(68, NULL, '8i0rt8js2rtdriaoauapvjja24', '2026-03-29 10:57:26'),
+(69, NULL, 'v17e960sidvqmmvqmf5hi83gtd', '2026-03-29 15:24:07'),
+(86, NULL, 'vhv70q672mnol3gi1aj3vckumt', '2026-03-30 13:31:12'),
+(87, NULL, '0etk3qs9j9j5fgr5kco6kvopqd', '2026-03-31 04:51:59'),
+(88, NULL, '44l0lcijdv4ht5fm6ag3drks9n', '2026-03-31 05:42:53'),
+(96, NULL, 'qbcdhaafoov25u4mkie5ndajd2', '2026-03-31 09:22:11'),
+(98, NULL, '8pbd2m85div1g5lmsbgtkagoht', '2026-03-31 10:15:48'),
+(99, NULL, '9velts18sathr6omgi23jlm15r', '2026-03-31 11:01:53'),
+(101, NULL, 'fgp53i90h7i3uq0o5vd6ehcgsg', '2026-03-31 11:11:05'),
+(103, NULL, 'safoufb9k0ohvjbugabi24gll9', '2026-03-31 11:48:59'),
+(104, NULL, 'uf7i1egpj45u7h811uf61phjsd', '2026-03-31 12:10:29'),
+(105, NULL, 'r2ljvdcfjdv1ivt3vrnm5oiqps', '2026-03-31 12:55:13');
 
 -- --------------------------------------------------------
 
@@ -95,7 +107,8 @@ CREATE TABLE `cart_items` (
 --
 
 INSERT INTO `cart_items` (`id`, `cart_id`, `product_id`, `quantity`, `created_at`) VALUES
-(146, 8, 36, 1, '2026-03-29 06:46:13');
+(158, 69, 36, 1, '2026-03-29 15:24:09'),
+(159, 69, 37, 1, '2026-03-29 15:24:11');
 
 -- --------------------------------------------------------
 
@@ -137,6 +150,221 @@ CREATE TABLE `chatbot_faq` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `chatbot_faq`
+--
+
+INSERT INTO `chatbot_faq` (`id`, `keywords`, `answer`, `status`, `created_at`) VALUES
+(1, 'tài khoản,thông tin cá nhân,account,xem thông tin', 'Dạ, bạn có thể quản lý thông tin cá nhân và lịch sử mua hàng tại trang Tài khoản của tôi nhé.', 'HoatDong', '2026-03-31 08:24:17'),
+(2, 'quên mật khẩu,lấy lại mật khẩu,đổi mật khẩu,reset pass,mất pass', 'Dạ, để lấy lại mật khẩu, bạn vui lòng ấn vào nút \"Đăng nhập\", sau đó chọn \"Quên mật khẩu\" và làm theo hướng dẫn gửi về Email nhé.', 'HoatDong', '2026-03-31 08:24:17'),
+(3, 'địa chỉ,liên hệ,cửa hàng,shop ở đâu,hotline,email', 'Dạ, COZY CORNER hiện có địa chỉ tại:\n- **Cửa hàng:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. Hồ Chí Minh\n- **Hotline:** 0888 888 888\n- **Email:** Cozy@cv.com.vn', 'HoatDong', '2026-03-31 08:24:17'),
+(4, 'giờ làm việc,mấy giờ mở cửa,thời gian hoạt động,mở cửa lúc mấy giờ,khi nào đóng cửa', 'Dạ, cửa hàng COZY CORNER mở cửa phục vụ từ **08:00 sáng đến 22:00 tối** tất cả các ngày trong tuần (kể cả Lễ, Tết) ạ. Bot thì hoạt động 24/7 luôn nhé!', 'HoatDong', '2026-03-31 08:24:17'),
+(5, 'mua hàng,đặt hàng,cách mua,hướng dẫn mua,làm sao mua,đặt sao,mua ntn', 'Dạ để đặt hàng, bạn chỉ cần chọn sản phẩm ưng ý -> Thêm vào giỏ hàng -> Vào giỏ hàng chọn \"Thanh toán\" -> Điền địa chỉ và xác nhận là xong ạ. Cực kỳ đơn giản!', 'HoatDong', '2026-03-31 08:24:17'),
+(6, 'vận chuyển,giao hàng,phí ship,ship,bao lâu nhận,giao hỏa tốc,freeship', 'Dạ, shop giao hàng toàn quốc qua đối tác Giao Hàng Nhanh (GHN):\n- **Thời gian:** 1-2 ngày (Nội thành HCM), 3-5 ngày (Tỉnh thành khác).\n- **Phí ship:** Được tính tự động tại trang thanh toán. Đừng quên săn mã Freeship của shop nhé!', 'HoatDong', '2026-03-31 08:24:17'),
+(7, 'đồng kiểm,cho xem hàng không,được bóc hàng không,kiểm tra hàng', 'Dạ, COZY CORNER hỗ trợ **ĐỒNG KIỂM**. Bạn hoàn toàn được mở bưu kiện kiểm tra ngoại quan sản phẩm (không dùng thử) trước khi thanh toán cho Shipper ạ.', 'HoatDong', '2026-03-31 08:24:17'),
+(8, 'đổi trả,hoàn hàng,hoàn tiền,trả hàng,hàng lỗi,móp méo,bể vỡ', 'Dạ, COZY CORNER có chính sách **1 ĐỔI 1 TRONG VÒNG 7 NGÀY** (miễn phí ship) nếu:\n- Sản phẩm lỗi do nhà sản xuất.\n- Hàng bể vỡ do vận chuyển.\nBạn vui lòng chụp ảnh/quay video lúc mở hàng và gửi cho shop qua mục Liên hệ để được xử lý ngay lập tức ạ!', 'HoatDong', '2026-03-31 08:24:17'),
+(9, 'bảo hành,chính sách bảo hành,sửa chữa', 'Dạ, các sản phẩm điện gia dụng tại shop đều được bảo hành chính hãng từ 12 - 24 tháng. Bạn chỉ cần giữ lại hóa đơn hoặc cung cấp SĐT đặt hàng là được ạ.', 'HoatDong', '2026-03-31 08:24:17'),
+(10, 'khiếu nại,thái độ nhân viên,hàng giả,fake,không hài lòng,tệ', 'Dạ, Cozy Bot vô cùng xin lỗi nếu bạn có trải nghiệm chưa tốt. Bạn vui lòng liên hệ trực tiếp Hotline CSKH: **0888 888 888** để quản lý cửa hàng tiếp nhận và giải quyết thỏa đáng nhất cho bạn ạ!', 'HoatDong', '2026-03-31 08:24:17'),
+(11, 'hủy đơn,muốn hủy,không mua nữa,cancel order,đổi ý', 'Dạ, nếu đơn hàng của bạn đang ở trạng thái \"Chờ xác nhận\", bạn có thể vào \"Lịch sử đơn hàng\" để tự hủy. Nếu đơn đã chuyển sang \"Đang giao\", bạn vui lòng từ chối nhận hàng giúp shop khi Shipper gọi tới nhé!', 'HoatDong', '2026-03-31 08:24:17'),
+(12, 'đổi địa chỉ,sửa địa chỉ,đổi số điện thoại,sai thông tin', 'Dạ, nếu đơn hàng chưa được đóng gói, bạn hãy gọi ngay Hotline **0888 888 888** để nhân viên hỗ trợ cập nhật lại địa chỉ/SĐT cho bạn nhé. Bot không tự sửa được thông tin này ạ.', 'HoatDong', '2026-03-31 08:24:17'),
+(13, 'thanh toán,chuyển khoản,cod,thanh toán khi nhận hàng,momo,vnpay', 'Dạ, shop hiện hỗ trợ các hình thức:\n- Nhận hàng thanh toán tiền mặt (COD).\n- Chuyển khoản ngân hàng (Quét mã QR tự động).', 'HoatDong', '2026-03-31 08:24:17'),
+(14, 'hóa đơn đỏ,xuất vat,hóa đơn công ty', 'Dạ, shop có hỗ trợ xuất hóa đơn điện tử (VAT). Bạn vui lòng ghi chú [Mã số thuế + Tên công ty + Email] ở bước Thanh toán, kế toán bên shop sẽ gửi hóa đơn sau khi hoàn tất đơn hàng ạ.', 'HoatDong', '2026-03-31 08:24:17'),
+(15, 'chào,hello,hi,bạn là ai,bot là ai,bot tên gì', 'Xin chào 👋 Mình là **Cozy Bot** – trợ lý AI của COZY CORNER. Mình có thể kiểm tra đơn hàng, tìm voucher, giới thiệu sản phẩm. Mình giúp gì được cho bạn ạ?', 'HoatDong', '2026-03-31 08:24:17');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `chat_messages`
+--
+
+CREATE TABLE `chat_messages` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `session_id` varchar(255) DEFAULT NULL,
+  `role` enum('user','bot') NOT NULL,
+  `content` text NOT NULL,
+  `is_cleared` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `chat_messages`
+--
+
+INSERT INTO `chat_messages` (`id`, `user_id`, `session_id`, `role`, `content`, `is_cleared`, `created_at`) VALUES
+(1, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Shop có bán những gì?', 1, '2026-03-30 10:39:00'),
+(2, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Cozy Bot đang xử lý nhiều yêu cầu cùng lúc.Vui lòng thử lại sau ít phút để được hỗ trợ tốt nhất nhé!', 1, '2026-03-30 10:39:00'),
+(3, NULL, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Shop có bán những gì?', 1, '2026-03-30 10:53:29'),
+(4, NULL, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Chào bạn! Cozy Bot rất vui được hỗ trợ bạn ạ. 😊\n\nTại COZY CORNER, chúng mình có rất nhiều sản phẩm gia dụng chất lượng để giúp không gian bếp của bạn thêm ấm cúng và tiện nghi đó ạ. Bạn có thể tham khảo các nhóm sản phẩm chính sau đây nhé:\n\n*   **Dao các loại:** Từ dao thái chuyên dụng đến dao chặt xương, ví dụ như [Dao Nigara Anmon](http://localhost:8080/cozycorner/index.php?url=product/detail&id=36) hay [Dao chặt xương Nhật](http://localhost:8080/cozycorner/index.php?url=product/detail&id=40).\n*   **Nồi:** Đa dạng các loại nồi như [Nồi cơm điện Kalpen](http://localhost:8080/cozycorner/index.php?url=product/detail&id=45), [Nồi áp suất Kalpen](http://localhost:8080/cozycorner/index.php?url=product/detail&id=47) và [Nồi lẩu inox](http://localhost:8080/cozycorner/index.php?url=product/detail&id=52).\n*   **Đồ Điện gia dụng:** Các thiết bị tiện ích như [Ấm đun nước siêu tốc](http://localhost:8080/cozycorner/index.php?url=product/detail&id=54), [Bếp từ đơn Kalpen](http://localhost:8080/cozycorner/index.php?url=product/detail&id=55) và [Nồi chiên không dầu](http://localhost:8080/cozycorner/index.php?url=product/detail&id', 1, '2026-03-30 10:53:29'),
+(5, NULL, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-30 10:53:49'),
+(6, NULL, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Dạ chào bạn, Cozy Bot rất sẵn lòng hỗ trợ bạn tra cứu thông tin đơn hàng ạ. 😊\n\nĐể mình có thể kiểm tra chính xác nhất, bạn vui lòng cung cấp giúp mình **mã đơn hàng** của bạn nhé (ví dụ: ORD00001).\n\nNgoài ra, bạn hiện chưa đăng nhập vào hệ thống của COZY CORNER. Nếu bạn đăng nhập, bạn có thể dễ dàng tra cứu trạng thái đơn hàng của mình và xem hạng thành viên của mình bất cứ lúc nào đó ạ.\n\nMình chờ mã đơn hàng từ bạn nhé!', 1, '2026-03-30 10:53:49'),
+(7, 4, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Shop có bán những gì?', 1, '2026-03-30 10:55:23'),
+(8, 4, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Chào anh Đào Công Anh Minh, Cozy Bot xin chào ạ! 👋\n\nDạ, tại COZY CORNER, chúng em có rất nhiều sản phẩm gia dụng chất lượng để phục vụ nhu cầu của quý khách. Anh Minh có thể tham khảo các nhóm sản phẩm chính sau đây ạ:\n\n-   **Dao:** Các loại dao đa dạng như [Dao Nigara Anmon](http://localhost:8080/cozycorner/index.php?url=product/detail&id=36), [Dao chặt xương Nhật](http://localhost:8080/cozycorner/index.php?url=product/detail&id=40), [Dao thái sashimi](http://localhost:8080/cozycorner/index.php?url=product/detail&id=41), v.v.\n-   **Nồi:** Bao gồm [Nồi cơm điện Kalpen](http://localhost:8080/cozycorner/index.php?url=product/detail&id=45), [Nồi áp suất Kalpen](http://localhost:8080/cozycorner/index.php?url=product/detail&id=47), [Bộ 3 nồi inox](http://localhost:8080/cozycorner/index.php?url=product/detail&id=50), v.v.\n-   **Đồ Điện Gia Dụng:** Như [Ấm đun nước siêu tốc](http://localhost:8080/cozycorner/index.php?url=product/detail&id=54), [Bếp từ đơn Kalpen](http://localhost:8080/cozycorner/index.php?url=product/detail&id=55), [Nồi chiên không dầu](http://localhost:8080/cozycorner/index.php?url=product/detail&id=59), v.v.\n-   **Chảo:** Có [Chảo chống dính cao cấp](http://localhost:8080/cozycorner/index.php?url=product/detail&id=60), [Chảo inox](http://localhost:8080/cozycorner/index.php?url=product/detail&id=61), [Chảo chống dính sâu lòng](http://localhost:8080/cozycorner/index.php?url=product/detail&id=64), v.v.\n-   **Chén & Dĩa:** Các mẫu đáng yêu như [Bát Kuromi](http://localhost:8080/cozycorner/index.php?url=product/detail&id=66), [Dĩa quả bơ](http://localhost:8080/cozycorner/index.php?url=', 1, '2026-03-30 10:55:23'),
+(9, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Shop có bán những gì?', 1, '2026-03-30 11:31:14'),
+(10, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Chào Anh Đào Công Anh Minh, Cozy Bot xin chào ạ! 😊\n\nDạ, tại COZY CORNER, chúng mình có rất nhiều sản phẩm gia dụng đa dạng để giúp không gian bếp nhà mình thêm tiện nghi và ấm cúng đó ạ. Anh Minh có thể tham khảo một số dòng sản phẩm nổi bật như:\n\n*   **Dụng cụ bếp:**\n    *   [Dao chặt xương Nhật](http://localhost:8080/cozycorner/index.php?url=product/detail&id=40)\n    *   [Dao thái sashimi](http://localhost:8080/cozycorner/index.php?url=product/detail&id=41)\n*   **Nồi & Chảo:**\n    *   [Nồi cơm điện Kalpen](http://localhost:8080/cozycorner/index.php?url=product/detail&id=45)\n    *   [Chảo chống dính cao cấp](http://localhost:8080/cozycorner/index.php?url=product/detail&id=60)\n*   **Đồ điện gia dụng:**\n    *   [Bếp từ đơn Kalpen](http://localhost:8080/cozycorner/index.php?url=product/detail&id=55)\n    *   [Máy xay sinh tố](http://localhost:8080/cozycorner/index.php?url=product/detail&id=56)\n*   **Đồ dùng bàn ăn:**\n    *   [Bát Kuromi](http://localhost:8080/cozycorner/index.php?url=product/detail&id=66)\n    *   [Thớt gỗ đa dụng](http://localhost:8080/cozycorner/index.php?url=product/detail&id=75)\n\nNgoài ra, COZY CORNER còn có rất nhiều sản phẩm khác nữa ạ. Anh Minh muốn tìm hiểu thêm về loại sản phẩm nào không ạ? Mình rất sẵn lòng hỗ trợ! ✨', 1, '2026-03-30 11:31:14'),
+(11, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-30 12:07:28'),
+(12, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Dạ, đây là các đơn hàng gần nhất của bạn:\n- Mã **ORD00036** | 27.900đ | Trạng thái: *HoanThanh*\n- Mã **ORD00035** | 37.900đ | Trạng thái: *HoanThanh*\n- Mã **ORD00034** | 88.600đ | Trạng thái: *Huy*\n\n👉 [Xem chi tiết tất cả đơn hàng](http://localhost:8080/cozycorner/index.php?url=user/account&tab=orders)', 1, '2026-03-30 12:07:28'),
+(13, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Mã giảm giá hôm nay', 1, '2026-03-30 12:07:36'),
+(14, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', '🎁 Hiện shop đang có các mã giảm giá sau:\n- Mã **TET2026** : Giảm 5% (Đơn từ 20.000đ)\n- Mã **TET** : Giảm 2.000đ (Đơn từ 10.000đ)\n- Mã **XUAN** : Giảm 5.000đ (Đơn từ 30.000đ)\n- Mã **FREESHIP** : Giảm Freeship tối đa 10.000đ (Đơn từ 30.000đ)\n', 1, '2026-03-30 12:07:36'),
+(15, 4, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-30 12:16:31'),
+(16, 4, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Hiện tại hệ thống chưa ghi nhận đơn hàng nào của bạn ạ.', 1, '2026-03-30 12:16:31'),
+(17, 4, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Mã giảm giá hôm nay', 1, '2026-03-30 12:16:38'),
+(18, 4, 'vhv70q672mnol3gi1aj3vckumt', 'bot', '🎁 Hiện shop đang có các mã giảm giá sau:\n- Mã **TET2026** : Giảm 5% (Đơn từ 20.000đ)\n- Mã **TET** : Giảm 2.000đ (Đơn từ 10.000đ)\n- Mã **XUAN** : Giảm 5.000đ (Đơn từ 30.000đ)\n- Mã **FREESHIP** : Giảm Freeship tối đa 10.000đ (Đơn từ 30.000đ)\n', 1, '2026-03-30 12:16:38'),
+(19, 4, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Chính sách bảo hành', 1, '2026-03-30 12:16:39'),
+(20, 4, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Chào bạn, đây là thông tin của COZY CORNER:\n- **Địa chỉ:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. HCM\n- **Hotline:** 0888 888 888 | **Email:** Cozy@cv.com.vn\n- **Bảo hành:** 1 đổi 1 trong 7 ngày nếu có lỗi nhà sản xuất.\n- **Giao hàng:** Toàn quốc qua GHN, hỗ trợ COD và chuyển khoản QR.', 1, '2026-03-30 12:16:39'),
+(21, 4, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Địa chỉ shop ở đâu?', 1, '2026-03-30 12:16:42'),
+(22, 4, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Chào bạn, đây là thông tin của COZY CORNER:\n- **Địa chỉ:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. HCM\n- **Hotline:** 0888 888 888 | **Email:** Cozy@cv.com.vn\n- **Bảo hành:** 1 đổi 1 trong 7 ngày nếu có lỗi nhà sản xuất.\n- **Giao hàng:** Toàn quốc qua GHN, hỗ trợ COD và chuyển khoản QR.', 1, '2026-03-30 12:16:42'),
+(23, 4, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-30 12:31:07'),
+(24, 4, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Hiện tại hệ thống chưa ghi nhận đơn hàng nào của bạn ạ.', 1, '2026-03-30 12:31:07'),
+(25, 4, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Mã giảm giá hôm nay', 1, '2026-03-30 12:31:09'),
+(26, 4, 'vhv70q672mnol3gi1aj3vckumt', 'bot', '🎁 Hiện shop đang có các mã giảm giá sau:\n- Mã **TET2026** : Giảm 5% (Đơn từ 20.000đ)\n- Mã **TET** : Giảm 2.000đ (Đơn từ 10.000đ)\n- Mã **XUAN** : Giảm 5.000đ (Đơn từ 30.000đ)\n- Mã **FREESHIP** : Giảm Freeship tối đa 10.000đ (Đơn từ 30.000đ)\n', 1, '2026-03-30 12:31:09'),
+(27, 4, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-30 12:35:06'),
+(28, 4, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Hiện tại hệ thống chưa ghi nhận đơn hàng nào của bạn ạ.', 1, '2026-03-30 12:35:06'),
+(29, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Shop có bán những gì', 1, '2026-03-30 12:45:11'),
+(30, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Dạ, COZY CORNER chuyên cung cấp các mặt hàng gia dụng chất lượng, bao gồm:\n- **[Chảo](http://localhost:8080/cozycorner/index.php?url=product&category=ch-o)**\n- **[Nồi](http://localhost:8080/cozycorner/index.php?url=product&category=n-i)**\n- **[Đồ Điện](http://localhost:8080/cozycorner/index.php?url=product&category=-i-n)**\n- **[Chén](http://localhost:8080/cozycorner/index.php?url=product&category=ch-n)**\n- **[Thớt](http://localhost:8080/cozycorner/index.php?url=product&category=th-t)**\n- **[Dao](http://localhost:8080/cozycorner/index.php?url=product&category=dao)**\n\n👉 [Xem tất cả sản phẩm tại đây](http://localhost:8080/cozycorner/index.php?url=product)', 1, '2026-03-30 12:45:11'),
+(31, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Shop có bán những gì', 1, '2026-03-30 13:26:36'),
+(32, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Dạ, COZY CORNER chuyên cung cấp các mặt hàng gia dụng chất lượng, bao gồm:\n- **[Chảo](http://localhost:8080/cozycorner/index.php?url=product&category=ch-o)**\n- **[Nồi](http://localhost:8080/cozycorner/index.php?url=product&category=n-i)**\n- **[Đồ Điện](http://localhost:8080/cozycorner/index.php?url=product&category=-i-n)**\n- **[Chén](http://localhost:8080/cozycorner/index.php?url=product&category=ch-n)**\n- **[Thớt](http://localhost:8080/cozycorner/index.php?url=product&category=th-t)**\n- **[Dao](http://localhost:8080/cozycorner/index.php?url=product&category=dao)**\n\n👉 [Xem tất cả sản phẩm tại đây](http://localhost:8080/cozycorner/index.php?url=product)', 1, '2026-03-30 13:26:36'),
+(33, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'shop ở đâu', 1, '2026-03-30 13:26:51'),
+(34, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Chào bạn, đây là thông tin của COZY CORNER:\n- **Địa chỉ:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. HCM\n- **Hotline:** 0888 888 888 | **Email:** Cozy@cv.com.vn\n- **Bảo hành:** 1 đổi 1 trong 7 ngày nếu có lỗi nhà sản xuất.\n- **Giao hàng:** Toàn quốc qua GHN, hỗ trợ COD và chuyển khoản QR.', 1, '2026-03-30 13:26:51'),
+(35, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Bạn là ai', 1, '2026-03-30 13:27:04'),
+(36, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Chào bạn, đây là thông tin của COZY CORNER:\n- **Địa chỉ:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. HCM\n- **Hotline:** 0888 888 888 | **Email:** Cozy@cv.com.vn\n- **Bảo hành:** 1 đổi 1 trong 7 ngày nếu có lỗi nhà sản xuất.\n- **Giao hàng:** Toàn quốc qua GHN, hỗ trợ COD và chuyển khoản QR.', 1, '2026-03-30 13:27:04'),
+(37, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'tôi muốn mua thì làm như nào', 1, '2026-03-30 13:27:29'),
+(38, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Dạ chào bạn! Rất vui khi bạn quan tâm đến sản phẩm của COZY CORNER', 1, '2026-03-30 13:27:29'),
+(39, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'chỉ tôi cách mua hàng', 1, '2026-03-30 13:27:46'),
+(40, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Dạ chào bạn! Để mua hàng tại COZY CORNER, bạn có thể làm theo các', 1, '2026-03-30 13:27:46'),
+(41, 5, 'vhv70q672mnol3gi1aj3vckumt', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-30 13:30:57'),
+(42, 5, 'vhv70q672mnol3gi1aj3vckumt', 'bot', 'Dạ, đây là các đơn hàng gần nhất của bạn:\n- Mã **ORD00036** | 27.900đ | Trạng thái: *HoanThanh*\n- Mã **ORD00035** | 37.900đ | Trạng thái: *HoanThanh*\n- Mã **ORD00034** | 88.600đ | Trạng thái: *Huy*\n\n👉 [Xem chi tiết tất cả đơn hàng](http://localhost:8080/cozycorner/index.php?url=user/account&tab=orders)', 1, '2026-03-30 13:30:57'),
+(43, 5, '2o96t73jb1q9n7sia2bjsc9ha9', 'user', 'đơn tôi bị hủy hả', 1, '2026-03-31 06:19:12'),
+(44, 5, '2o96t73jb1q9n7sia2bjsc9ha9', 'bot', 'Dạ, đây là các đơn hàng gần nhất của bạn:\n- Mã **ORD00036** | 27.900đ | Trạng thái: *HoanThanh*\n- Mã **ORD00035** | 37.900đ | Trạng thái: *HoanThanh*\n- Mã **ORD00034** | 88.600đ | Trạng thái: *Huy*\n\n👉 [Xem chi tiết tất cả đơn hàng](http://localhost:8080/cozycorner/index.php?url=user/account&tab=orders)', 1, '2026-03-31 06:19:12'),
+(45, 5, '2o96t73jb1q9n7sia2bjsc9ha9', 'user', 'tôi mua mấy đơn rồi', 1, '2026-03-31 06:19:32'),
+(46, 5, '2o96t73jb1q9n7sia2bjsc9ha9', 'bot', 'Dạ, đây là các đơn hàng gần nhất của bạn:\n- Mã **ORD00036** | 27.900đ | Trạng thái: *HoanThanh*\n- Mã **ORD00035** | 37.900đ | Trạng thái: *HoanThanh*\n- Mã **ORD00034** | 88.600đ | Trạng thái: *Huy*\n\n👉 [Xem chi tiết tất cả đơn hàng](http://localhost:8080/cozycorner/index.php?url=user/account&tab=orders)', 1, '2026-03-31 06:19:32'),
+(47, 5, '2o96t73jb1q9n7sia2bjsc9ha9', 'user', 'tổi muốn trả hàng thì làm sao', 1, '2026-03-31 06:20:02'),
+(48, 5, '2o96t73jb1q9n7sia2bjsc9ha9', 'bot', 'Dạ, COZY CORNER có chính sách **1 đổi 1 trong vòng 7 ngày** đối với các sản phẩm có lỗi từ nhà sản xuất.\n\nNếu sản phẩm của bạn gặp vấn đề, vui lòng liên hệ ngay với shop kèm hình ảnh/video để được hỗ trợ nhanh nhất nhé!', 1, '2026-03-31 06:20:02'),
+(49, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Shop có bán những gì', 1, '2026-03-31 06:39:21'),
+(50, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, COZY CORNER chuyên cung cấp các mặt hàng gia dụng chất lượng, bao gồm:\n- **[Chảo](http://localhost:8080/cozycorner/index.php?url=product&category=ch-o)**\n- **[Nồi](http://localhost:8080/cozycorner/index.php?url=product&category=n-i)**\n- **[Đồ Điện](http://localhost:8080/cozycorner/index.php?url=product&category=-i-n)**\n- **[Chén](http://localhost:8080/cozycorner/index.php?url=product&category=ch-n)**\n- **[Thớt](http://localhost:8080/cozycorner/index.php?url=product&category=th-t)**\n- **[Dao](http://localhost:8080/cozycorner/index.php?url=product&category=dao)**\n\n👉 [Xem tất cả sản phẩm tại đây](http://localhost:8080/cozycorner/index.php?url=product)', 1, '2026-03-31 06:39:21'),
+(51, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'tôi muốn đổi mật khẩu', 1, '2026-03-31 06:41:36'),
+(52, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể quản lý thông tin cá nhân, xem lịch sử đơn hàng và đổi mật khẩu tại trang **Tài khoản của tôi**.\n\n👉 Bấm vào đây để đến trang tài khoản của bạn.', 1, '2026-03-31 06:41:36'),
+(53, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Shop có bán những gì', 1, '2026-03-31 06:48:07'),
+(54, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, COZY CORNER chuyên cung cấp các mặt hàng gia dụng chất lượng, bao gồm:\n- **[Chảo](http://localhost:8080/cozycorner/index.php?url=product&category=ch-o)**\n- **[Nồi](http://localhost:8080/cozycorner/index.php?url=product&category=n-i)**\n- **[Đồ Điện](http://localhost:8080/cozycorner/index.php?url=product&category=-i-n)**\n- **[Chén](http://localhost:8080/cozycorner/index.php?url=product&category=ch-n)**\n- **[Thớt](http://localhost:8080/cozycorner/index.php?url=product&category=th-t)**\n- **[Dao](http://localhost:8080/cozycorner/index.php?url=product&category=dao)**\n\n👉 [Xem tất cả sản phẩm tại đây](http://localhost:8080/cozycorner/index.php?url=product)', 1, '2026-03-31 06:48:07'),
+(55, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'dùng voucher', 1, '2026-03-31 06:48:16'),
+(56, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để sử dụng mã giảm giá, bạn chỉ cần nhập mã vào ô **\"Mã giảm giá\"** ở trang thanh toán và nhấn \"Áp dụng\".\n\nHệ thống sẽ tự động trừ số tiền được giảm vào tổng đơn hàng của bạn. Bạn có thể xem các mã giảm giá hiện có ở trang thanh toán nhé!', 1, '2026-03-31 06:48:16'),
+(57, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'tôi muốn xem thông tin cá nhân thì ở đâu', 1, '2026-03-31 06:48:41'),
+(58, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể liên hệ với COZY CORNER qua các thông tin sau:\n\n- **Địa chỉ:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. Hồ Chí Minh\n- **Hotline:** 0888 888 888\n- **Email:** Cozy@cv.com.vn\n\nNếu cần hỗ trợ gấp, bạn có thể tiếp tục trò chuyện với mình hoặc vào trang liên hệ nhé!', 1, '2026-03-31 06:48:41'),
+(59, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'thông tin cá nhân', 1, '2026-03-31 06:48:54'),
+(60, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể quản lý thông tin cá nhân, xem lịch sử đơn hàng và đổi mật khẩu tại trang **Tài khoản của tôi**.\n\n👉 Bấm vào đây để đến trang tài khoản của bạn.', 1, '2026-03-31 06:48:54'),
+(61, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Shop có bán những gì', 1, '2026-03-31 06:49:53'),
+(62, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, COZY CORNER chuyên cung cấp các mặt hàng gia dụng chất lượng, bao gồm:\n- **[Chảo](http://localhost:8080/cozycorner/index.php?url=product&category=ch-o)**\n- **[Nồi](http://localhost:8080/cozycorner/index.php?url=product&category=n-i)**\n- **[Đồ Điện](http://localhost:8080/cozycorner/index.php?url=product&category=-i-n)**\n- **[Chén](http://localhost:8080/cozycorner/index.php?url=product&category=ch-n)**\n- **[Thớt](http://localhost:8080/cozycorner/index.php?url=product&category=th-t)**\n- **[Dao](http://localhost:8080/cozycorner/index.php?url=product&category=dao)**\n\n👉 [Xem tất cả sản phẩm tại đây](http://localhost:8080/cozycorner/index.php?url=product)', 1, '2026-03-31 06:49:53'),
+(63, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-31 06:50:55'),
+(64, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, đây là các đơn hàng gần nhất của bạn:\n- Mã **ORD00036** | 27.900đ | Trạng thái: *HoanThanh*\n- Mã **ORD00035** | 37.900đ | Trạng thái: *HoanThanh*\n- Mã **ORD00034** | 88.600đ | Trạng thái: *Huy*\n\n👉 [Xem chi tiết tất cả đơn hàng](http://localhost:8080/cozycorner/index.php?url=user/account&tab=orders)', 1, '2026-03-31 06:50:55'),
+(65, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'đặt hàng như nào', 1, '2026-03-31 06:51:15'),
+(66, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ để mua hàng tại COZY CORNER, bạn có thể làm theo các bước sau ạ:\n\n1.  **Chọn sản phẩm:** Duyệt qua các danh mục sản phẩm và chọn món đồ bạn yêu thích.\n2.  **Thêm vào giỏ:** Tại trang chi tiết sản phẩm, nhấn nút \"Thêm vào giỏ hàng\".\n3.  **Thanh toán:** Vào giỏ hàng của bạn, kiểm tra lại sản phẩm và nhấn \"Tiến hành thanh toán\".\n4.  **Điền thông tin:** Nhập địa chỉ giao hàng, chọn mã giảm giá (nếu có) và phương thức thanh toán.\n\nChúc bạn có một trải nghiệm mua sắm tuyệt vời! 🛒', 1, '2026-03-31 06:51:15'),
+(67, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'tôi muốn xem thông tin cá nhân thì ở đâu', 1, '2026-03-31 06:59:11'),
+(68, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể quản lý mọi thông tin cá nhân, xem lịch sử đơn hàng và đổi mật khẩu tại trang Tài khoản của tôi.\n\nChỉ cần click vào link là đến trang đó ngay ạ!', 1, '2026-03-31 06:59:11'),
+(69, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'tôi đang là hạng gì', 1, '2026-03-31 06:59:32'),
+(70, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ em xin lỗi ạ, hiện tại Cozy Bot chưa thể kiểm tra hạng thành viên của quý khách được ạ.\n\nĐể biết thêm thông tin chi tiết về hạng thành viên và các ưu đãi dành riêng cho mình, bạn vui lòng liên hệ trực tiếp với bộ phận Chăm sóc khách hàng qua Hotline: **0888 888 888** hoặc Email: **Cozy@cv.com.vn** nhé!\n\nCozy Bot rất tiếc vì sự bất tiện này ạ!', 1, '2026-03-31 06:59:32'),
+(71, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Tôi đang ở hạng gì', 1, '2026-03-31 07:13:18'),
+(72, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Chào bạn Đào Công Anh Minh thân mến!\n\nCozy Bot xin phép thông báo:\n- Hiện tại, bạn đang là thành viên hạng **Kim Cương** của COZY CORNER ạ!\n\nNếu bạn cần Cozy Bot hỗ trợ thêm thông tin gì, đừng ngần ngại cho Cozy Bot biết nhé!', 1, '2026-03-31 07:13:18'),
+(73, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'tôi có thể xem thông tin cá nhân ở đâu', 1, '2026-03-31 07:13:46'),
+(74, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể quản lý mọi thông tin cá nhân, xem lịch sử đơn hàng và đổi mật khẩu tại trang Tài khoản của tôi.\n\nChỉ cần click vào link là đến trang đó ngay ạ!', 1, '2026-03-31 07:13:46'),
+(75, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Shop có bán những gì', 1, '2026-03-31 07:13:52'),
+(76, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, COZY CORNER chuyên cung cấp các mặt hàng gia dụng chất lượng, bao gồm:\n- **[Chảo](http://localhost:8080/cozycorner/index.php?url=product&category=ch-o)**\n- **[Nồi](http://localhost:8080/cozycorner/index.php?url=product&category=n-i)**\n- **[Đồ Điện](http://localhost:8080/cozycorner/index.php?url=product&category=-i-n)**\n- **[Chén](http://localhost:8080/cozycorner/index.php?url=product&category=ch-n)**\n- **[Thớt](http://localhost:8080/cozycorner/index.php?url=product&category=th-t)**\n- **[Dao](http://localhost:8080/cozycorner/index.php?url=product&category=dao)**\n\n👉 [Xem tất cả sản phẩm tại đây](http://localhost:8080/cozycorner/index.php?url=product)', 1, '2026-03-31 07:13:52'),
+(77, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-31 07:13:53'),
+(78, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 1, '2026-03-31 07:13:53'),
+(79, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Đơn hàng của tôi đâu?', 0, '2026-03-31 07:14:47'),
+(80, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 0, '2026-03-31 07:14:47'),
+(81, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Mã giảm giá hôm nay', 0, '2026-03-31 07:14:54'),
+(82, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', '🎁 Hiện shop đang có các mã giảm giá sau:\n- Mã **TET2026** : Giảm 5% (Đơn từ 20.000đ)\n- Mã **TET** : Giảm 2.000đ (Đơn từ 10.000đ)\n- Mã **XUAN** : Giảm 5.000đ (Đơn từ 30.000đ)\n- Mã **FREESHIP** : Giảm Freeship tối đa 10.000đ (Đơn từ 30.000đ)\n', 0, '2026-03-31 07:14:54'),
+(83, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Chính sách bảo hành', 0, '2026-03-31 07:14:55'),
+(84, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, tất cả sản phẩm tại COZY CORNER đều được áp dụng chính sách bảo hành **1 đổi 1 trong vòng 7 ngày** nếu phát sinh lỗi từ nhà sản xuất. Bạn vui lòng giữ lại hóa đơn và xem chi tiết tại trang chính sách bảo hành để được hỗ trợ tốt nhất ạ!', 0, '2026-03-31 07:14:55'),
+(85, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Đơn hàng của tôi đâu?', 0, '2026-03-31 07:25:36'),
+(86, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 0, '2026-03-31 07:25:36'),
+(87, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Mã giảm giá hôm nay', 0, '2026-03-31 07:26:08'),
+(88, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, shop sử dụng dịch vụ **Giao Hàng Nhanh (GHN)** cho tất cả các đơn hàng.\n\n- **Phí vận chuyển:** Sẽ được tự động tính toán dựa trên địa chỉ của bạn ở trang thanh toán.\n- **Thời gian giao hàng:** Thông thường từ 2-4 ngày làm việc tùy thuộc vào khu vực của bạn.\n\nBạn cứ yên tâm đặt hàng, hệ thống sẽ hiển thị chi tiết phí ship trước khi bạn xác nhận ạ!', 0, '2026-03-31 07:26:08'),
+(89, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'tôi là ai', 0, '2026-03-31 07:27:30'),
+(90, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 0, '2026-03-31 07:27:30'),
+(91, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'tôi là ai', 0, '2026-03-31 07:27:41'),
+(92, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 0, '2026-03-31 07:27:41'),
+(93, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Shop có bán những gì', 0, '2026-03-31 07:27:44'),
+(94, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể liên hệ với COZY CORNER qua các thông tin sau:\n\n- **Địa chỉ:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. Hồ Chí Minh\n- **Hotline:** 0888 888 888\n- **Email:** Cozy@cv.com.vn\n\nHoặc bạn có thể đến trực tiếp trang liên hệ để gửi tin nhắn cho shop ạ!', 0, '2026-03-31 07:27:44'),
+(95, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Mã giảm giá hôm nay', 0, '2026-03-31 07:29:14'),
+(96, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, shop sử dụng dịch vụ **Giao Hàng Nhanh (GHN)** cho tất cả các đơn hàng.\n\n- **Phí vận chuyển:** Sẽ được tự động tính toán dựa trên địa chỉ của bạn ở trang thanh toán.\n- **Thời gian giao hàng:** Thông thường từ 2-4 ngày làm việc tùy thuộc vào khu vực của bạn.\n\nBạn cứ yên tâm đặt hàng, hệ thống sẽ hiển thị chi tiết phí ship trước khi bạn xác nhận ạ!', 0, '2026-03-31 07:29:14'),
+(97, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Chính sách bảo hành', 0, '2026-03-31 07:29:17'),
+(98, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, COZY CORNER hiện hỗ trợ 2 phương thức thanh toán chính:\n\n- **Thanh toán khi nhận hàng (COD):** Bạn sẽ thanh toán tiền mặt trực tiếp cho nhân viên giao hàng.\n- **Chuyển khoản ngân hàng:** Bạn có thể thanh toán qua mã QR động được tạo tự động sau khi đặt hàng thành công.\n\nBạn có thể lựa chọn phương thức phù hợp nhất ở trang thanh toán nhé!', 0, '2026-03-31 07:29:17'),
+(99, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Địa chỉ shop ở đâu?', 0, '2026-03-31 07:29:20'),
+(100, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể liên hệ với COZY CORNER qua các thông tin sau:\n\n- **Địa chỉ:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. Hồ Chí Minh\n- **Hotline:** 0888 888 888\n- **Email:** Cozy@cv.com.vn\n\nHoặc bạn có thể đến trực tiếp trang liên hệ để gửi tin nhắn cho shop ạ!', 0, '2026-03-31 07:29:20'),
+(101, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Đơn hàng của tôi đâu?', 0, '2026-03-31 07:29:54'),
+(102, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 0, '2026-03-31 07:29:54'),
+(103, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Shop có bán những gì', 0, '2026-03-31 07:29:55'),
+(104, 4, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể liên hệ với COZY CORNER qua các thông tin sau:\n\n- **Địa chỉ:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. Hồ Chí Minh\n- **Hotline:** 0888 888 888\n- **Email:** Cozy@cv.com.vn\n\nHoặc bạn có thể đến trực tiếp trang liên hệ để gửi tin nhắn cho shop ạ!', 0, '2026-03-31 07:29:55'),
+(105, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Shop có bán những gì', 1, '2026-03-31 07:39:41'),
+(106, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, COZY CORNER hiện đang kinh doanh các danh mục sản phẩm sau ạ:\n- [Chảo](http://localhost:8080/cozycorner/index.php?url=product&category=ch-o)\n- [Nồi](http://localhost:8080/cozycorner/index.php?url=product&category=n-i)\n- [Đồ Điện](http://localhost:8080/cozycorner/index.php?url=product&category=-i-n)\n- [Chén](http://localhost:8080/cozycorner/index.php?url=product&category=ch-n)\n- [Thớt](http://localhost:8080/cozycorner/index.php?url=product&category=th-t)\n- [Dao](http://localhost:8080/cozycorner/index.php?url=product&category=dao)\n\nBạn muốn xem danh mục nào ạ?', 1, '2026-03-31 07:39:41'),
+(107, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-31 07:39:43'),
+(108, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 1, '2026-03-31 07:39:43'),
+(109, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Địa chỉ shop ở đâu?', 1, '2026-03-31 07:39:45'),
+(110, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể liên hệ với COZY CORNER qua các thông tin sau:\n\n- **Địa chỉ:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. Hồ Chí Minh\n- **Hotline:** 0888 888 888\n- **Email:** Cozy@cv.com.vn\n\nHoặc bạn có thể đến trực tiếp trang liên hệ để gửi tin nhắn cho shop ạ!', 1, '2026-03-31 07:39:45'),
+(111, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Chính sách bảo hành', 1, '2026-03-31 07:39:47'),
+(112, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, tất cả sản phẩm tại COZY CORNER đều được áp dụng chính sách bảo hành **1 đổi 1 trong vòng 7 ngày** nếu phát sinh lỗi từ nhà sản xuất. Bạn vui lòng giữ lại hóa đơn và liên hệ với shop để được hỗ trợ tốt nhất ạ!', 1, '2026-03-31 07:39:47'),
+(113, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Mã giảm giá hôm nay', 1, '2026-03-31 07:39:54'),
+(114, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Chào bạn Đào Công Anh Minh, Cozy Bot xin gửi bạn các mã giảm giá siêu hấp dẫn đang có tại Cozy Corner đây ạ:\n\n*   **Mã TET2026**: Giảm ngay 5% cho đơn hàng từ 20.000đ.\n*   **Mã TET**: Giảm 2.000đ cho đơn hàng từ 10.000đ.\n*   **Mã XUAN**: Giảm 5.000đ cho đơn hàng từ 30.000đ.\n\nBạn nhớ áp dụng mã khi thanh toán để nhận ưu đãi nhé! Chúc bạn mua sắm vui vẻ ạ! 😊', 1, '2026-03-31 07:39:54'),
+(115, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'cách thanh toán qr', 1, '2026-03-31 07:50:43'),
+(116, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, COZY CORNER hiện hỗ trợ 2 phương thức thanh toán chính:\n\n- **Thanh toán khi nhận hàng (COD):** Bạn sẽ thanh toán tiền mặt trực tiếp cho nhân viên giao hàng.\n- **Chuyển khoản ngân hàng:** Bạn có thể thanh toán qua mã QR động được tạo tự động sau khi đặt hàng thành công.\n\nBạn có thể lựa chọn phương thức phù hợp nhất ở trang thanh toán nhé!', 1, '2026-03-31 07:50:43'),
+(117, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'đơn hàng của tôi tới đâu rồi sao mãi chưa thấy giao', 1, '2026-03-31 07:51:25'),
+(118, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 1, '2026-03-31 07:51:25'),
+(119, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'kiểm tra tình trạng đơn #ORD00036', 1, '2026-03-31 07:51:49'),
+(120, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 1, '2026-03-31 07:51:49'),
+(121, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Mã giảm giá hôm nay', 1, '2026-03-31 08:05:32'),
+(122, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Chào bạn Đào Công Anh Minh, thành viên hạng Kim Cương của COZY CORNER! ✨\n\nDạ, COZY CORNER có những mã giảm giá siêu hấp dẫn đang chờ bạn đây ạ:\n\n*   **Mã \'TET2026\'**: Giảm ngay **5%** cho đơn hàng từ 20.000đ.\n*   **Mã \'TET\'**: Giảm **2.000đ** cho đơn hàng từ 10.000đ.\n*   **Mã \'XUAN\'**: Giảm **5.000đ** cho đơn hàng từ 30.000đ.\n\nBạn nhớ áp dụng mã phù hợp khi thanh toán để nhận ưu đãi nhé! Chúc bạn có trải nghiệm mua sắm thật vui vẻ tại COZY CORNER ạ! 😊', 1, '2026-03-31 08:05:32'),
+(123, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-31 08:05:51'),
+(124, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 1, '2026-03-31 08:05:51'),
+(125, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'hello', 1, '2026-03-31 08:06:43'),
+(126, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Xin chào 👋 Mình là **Cozy Bot** – trợ lý AI thông minh tại cửa hàng gia dụng COZY CORNER.\n\nMình có thể giúp bạn:\n- Tư vấn và tìm kiếm sản phẩm.\n- Cung cấp thông tin về mã giảm giá.\n- Hỗ trợ kiểm tra đơn hàng.\n\nBạn cần mình giúp gì hôm nay ạ?', 1, '2026-03-31 08:06:43'),
+(127, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'link tài khoản', 1, '2026-03-31 08:06:57'),
+(128, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể quản lý mọi thông tin cá nhân, xem lịch sử đơn hàng và đổi mật khẩu tại trang Tài khoản của tôi.\n\nChỉ cần click vào link là đến trang đó ngay ạ!', 1, '2026-03-31 08:06:57'),
+(129, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Cho tôi xem thông tin sản phẩm', 1, '2026-03-31 08:08:12'),
+(130, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn có thể quản lý mọi thông tin cá nhân, xem lịch sử đơn hàng và đổi mật khẩu tại trang Tài khoản của tôi.', 1, '2026-03-31 08:08:12'),
+(131, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-31 08:09:31'),
+(132, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 1, '2026-03-31 08:09:31'),
+(133, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Mã giảm giá hôm nay', 1, '2026-03-31 08:09:52'),
+(134, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Chào bạn Đào Công Anh Minh, Cozy Bot xin gửi bạn các mã giảm giá đang áp dụng tại Cozy Corner đây ạ:\n\n*   **TET2026**: Giảm 5% cho đơn hàng từ 20.000đ.\n*   **TET**: Giảm 2.000đ cho đơn hàng từ 10.000đ.\n*   **XUAN**: Giảm 5.000đ cho đơn hàng từ 30.000đ.\n\nBạn có thể áp dụng các mã này khi thanh toán để nhận ưu đãi nhé! Chúc bạn mua sắm vui vẻ ạ! 😊', 1, '2026-03-31 08:09:52'),
+(135, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Chính sách bảo hành', 1, '2026-03-31 08:09:54'),
+(136, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, tất cả sản phẩm tại COZY CORNER đều được áp dụng chính sách bảo hành **1 đổi 1 trong vòng 7 ngày** nếu phát sinh lỗi từ nhà sản xuất. Bạn vui lòng giữ lại hóa đơn và liên hệ với shop để được hỗ trợ tốt nhất ạ!', 1, '2026-03-31 08:09:54'),
+(137, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-31 08:21:41'),
+(138, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, để kiểm tra tình trạng các đơn hàng đã đặt, bạn vui lòng truy cập trang Lịch sử đơn hàng nhé. Mọi thông tin đều được cập nhật ở đó ạ!', 1, '2026-03-31 08:21:41'),
+(139, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Đơn hàng của tôi đâu?', 1, '2026-03-31 08:25:30'),
+(140, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, bạn vui lòng cho mình xin mã đơn hàng (ví dụ: ORD00036) để mình kiểm tra nhé!', 1, '2026-03-31 08:25:30'),
+(141, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'ord0036', 1, '2026-03-31 08:25:46'),
+(142, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, đơn hàng **ORD00036** (tạo ngày 29/03/2026) có tổng giá trị **27.900đ** hiện đang ở trạng thái: **HoanThanh**.', 1, '2026-03-31 08:25:46'),
+(143, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Shop có bán những gì', 1, '2026-03-31 08:25:52'),
+(144, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, COZY CORNER hiện đang kinh doanh các danh mục sản phẩm sau ạ:\n- [Chảo](http://localhost:8080/cozycorner/index.php?url=product&category=ch-o)\n- [Nồi](http://localhost:8080/cozycorner/index.php?url=product&category=n-i)\n- [Đồ Điện](http://localhost:8080/cozycorner/index.php?url=product&category=-i-n)\n- [Chén](http://localhost:8080/cozycorner/index.php?url=product&category=ch-n)\n- [Thớt](http://localhost:8080/cozycorner/index.php?url=product&category=th-t)\n- [Dao](http://localhost:8080/cozycorner/index.php?url=product&category=dao)\n\nBạn muốn xem danh mục nào ạ?', 1, '2026-03-31 08:25:52'),
+(145, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'cho tôi xem cái chảo', 1, '2026-03-31 08:26:02'),
+(146, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ vâng, COZY CORNER hiện có các loại chảo sau đây ạ:\n\n*   [Chảo chống dính cao cấp](http://localhost:8080/cozycorner/index.php?url=product/detail&id=60) - Giá 15.000đ\n*   [Chảo inox](http://localhost:8080/cozycorner/index.php?url=product/detail&id=61) - Giá 10.000đ\n*   [Chảo chống dính ceramic](http://localhost:8080/cozycorner/index.php?url=product/detail&id=62) - Giá 10.000đ\n*   [Chảo chống dính](http://localhost:8080/cozycorner/index.php?url=product/detail&id=63) - Giá 15.000đ\n\nBạn quan tâm đến loại chảo nào ạ?', 1, '2026-03-31 08:26:02'),
+(147, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Chính sách bảo hành', 1, '2026-03-31 08:26:08'),
+(148, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, các sản phẩm điện gia dụng tại shop đều được bảo hành chính hãng từ 12 - 24 tháng. Bạn chỉ cần giữ lại hóa đơn hoặc cung cấp SĐT đặt hàng là được ạ.', 1, '2026-03-31 08:26:08'),
+(149, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Mã giảm giá hôm nay', 1, '2026-03-31 08:26:17'),
+(150, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ vâng, Cozy Bot xin thông báo các mã giảm giá hiện có tại COZY CORNER để anh/chị Đào Công Anh Minh tham khảo ạ:\n\n*   **Mã \'TET2026\'**: Giảm 5% cho đơn hàng từ 20.000đ.\n*   **Mã \'TET\'**: Giảm 2.000đ cho đơn hàng từ 10.000đ.\n*   **Mã \'XUAN\'**: Giảm 5.000đ cho đơn hàng từ 30.000đ.\n\nAnh/chị Đào Công Anh Minh có thể áp dụng các mã này khi thanh toán nhé! Nếu cần hỗ trợ thêm, đừng ngần ngại cho Cozy Bot biết ạ. 😊', 1, '2026-03-31 08:26:17'),
+(151, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Địa chỉ shop ở đâu?', 1, '2026-03-31 08:26:25'),
+(152, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, COZY CORNER hiện có địa chỉ tại:\n- **Cửa hàng:** Hoàng Hoa Thám, P. 7, Q. Bình Thạnh, TP. Hồ Chí Minh\n- **Hotline:** 0888 888 888\n- **Email:** Cozy@cv.com.vn', 1, '2026-03-31 08:26:25'),
+(153, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'có xuất hóa đơn ko', 1, '2026-03-31 08:26:43'),
+(154, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ có ạ! COZY CORNER có xuất hóa đơn VAT theo yêu cầu của quý khách hàng. Khi đặt hàng, anh/chị Đào Công Anh Minh chỉ cần cung cấp thông tin cần thiết để xuất hóa đơn là được ạ. 😊', 1, '2026-03-31 08:26:43'),
+(155, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Tôi có thể mua được mấy sản phẩm 1 lần', 1, '2026-03-31 08:29:24'),
+(156, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Chào bạn Đào Công Anh Minh! Cozy Bot rất vui được hỗ trợ bạn ạ.\n\nRất tiếc, Cozy Bot hiện tại chưa có thông tin về số lượng sản phẩm tối đa mà bạn có thể mua trong một lần. Thông tin này có thể phụ thuộc vào chính sách vận chuyển hoặc quy định của từng sản phẩm cụ thể.\n\nĐể biết thông tin chính xác nhất, bạn vui lòng kiểm tra trực tiếp trên trang sản phẩm hoặc liên hệ với bộ phận hỗ trợ khách hàng của Cozy Corner nhé!\n\nNếu bạn cần tìm hiểu về các sản phẩm của Cozy Corner, Cozy Bot luôn sẵn lòng giúp đỡ ạ:\n*   [Thớt gỗ đa dụng](http://localhost:8080/cozycorner/index.php?url=product/detail&id=75)\n*   [Dao Nigara Anmon](http://localhost:8080/cozycorner/index.php?url=product/detail&id=36)\n*   [Dao Shigekatsu](http://localhost:8080/cozycorner/index.php?url=product/detail&id=37)\n*   [Thớt gỗ](http://localhost:8080/cozycorner/index.php?url=product/detail&id=72)', 1, '2026-03-31 08:29:24'),
+(157, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Shop có bán những gì', 1, '2026-03-31 08:29:42'),
+(158, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, COZY CORNER hiện đang kinh doanh các danh mục sản phẩm sau ạ:\n- [Chảo](http://localhost:8080/cozycorner/index.php?url=product&category=ch-o)\n- [Nồi](http://localhost:8080/cozycorner/index.php?url=product&category=n-i)\n- [Đồ Điện](http://localhost:8080/cozycorner/index.php?url=product&category=-i-n)\n- [Chén](http://localhost:8080/cozycorner/index.php?url=product&category=ch-n)\n- [Thớt](http://localhost:8080/cozycorner/index.php?url=product&category=th-t)\n- [Dao](http://localhost:8080/cozycorner/index.php?url=product&category=dao)\n\nBạn muốn xem danh mục nào ạ?', 1, '2026-03-31 08:29:42'),
+(159, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'Chính sách bảo hành', 1, '2026-03-31 08:29:46'),
+(160, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, các sản phẩm điện gia dụng tại shop đều được bảo hành chính hãng từ 12 - 24 tháng. Bạn chỉ cần giữ lại hóa đơn hoặc cung cấp SĐT đặt hàng là được ạ.', 1, '2026-03-31 08:29:46'),
+(161, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'bạn là ai dị', 1, '2026-03-31 09:21:45'),
+(162, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Xin chào 👋 Mình là **Cozy Bot** – trợ lý AI của COZY CORNER. Mình có thể kiểm tra đơn hàng, tìm voucher, giới thiệu sản phẩm. Mình giúp gì được cho bạn ạ?', 1, '2026-03-31 09:21:45'),
+(163, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'user', 'bạn có gì ăn không', 1, '2026-03-31 09:21:58'),
+(164, 5, 'qbcdhaafoov25u4mkie5ndajd2', 'bot', 'Dạ, em là trợ lý AI nên em không có gì để ăn đâu ạ! 😅\n\nCOZY CORNER chuyên cung cấp các sản phẩm đồ dùng nhà bếp chất lượng cao như chảo, nồi, dao, thớt... Bạn có muốn em giới thiệu sản phẩm nào không ạ?', 1, '2026-03-31 09:21:58'),
+(165, 5, 'uf7i1egpj45u7h811uf61phjsd', 'user', 'Shop có bán những gì', 1, '2026-03-31 12:11:46'),
+(166, 5, 'uf7i1egpj45u7h811uf61phjsd', 'bot', 'Dạ, COZY CORNER hiện đang kinh doanh các danh mục sản phẩm sau ạ:\n- [Chảo](http://localhost:8080/cozycorner/index.php?url=product&category=ch-o)\n- [Nồi](http://localhost:8080/cozycorner/index.php?url=product&category=n-i)\n- [Đồ Điện](http://localhost:8080/cozycorner/index.php?url=product&category=-i-n)\n- [Chén](http://localhost:8080/cozycorner/index.php?url=product&category=ch-n)\n- [Thớt](http://localhost:8080/cozycorner/index.php?url=product&category=th-t)\n- [Dao](http://localhost:8080/cozycorner/index.php?url=product&category=dao)\n\nBạn muốn xem danh mục nào ạ?', 1, '2026-03-31 12:11:46'),
+(167, 5, 'uf7i1egpj45u7h811uf61phjsd', 'user', 'Bạn có giỏi không', 1, '2026-03-31 12:11:57'),
+(168, 5, 'uf7i1egpj45u7h811uf61phjsd', 'bot', 'Dạ, em là Cozy Bot, trợ lý AI của COZY CORNER ạ! Em được thiết kế để giúp quý khách hàng tìm kiếm thông tin sản phẩm, giải đáp thắc mắc và hỗ trợ mua sắm một cách nhanh chóng và tiện lợi nhất.\n\nEm rất vui được phục vụ bạn, Đào Công Anh Minh! Nếu bạn cần tìm sản phẩm hay có bất kỳ câu hỏi nào, đừng ngần ngại hỏi em nhé! 😊', 1, '2026-03-31 12:11:57'),
+(169, 5, 'uf7i1egpj45u7h811uf61phjsd', 'user', 'Bán cho tôi 1 con dao thật sắc để đi quánh lộn', 1, '2026-03-31 12:12:28'),
+(170, 5, 'uf7i1egpj45u7h811uf61phjsd', 'bot', 'Dạ, em rất xin lỗi ạ, nhưng các sản phẩm dao của COZY CORNER đều là dụng cụ nhà bếp chuyên dụng, được thiết kế để hỗ trợ quý khách trong việc nấu nướng và chuẩn bị thực phẩm thôi ạ. Chúng em không kinh doanh hay khuyến khích sử dụng sản phẩm cho bất kỳ mục đích nào khác ngoài việc bếp núc an toàn và hợp pháp ạ.\n\nNếu bạn Đào Công Anh Minh đang tìm kiếm dao để phục vụ cho việc bếp núc, em rất sẵn lòng giới thiệu các mẫu dao chất lượng cao của COZY CORNER ạ! 😊', 1, '2026-03-31 12:12:28'),
+(171, 5, 'uf7i1egpj45u7h811uf61phjsd', 'user', 'Bạn bán điện thoại không', 1, '2026-03-31 12:14:13'),
+(172, 5, 'uf7i1egpj45u7h811uf61phjsd', 'bot', 'Chào bạn! Cozy Bot rất vui được hỗ trợ bạn ạ! 😊\n\nHiện tại, Cozy Corner chuyên cung cấp các sản phẩm đồ dùng nhà bếp chất lượng cao thôi ạ, như:\n*   [Thớt gỗ đa dụng](http://localhost:8080/cozycorner/index.php?url=product/detail&id=75)\n*   [Dao Nigara Anmon](http://localhost:8080/cozycorner/index.php?url=product/detail&id=36)\n*   [Dao Shigekatsu](http://localhost:8080/cozycorner/index.php?url=product/detail&id=37)\n*   [Thớt gỗ](http://localhost:8080/cozycorner/index.php?url=product/detail&id=72)\n\nCozy Corner chưa kinh doanh mặt hàng điện thoại bạn nhé. Rất mong được phục vụ bạn với các sản phẩm nhà bếp tiện ích của chúng mình ạ!', 1, '2026-03-31 12:14:13');
+
 -- --------------------------------------------------------
 
 --
@@ -168,6 +396,26 @@ INSERT INTO `contacts` (`id`, `ho_ten`, `email`, `so_dien_thoai`, `tieu_de`, `no
 (7, 'minh', 'admin123@gmail.com', '0123456789', 'test', 'test', 'ChuaDoc', '2026-03-26 11:26:20'),
 (8, 'minh', 'admin123@gmail.com', '0123456789', 'test', 'test', 'ChuaDoc', '2026-03-26 11:28:03'),
 (9, 'Đào Công Anh Minh', 'daoconganhminh1902@gmail.com', '0911078383', '123', '123', 'ChuaDoc', '2026-03-29 06:20:14');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `guest_rate_limits`
+--
+
+CREATE TABLE `guest_rate_limits` (
+  `ip_address` varchar(45) NOT NULL,
+  `action_date` date NOT NULL,
+  `daily_count` int(11) DEFAULT 0,
+  `last_request_time` int(11) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `guest_rate_limits`
+--
+
+INSERT INTO `guest_rate_limits` (`ip_address`, `action_date`, `daily_count`, `last_request_time`) VALUES
+('::1', '2026-03-31', 11, 1774963243);
 
 -- --------------------------------------------------------
 
@@ -254,14 +502,14 @@ INSERT INTO `orders` (`id`, `user_id`, `ghn_order_code`, `tong_tien`, `phi_van_c
 (26, 5, 'LTAEFX', 30900.00, 20900.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 123, Phường 10, Quận Tân Bình, Hồ Chí Minh', 'DangGiao', 'ChuyenKhoan', '', '2026-03-29 06:18:49', 0, NULL, 0),
 (27, 5, 'LTAEFA', 70500.00, 60500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 123, Phường Thịnh Lang, Thành phố Hòa Bình, Hòa Bình', 'HoanThanh', 'COD', '', '2026-03-29 06:19:57', 0, NULL, 0),
 (28, 5, 'LTAE6Y', 69500.00, 60500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 123, Xã Tân Thành, Thành phố Ngã Bảy, Hậu Giang', 'ChoXacNhan', 'COD', '', '2026-03-29 06:47:01', 1000, '', 0),
-(29, 5, 'LTAEBD', 69500.00, 60500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 123, Xã Tân Lộc Đông, Huyện Thới Bình, Cà Mau', 'ChoXacNhan', 'ChuyenKhoan', '', '2026-03-29 06:56:37', 1000, '', 0),
+(29, 5, 'LTAEBD', 69500.00, 60500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 123, Xã Tân Lộc Đông, Huyện Thới Bình, Cà Mau', 'DangGiao', 'ChuyenKhoan', '', '2026-03-29 06:56:37', 1000, '', 0),
 (30, 5, 'LTAEB3', 91500.00, 82500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 1, Xã Quỳnh Hoa, Huyện Quỳnh Phụ, Thái Bình', 'Huy', 'ChuyenKhoan', '', '2026-03-29 06:57:43', 1000, '', 0),
-(31, 5, 'LTAEX3', 79500.00, 71500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 123, Xã Hiên Vân, Huyện Tiên Du, Bắc Ninh', 'ChoXacNhan', 'COD', '', '2026-03-29 07:27:03', 2000, 'TET2025', 10000),
+(31, 5, 'LTAEX3', 79500.00, 71500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 123, Xã Hiên Vân, Huyện Tiên Du, Bắc Ninh', 'HoanThanh', 'COD', '', '2026-03-29 07:27:03', 2000, 'TET2025', 10000),
 (32, 5, 'LT8QGB', 114800.00, 82500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: a, Xã Nậm Mười, Huyện Văn Chấn, Yên Bái', 'HoanThanh', 'COD', '', '2026-03-29 07:55:33', 3800, 'TET2026', 1900),
-(33, 5, 'LT8QCD', 45500.00, 38500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 1, Phường IV, Thành phố Vị Thanh, Hậu Giang', 'ChoXacNhan', 'COD', '', '2026-03-29 08:10:54', 1000, 'TET', 2000),
-(34, 5, 'LT8QVC', 88600.00, 71500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 8, Xã Thanh Khương, Thị xã Thuận Thành, Bắc Ninh', 'ChoXacNhan', 'COD', '', '2026-03-29 08:14:12', 1900, '', 0),
-(35, 5, 'LT8QV9', 37900.00, 20900.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 123, Phường 2, Quận Tân Bình, Hồ Chí Minh', 'DangGiao', 'ChuyenKhoan', '', '2026-03-29 08:15:18', 2000, 'TET2026', 1000),
-(36, 5, 'LT8QV6', 27900.00, 20900.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 1, Phường 3, Quận Phú Nhuận, Hồ Chí Minh', 'DangGiao', 'ChuyenKhoan', '', '2026-03-29 08:19:03', 1000, 'TET', 2000);
+(33, 5, 'LT8QCD', 45500.00, 38500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 1, Phường IV, Thành phố Vị Thanh, Hậu Giang', 'HoanThanh', 'COD', '', '2026-03-29 08:10:54', 1000, 'TET', 2000),
+(34, 5, 'LT8QVC', 88600.00, 71500.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 8, Xã Thanh Khương, Thị xã Thuận Thành, Bắc Ninh', 'Huy', 'COD', '', '2026-03-29 08:14:12', 1900, '', 0),
+(35, 5, 'LT8QV9', 37900.00, 20900.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 123, Phường 2, Quận Tân Bình, Hồ Chí Minh', 'HoanThanh', 'ChuyenKhoan', '', '2026-03-29 08:15:18', 2000, 'TET2026', 1000),
+(36, 5, 'LT8QV6', 27900.00, 20900.00, 'Người nhận: Đào Công Anh Minh | SĐT: 0911078383 | Địa chỉ: 1, Phường 3, Quận Phú Nhuận, Hồ Chí Minh', 'HoanThanh', 'ChuyenKhoan', '', '2026-03-29 08:19:03', 1000, 'TET', 2000);
 
 -- --------------------------------------------------------
 
@@ -428,7 +676,8 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `ho_ten` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
-  `mat_khau` varchar(255) NOT NULL,
+  `google_id` varchar(255) DEFAULT NULL,
+  `mat_khau` varchar(255) DEFAULT NULL,
   `so_dien_thoai` varchar(20) DEFAULT NULL,
   `dia_chi` text DEFAULT NULL,
   `gioi_tinh` varchar(10) DEFAULT 'Nam',
@@ -438,16 +687,18 @@ CREATE TABLE `users` (
   `avatar` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `remember_token` varchar(255) DEFAULT NULL,
-  `remember_expire` datetime DEFAULT NULL
+  `remember_expire` datetime DEFAULT NULL,
+  `chat_daily_count` int(11) NOT NULL DEFAULT 0,
+  `last_chat_date` date DEFAULT NULL
 ) ;
 
 --
 -- Đang đổ dữ liệu cho bảng `users`
 --
 
-INSERT INTO `users` (`id`, `ho_ten`, `email`, `mat_khau`, `so_dien_thoai`, `dia_chi`, `gioi_tinh`, `hang`, `trang_thai`, `ngay_sinh`, `avatar`, `created_at`, `remember_token`, `remember_expire`) VALUES
-(4, 'Đào Công Anh Minh', 'Minhkendy1903@gmail.com', '$2y$10$kDeZ/bc0Ai9WW5jA0Z0eMedyY3DP4remjYLms7YfkOvOJpN2oP2Ri', '0911078381', 'Sài Gòn', 'Nam', 'Đồng', 'HoatDong', '2026-03-20', 'uploads/1773833815_dao1.jpg', '2026-03-16 12:43:44', NULL, NULL),
-(5, 'Đào Công Anh Minh', 'daoconganhminh1902@gmail.com', '$2y$10$OgsIdKwxHGWpLChaQtgHKOK/WIyxF9UApcQdbLvFjUc6FmTIqBx66', '0911078383', 'Đà Lạt', 'Nam', 'Kim Cương', 'HoatDong', '2026-02-26', 'uploads/1774333586_default-avatar.png', '2026-03-22 11:32:22', NULL, NULL);
+INSERT INTO `users` (`id`, `ho_ten`, `email`, `google_id`, `mat_khau`, `so_dien_thoai`, `dia_chi`, `gioi_tinh`, `hang`, `trang_thai`, `ngay_sinh`, `avatar`, `created_at`, `remember_token`, `remember_expire`, `chat_daily_count`, `last_chat_date`) VALUES
+(4, 'Đào Công Anh Minh', 'Minhkendy1903@gmail.com', NULL, '$2y$10$kDeZ/bc0Ai9WW5jA0Z0eMedyY3DP4remjYLms7YfkOvOJpN2oP2Ri', '0911078381', 'Sài Gòn', 'Nam', 'Đồng', 'HoatDong', '2026-03-20', 'uploads/1773833815_dao1.jpg', '2026-03-16 12:43:44', NULL, NULL, 13, '2026-03-31'),
+(5, 'Đào Công Anh Minh', 'daoconganhminh1902@gmail.com', '100715689387117212188', '$2y$10$28hBcsBgAAxfrsdimRpMq.28Ij8EbH8i2sAW4xT1I/lqKqFbOibDS', '0911078383', 'Đà Lạt', 'Nam', 'Kim Cương', 'HoatDong', '2026-02-26', 'uploads/1774333586_default-avatar.png', '2026-03-22 11:32:22', NULL, NULL, 54, '2026-03-31');
 
 -- --------------------------------------------------------
 
@@ -474,9 +725,9 @@ CREATE TABLE `vouchers` (
 --
 
 INSERT INTO `vouchers` (`id`, `ma_voucher`, `loai_voucher`, `gia_tri`, `giam_toi_da`, `don_toi_thieu`, `so_luong`, `da_dung`, `ngay_bat_dau`, `ngay_het_han`, `trang_thai`) VALUES
-(3, 'TET2026', 'PhanTram', 5, 5000, 20000, 5, 2, '2026-03-29 14:41:00', '2026-04-02 14:41:00', 'HoatDong'),
+(3, 'TET2026', 'PhanTram', 5, 5000, 20000, 5, 2, '2026-03-29 14:41:00', '2026-05-01 14:41:00', 'HoatDong'),
 (4, 'TET', 'TienMat', 2000, 0, 10000, 5, 2, '2026-03-20 15:00:00', '2026-04-25 15:03:00', 'HoatDong'),
-(5, 'XUAN', 'TienMat', 5000, 0, 30000, 6, 0, '2026-03-20 15:01:00', '2026-04-05 15:01:00', 'HoatDong'),
+(5, 'XUAN', 'TienMat', 5000, 0, 30000, 6, 0, '2026-03-20 15:01:00', '2026-05-09 15:01:00', 'HoatDong'),
 (6, 'FREESHIP', 'FreeShip', 10000, 0, 30000, 9, 0, '2026-03-29 15:02:00', '2026-05-02 15:02:00', 'HoatDong');
 
 --
@@ -489,12 +740,6 @@ INSERT INTO `vouchers` (`id`, `ma_voucher`, `loai_voucher`, `gia_tri`, `giam_toi
 ALTER TABLE `admins`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `username` (`username`);
-
---
--- Chỉ mục cho bảng `chatbot_faq`
---
-ALTER TABLE `chatbot_faq`
-  ADD PRIMARY KEY (`id`);
 
 --
 -- Chỉ mục cho bảng `carts`
@@ -519,10 +764,30 @@ ALTER TABLE `categories`
   ADD UNIQUE KEY `slug` (`slug`);
 
 --
+-- Chỉ mục cho bảng `chatbot_faq`
+--
+ALTER TABLE `chatbot_faq`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Chỉ mục cho bảng `chat_messages`
+--
+ALTER TABLE `chat_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `session_id` (`session_id`);
+
+--
 -- Chỉ mục cho bảng `contacts`
 --
 ALTER TABLE `contacts`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Chỉ mục cho bảng `guest_rate_limits`
+--
+ALTER TABLE `guest_rate_limits`
+  ADD PRIMARY KEY (`ip_address`,`action_date`);
 
 --
 -- Chỉ mục cho bảng `news`
@@ -564,7 +829,8 @@ ALTER TABLE `reviews`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `google_id` (`google_id`);
 
 --
 -- Chỉ mục cho bảng `vouchers`
@@ -584,28 +850,34 @@ ALTER TABLE `admins`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT cho bảng `chatbot_faq`
---
-ALTER TABLE `chatbot_faq`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
-
---
 -- AUTO_INCREMENT cho bảng `carts`
 --
 ALTER TABLE `carts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
 
 --
 -- AUTO_INCREMENT cho bảng `cart_items`
 --
 ALTER TABLE `cart_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=158;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
 
 --
 -- AUTO_INCREMENT cho bảng `categories`
 --
 ALTER TABLE `categories`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT cho bảng `chatbot_faq`
+--
+ALTER TABLE `chatbot_faq`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT cho bảng `chat_messages`
+--
+ALTER TABLE `chat_messages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
 
 --
 -- AUTO_INCREMENT cho bảng `contacts`

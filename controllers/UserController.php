@@ -12,7 +12,7 @@ class UserController {
         
         // Chặn truy cập nếu chưa đăng nhập
         if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . BASE_URL . 'view/user/DangNhap.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+            header('Location: ' . BASE_URL . 'index.php?url=auth/showLogin&redirect=' . urlencode($_SERVER['REQUEST_URI']));
             exit;
         }
     }

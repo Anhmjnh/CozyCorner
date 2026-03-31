@@ -26,7 +26,7 @@
                         style="width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; min-height: 45px; padding: 10px 0;">XEM GIỎ HÀNG</a>
                 <?php else: ?>
                     <a href="javascript:void(0)"
-                        onclick="alert('Bạn cần đăng nhập để xem chi tiết và thanh toán giỏ hàng!'); window.location.href='<?= BASE_URL ?>view/user/DangNhap.php';"
+                        onclick="alert('Bạn cần đăng nhập để xem chi tiết và thanh toán giỏ hàng!'); window.location.href='<?= BASE_URL ?>index.php?url=auth/showLogin';"
                         class="cart__checkout-button"
                         style="width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; min-height: 45px; padding: 10px 0;">XEM GIỎ HÀNG</a>
                 <?php endif; ?>

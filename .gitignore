@@ -1,5 +1,4 @@
 # Dependencies 
-/vendor/
 /libs/
 
 # Các file log sinh ra trong quá trình chạy
@@ -27,3 +26,5 @@ config.php
 .env
 .env.*
 !.env.example
+
+/vendor/

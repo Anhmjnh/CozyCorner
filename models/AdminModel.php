@@ -377,7 +377,8 @@ class AdminModel extends Model
     }
 
     // --- QUẢN LÝ ĐƠN HÀNG ---
-    private function buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) {
+    private function buildOrderWhereClause($search, $trang_thai, $from_date, $to_date)
+    {
         $sql = " WHERE 1=1";
         if (!empty($search)) {
             $search_esc = $this->conn->real_escape_string($search);
@@ -398,7 +399,8 @@ class AdminModel extends Model
         return $sql;
     }
 
-    public function getOrdersList($limit = 15, $offset = 0, $search = '', $trang_thai = '', $from_date = '', $to_date = '') {
+    public function getOrdersList($limit = 15, $offset = 0, $search = '', $trang_thai = '', $from_date = '', $to_date = '')
+    {
         $sql = "SELECT o.*, u.ho_ten as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("ii", $limit, $offset);
@@ -406,17 +408,20 @@ class AdminModel extends Model
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
-    public function getTotalOrdersCount($search = '', $trang_thai = '', $from_date = '', $to_date = '') {
+    public function getTotalOrdersCount($search = '', $trang_thai = '', $from_date = '', $to_date = '')
+    {
         $sql = "SELECT COUNT(o.id) as total FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date);
         return $this->conn->query($sql)->fetch_assoc()['total'] ?? 0;
     }
 
-    public function getTotalRevenue($search = '', $trang_thai = '', $from_date = '', $to_date = '') {
+    public function getTotalRevenue($search = '', $trang_thai = '', $from_date = '', $to_date = '')
+    {
         $sql = "SELECT SUM(o.tong_tien) as total_revenue FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " AND (o.trang_thai = 'HoanThanh' OR (o.trang_thai = 'DangGiao' AND o.phuong_thuc_thanh_toan = 'ChuyenKhoan'))";
         return $this->conn->query($sql)->fetch_assoc()['total_revenue'] ?? 0;
     }
 
-    public function getOrdersForExport($search = '', $trang_thai = '', $from_date = '', $to_date = '') {
+    public function getOrdersForExport($search = '', $trang_thai = '', $from_date = '', $to_date = '')
+    {
         $sql = "SELECT 
                     o.id,
                     o.ghn_order_code,
@@ -432,9 +437,9 @@ class AdminModel extends Model
                     o.ghi_chu,
                     o.created_at
                 FROM orders o 
-                LEFT JOIN users u ON o.user_id = u.id" 
-                . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) 
-                . " ORDER BY o.created_at DESC";
+                LEFT JOIN users u ON o.user_id = u.id"
+            . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date)
+            . " ORDER BY o.created_at DESC";
         $result = $this->conn->query($sql);
         return $result->fetch_all(MYSQLI_ASSOC);
     }
@@ -639,5 +644,5 @@ class AdminModel extends Model
         $stmt->bind_param("i", $id);
         return $stmt->execute();
     }
-    
+
 }

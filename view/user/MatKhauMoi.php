@@ -33,7 +33,7 @@ require_once __DIR__ . '/../../config.php';
 <ul class="breadcrumb">
     <li><a href="<?= BASE_URL ?>">Trang chủ</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>
-    <li><a href="<?= BASE_URL ?>view/user/DangNhap.php">Đăng nhập</a></li>
+    <li><a href="<?= BASE_URL ?>index.php?url=auth/showLogin">Đăng nhập</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>
     <li><a href="<?= BASE_URL ?>index.php?url=auth/forgotPassword">Quên mật khẩu</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>
@@ -73,16 +73,16 @@ require_once __DIR__ . '/../../config.php';
         <button type="submit" class="login__button">Đặt Mật Khẩu</button>
 
         <p class="login__footer">
-            <a href="<?= BASE_URL ?>view/user/DangNhap.php" class="login__link">Quay lại đăng nhập</a>
+            <a href="<?= BASE_URL ?>index.php?url=auth/showLogin" class="login__link">Quay lại đăng nhập</a>
         </p>
     </form>
 </div>
 
 <script>
-// Toggle hiển thị mật khẩu mới
-document.getElementById('toggle-new-password').addEventListener('click', function() {
-    const input = document.getElementById('mat_khau_moi');
-    const icon = this;
+// Hàm chung để toggle hiển thị mật khẩu
+function togglePasswordVisibility(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
     if (input.type === 'password') {
         input.type = 'text';
         icon.classList.remove('fa-eye');
@@ -92,21 +92,15 @@ document.getElementById('toggle-new-password').addEventListener('click', functio
         icon.classList.remove('fa-eye-slash');
         icon.classList.add('fa-eye');
     }
+}
+
+// Gán sự kiện cho các icon
+document.getElementById('toggle-new-password').addEventListener('click', function() {
+    togglePasswordVisibility('mat_khau_moi', 'toggle-new-password');
 });
 
-// Toggle hiển thị xác nhận mật khẩu
 document.getElementById('toggle-confirm-password').addEventListener('click', function() {
-    const input = document.getElementById('xac_nhan_mk');
-    const icon = this;
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    }
+    togglePasswordVisibility('xac_nhan_mk', 'toggle-confirm-password');
 });
 </script>
 

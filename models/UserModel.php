@@ -103,4 +103,63 @@ class UserModel extends Model {
         $stmt->close();
         return $result;
     }
+
+    /**
+     * Đăng ký người dùng mới.
+     * @return int|string|false ID người dùng mới, 'email_exists' nếu email đã tồn tại, false nếu lỗi.
+     */
+    public function registerUser($ho_ten, $email, $hashedPassword, $so_dien_thoai, $gioi_tinh, $ngay_sinh)
+    {
+        // Kiểm tra email tồn tại
+        $stmt_check = $this->conn->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt_check->bind_param('s', $email);
+        $stmt_check->execute();
+        if ($stmt_check->get_result()->num_rows > 0) {
+            $stmt_check->close();
+            return 'email_exists';
+        }
+        $stmt_check->close();
+
+        // Thêm user mới
+        $stmt = $this->conn->prepare("INSERT INTO users (ho_ten, email, mat_khau, so_dien_thoai, gioi_tinh, ngay_sinh) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param('ssssss', $ho_ten, $email, $hashedPassword, $so_dien_thoai, $gioi_tinh, $ngay_sinh);
+
+        if ($stmt->execute()) return $this->conn->insert_id;
+        return false;
+    }
+
+    // --- CÁC HÀM CHO ĐĂNG NHẬP GOOGLE ---
+
+    /**
+     * Tạo một người dùng mới từ thông tin Google OAuth.
+     * @param string $ho_ten Tên người dùng
+     * @param string $email Email
+     * @param string $google_id ID từ Google
+     * @param string $avatar URL ảnh đại diện
+     * @return int|false ID của người dùng mới hoặc false nếu lỗi
+     */
+    public function registerGoogleUser($ho_ten, $email, $google_id, $avatar) {
+        // Tạo một mật khẩu ngẫu nhiên, phức tạp để tăng cường bảo mật cho tài khoản
+        $random_password = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
+        
+        $stmt = $this->conn->prepare("INSERT INTO users (ho_ten, email, google_id, mat_khau, avatar, trang_thai) VALUES (?, ?, ?, ?, ?, 'HoatDong')");
+        $stmt->bind_param('sssss', $ho_ten, $email, $google_id, $random_password, $avatar);
+        
+        if ($stmt->execute()) {
+            $insert_id = $this->conn->insert_id;
+            $stmt->close();
+            return $insert_id;
+        }
+        
+        $stmt->close();
+        return false;
+    }
+
+    public function updateGoogleId($user_id, $google_id) {
+        $stmt = $this->conn->prepare("UPDATE users SET google_id = ? WHERE id = ?");
+        $stmt->bind_param('si', $google_id, $user_id);
+        $result = $stmt->execute();
+        $stmt->close();
+        return $result;
+    }
 }

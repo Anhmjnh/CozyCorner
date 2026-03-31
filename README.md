@@ -1,6 +1,6 @@
 COZY CORNER - HỆ THỐNG THƯƠNG MẠI CỬA HÀNG GIA DỤNG
 
-Cozy Corner là website thương mại điện tử chuyên cung cấp thiết bị gia dụng nhà bếp. Dự án được xây dựng bằng PHP thuần theo mô hình MVC (Custom MVC), tích hợp các API thực tế để mô phỏng hệ thống production.
+Cozy Corner là website thương mại điện tử chuyên cung cấp thiết bị gia dụng nhà bếp. Dự án được xây dựng bằng PHP thuần theo mô hình MVC (Custom MVC), tích hợp các API thực tế (GHN, SePay, Google, Gemini AI) để mô phỏng một hệ thống production hoàn chỉnh.
 
 --------------------------------------------------
 
@@ -8,7 +8,7 @@ Cozy Corner là website thương mại điện tử chuyên cung cấp thiết b
 
 - Tên dự án: Cozy Corner
 - Công nghệ: PHP (Custom MVC), MySQLi, HTML, CSS, JavaScript
-- Thư viện & API: PHPMailer, GHN API, SePay, Chart.js,
+- Thư viện & API: PHPMailer, GHN API, SePay, Google OAuth, Gemini AI, Chart.js
 - Mục đích: Đồ án
 - Tác giả: Anh Minh
 
@@ -17,21 +17,30 @@ Cozy Corner là website thương mại điện tử chuyên cung cấp thiết b
 2. TÍNH NĂNG CHÍNH
 
 2.1. Người dùng
-- Tìm kiếm, lọc và xem sản phẩm
-- Giỏ hàng 
-- Tính phí vận chuyển tự động (GHN)
-- Áp dụng mã giảm giá
-- Thanh toán QR (SePay)
-- Đăng ký, đăng nhập, quên mật khẩu bằng OTP
-- Quản lý đơn hàng và tài khoản
+- Tìm kiếm, lọc và xem sản phẩm.
+- Giỏ hàng và quản lý giỏ hàng (thêm, xóa, cập nhật số lượng).
+- Đăng ký, đăng nhập (thường, Google), quên mật khẩu qua OTP.
+- Tính phí vận chuyển tự động theo địa chỉ (tích hợp API Giao Hàng Nhanh).
+- Áp dụng mã giảm giá, voucher.
+- Thanh toán khi nhận hàng (COD) hoặc chuyển khoản qua mã QR (tích hợp API SePay).
+- Quản lý tài khoản cá nhân, xem lịch sử đơn hàng.
+- Phân hạng thành viên (Đồng, Bạc, Vàng, Kim Cương) và nhận chiết khấu tương ứng.
+- Người dùng có thể tự hủy đơn hàng.
+- Để lại đánh giá cho các sản phẩm đã mua.
+- Tương tác với Chatbot AI để được hỗ trợ và tư vấn sản phẩm.
 
 2.2. Quản trị viên
-- Dashboard thống kê
-- Quản lý sản phẩm
-- Quản lý đơn hàng
-- Quản lý mã giảm giá
-- Quản lý người dùng
-- Quản lý bài viết
+- Dashboard thống kê doanh thu, đơn hàng, người dùng mới.
+- Quản lý sản phẩm (thêm, sửa, xóa, tìm kiếm).
+- Quản lý danh mục sản phẩm.
+- Quản lý đơn hàng (cập nhật trạng thái, xem chi tiết).
+- Quản lý mã giảm giá (voucher).
+- Quản lý người dùng (khóa/mở tài khoản, chỉnh sửa thông tin).
+- Quản lý nhân sự (phân quyền Admin, Staff).
+- Quản lý bài viết (tin tức, mẹo vặt).
+- Quản lý các câu hỏi và trả lời cho Chatbot.
+- Quản lý thông tin cá nhân của quản trị viên.
+- Xuất dữ liệu (sản phẩm, đơn hàng, người dùng,...) ra file CSV.
 
 --------------------------------------------------
 
@@ -92,6 +101,22 @@ define('SEPAY_BANK_ACC', 'YOUR_ACCOUNT');
 define('SEPAY_BANK_NAME', 'YOUR_NAME');
 define('SEPAY_WEBHOOK_SECRET', 'YOUR_SECRET');
 
+4.6. Google OAuth
+
+define('GOOGLE_CLIENT_ID', 'YOUR_CLIENT_ID');
+define('GOOGLE_CLIENT_SECRET', 'YOUR_CLIENT_SECRET');
+define('GOOGLE_REDIRECT_URI', 'http://localhost/cozycorner/index.php?url=auth/googleCallback');
+
+Lưu ý:
+- Redirect URI phải khớp với cấu hình trên Google Cloud Console.
+
+4.7. Gemini AI (Chatbot)
+
+define('GEMINI_API_KEY', 'YOUR_GEMINI_API_KEY');
+
+Lưu ý:
+- Đây là API Key để Chatbot có thể hoạt động.
+
 
 
 --------------------------------------------------
@@ -99,7 +124,7 @@ define('SEPAY_WEBHOOK_SECRET', 'YOUR_SECRET');
 5. TÀI KHOẢN MẶC ĐỊNH
 
 5.1. Admin
-- URL: http://localhost/cozycorner/view/user/DangNhap.php
+- URL: http://localhost/cozycorner/index.php?url=auth/showLogin
 - Email: admin
 - Password: 123456
 

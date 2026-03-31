@@ -14,7 +14,7 @@ class AdminController extends Controller
 
         // Middleware Check Login
         if (!isset($_SESSION['admin_id'])) {
-            header("Location: " . BASE_URL . "view/user/DangNhap.php");
+            header("Location: " . BASE_URL . "index.php?url=auth/showLogin");
             exit;
         }
     }
@@ -27,7 +27,7 @@ class AdminController extends Controller
         unset($_SESSION['admin_avatar']);
         unset($_SESSION['admin_role']);
 
-        header("Location: " . BASE_URL . "view/user/DangNhap.php");
+        header("Location: " . BASE_URL . "index.php?url=auth/showLogin");
         exit;
     }
 
