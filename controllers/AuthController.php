@@ -80,6 +80,9 @@ class AuthController
                         if (class_exists('CartModel')) {
                             $cartModel = new CartModel();
                             $cartModel->mergeCart(session_id(), $user['id']);
+
+                            // Xóa lịch sử chat của guest sau khi đăng nhập
+                            unset($_SESSION['guest_chat_history']);
                         }
                     }
 

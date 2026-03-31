@@ -47,44 +47,66 @@ class AdminModel extends Model
     // --- QUẢN LÝ NHÂN SỰ (ADMIN/STAFF) ---
     public function getStaffsList($limit = 10, $offset = 0, $search = '', $vai_tro = '', $trang_thai = '')
     {
+        $params = [];
+        $types = "";
         $sql = "SELECT id, username, ho_ten, email, so_dien_thoai, vai_tro, trang_thai, created_at FROM admins WHERE 1=1";
 
         if (!empty($search)) {
-            $search_esc = $this->conn->real_escape_string($search);
-            $sql .= " AND (ho_ten LIKE '%$search_esc%' OR email LIKE '%$search_esc%' OR so_dien_thoai LIKE '%$search_esc%')";
+            $sql .= " AND (ho_ten LIKE ? OR email LIKE ? OR so_dien_thoai LIKE ?)";
+            $searchTerm = "%" . $search . "%";
+            array_push($params, $searchTerm, $searchTerm, $searchTerm);
+            $types .= "sss";
         }
         if (!empty($vai_tro)) {
-            $vt_esc = $this->conn->real_escape_string($vai_tro);
-            $sql .= " AND vai_tro = '$vt_esc'";
+            $sql .= " AND vai_tro = ?";
+            $params[] = $vai_tro;
+            $types .= "s";
         }
         if (!empty($trang_thai)) {
-            $tt_esc = $this->conn->real_escape_string($trang_thai);
-            $sql .= " AND trang_thai = '$tt_esc'";
+            $sql .= " AND trang_thai = ?";
+            $params[] = $trang_thai;
+            $types .= "s";
         }
 
         $sql .= " ORDER BY id DESC LIMIT ? OFFSET ?";
+        array_push($params, $limit, $offset);
+        $types .= "ii";
+
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("ii", $limit, $offset);
+        if ($types) {
+            $stmt->bind_param($types, ...$params);
+        }
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
     public function getTotalStaffsCount($search = '', $vai_tro = '', $trang_thai = '')
     {
+        $params = [];
+        $types = "";
         $sql = "SELECT COUNT(id) as total FROM admins WHERE 1=1";
         if (!empty($search)) {
-            $search_esc = $this->conn->real_escape_string($search);
-            $sql .= " AND (ho_ten LIKE '%$search_esc%' OR email LIKE '%$search_esc%' OR so_dien_thoai LIKE '%$search_esc%')";
+            $sql .= " AND (ho_ten LIKE ? OR email LIKE ? OR so_dien_thoai LIKE ?)";
+            $searchTerm = "%" . $search . "%";
+            array_push($params, $searchTerm, $searchTerm, $searchTerm);
+            $types .= "sss";
         }
         if (!empty($vai_tro)) {
-            $vt_esc = $this->conn->real_escape_string($vai_tro);
-            $sql .= " AND vai_tro = '$vt_esc'";
+            $sql .= " AND vai_tro = ?";
+            $params[] = $vai_tro;
+            $types .= "s";
         }
         if (!empty($trang_thai)) {
-            $tt_esc = $this->conn->real_escape_string($trang_thai);
-            $sql .= " AND trang_thai = '$tt_esc'";
+            $sql .= " AND trang_thai = ?";
+            $params[] = $trang_thai;
+            $types .= "s";
         }
-        return $this->conn->query($sql)->fetch_assoc()['total'];
+        $stmt = $this->conn->prepare($sql);
+        if ($types) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc()['total'];
     }
 
     public function addStaff($username, $email, $ho_ten, $so_dien_thoai, $vai_tro, $trang_thai, $password)
