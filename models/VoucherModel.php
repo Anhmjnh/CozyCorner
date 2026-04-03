@@ -5,13 +5,13 @@ require_once __DIR__ . '/../core/Model.php';
 class VoucherModel extends Model {
     // Lấy danh sách voucher đang hoạt động "
     public function getActiveVouchers() {
-        $now = date('Y-m-d H:i:s');
+        $now = date('Y-m-d');
         $stmt = $this->conn->prepare("
             SELECT * FROM vouchers 
             WHERE trang_thai = 'HoatDong' 
-            AND (ngay_bat_dau IS NULL OR ngay_bat_dau <= ?)
-            AND (ngay_het_han IS NULL OR ngay_het_han >= ?)
-            AND (so_luong = 0 OR da_dung < so_luong)
+            AND (ngay_bat_dau IS NULL OR ngay_bat_dau = '0000-00-00 00:00:00' OR DATE(ngay_bat_dau) <= ?)
+            AND (ngay_het_han IS NULL OR ngay_het_han = '0000-00-00 00:00:00' OR DATE(ngay_het_han) >= ?)
+            AND (so_luong <= 0 OR so_luong IS NULL OR da_dung < so_luong)
         ");
         $stmt->bind_param("ss", $now, $now);
         $stmt->execute();
@@ -22,7 +22,7 @@ class VoucherModel extends Model {
 
     // Kiểm tra tính hợp lệ của mã voucher khi user nhập tay hoặc chọn
     public function checkVoucher($ma_voucher) {
-        $now = date('Y-m-d H:i:s');
+        $now = date('Y-m-d');
         $stmt = $this->conn->prepare("SELECT * FROM vouchers WHERE ma_voucher = ? AND trang_thai = 'HoatDong'");
         $stmt->bind_param("s", $ma_voucher);
         $stmt->execute();
@@ -30,8 +30,11 @@ class VoucherModel extends Model {
         $stmt->close();
 
         if (!$voucher) return ['status' => false, 'msg' => 'Mã voucher không tồn tại.'];
-        if ($voucher['ngay_bat_dau'] && $now < $voucher['ngay_bat_dau']) return ['status' => false, 'msg' => 'Voucher chưa đến thời gian áp dụng.'];
-        if ($voucher['ngay_het_han'] && $now > $voucher['ngay_het_han']) return ['status' => false, 'msg' => 'Voucher đã hết hạn.'];
+        
+        $startDate = (!empty($voucher['ngay_bat_dau']) && $voucher['ngay_bat_dau'] !== '0000-00-00 00:00:00') ? date('Y-m-d', strtotime($voucher['ngay_bat_dau'])) : null;
+        $endDate = (!empty($voucher['ngay_het_han']) && $voucher['ngay_het_han'] !== '0000-00-00 00:00:00') ? date('Y-m-d', strtotime($voucher['ngay_het_han'])) : null;
+        if ($startDate && $now < $startDate) return ['status' => false, 'msg' => 'Voucher chưa đến thời gian áp dụng.'];
+        if ($endDate && $now > $endDate) return ['status' => false, 'msg' => 'Voucher đã hết hạn.'];
         if ($voucher['so_luong'] > 0 && $voucher['da_dung'] >= $voucher['so_luong']) return ['status' => false, 'msg' => 'Voucher đã hết số lượt sử dụng.'];
 
         return ['status' => true, 'data' => $voucher];

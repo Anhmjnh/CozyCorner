@@ -667,6 +667,13 @@ class AdminController extends Controller
             $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
             $mo_ta = $_POST['mo_ta'] ?? '';
 
+            // Tìm category_id dựa trên chuỗi danh_muc
+            $category_id = $this->model->getCategoryIdByName($danh_muc);
+            if (!$category_id) {
+                echo json_encode(['status' => 'error', 'msg' => 'Danh mục không hợp lệ!']);
+                exit;
+            }
+
             // Xử lý upload ảnh
             $anh = '';
             if (isset($_FILES['anh']) && $_FILES['anh']['error'] == 0) {
@@ -678,7 +685,7 @@ class AdminController extends Controller
                 }
             }
 
-            if ($this->model->addProduct($ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh, $mo_ta)) {
+            if ($this->model->addProduct($ten_sp, $gia, $gia_cu, $category_id, $so_luong, $trang_thai, $anh, $mo_ta)) {
                 echo json_encode(['status' => 'success', 'msg' => 'Thêm sản phẩm thành công!']);
             } else {
                 echo json_encode(['status' => 'error', 'msg' => 'Lỗi khi thêm vào CSDL.']);
@@ -993,7 +1000,10 @@ class AdminController extends Controller
                 }
             }
 
-            if ($newsModel->addNews($tieu_de, $noi_dung, $danh_muc, $trang_thai, $anh))
+            // Lấy ID của Admin/Staff đang đăng nhập
+            $admin_id = $_SESSION['admin_id'];
+
+            if ($newsModel->addNews($admin_id, $tieu_de, $noi_dung, $danh_muc, $trang_thai, $anh))
                 echo json_encode(['status' => 'success', 'msg' => 'Thêm tin tức thành công!']);
             else
                 echo json_encode(['status' => 'error', 'msg' => 'Thêm tin tức thất bại.']);
@@ -1021,7 +1031,10 @@ class AdminController extends Controller
                     $anh = $filename;
             }
 
-            if ($newsModel->updateNews($id, $tieu_de, $noi_dung, $danh_muc, $trang_thai, $anh))
+            // Lấy ID của Admin/Staff đang cập nhật bài viết
+            $admin_id = $_SESSION['admin_id'];
+
+            if ($newsModel->updateNews($id, $admin_id, $tieu_de, $noi_dung, $danh_muc, $trang_thai, $anh))
                 echo json_encode(['status' => 'success', 'msg' => 'Cập nhật thành công!']);
             else
                 echo json_encode(['status' => 'error', 'msg' => 'Cập nhật thất bại.']);
@@ -1070,6 +1083,13 @@ class AdminController extends Controller
             $trang_thai = $_POST['trang_thai'] ?? 'HienThi';
             $mo_ta = $_POST['mo_ta'] ?? '';
 
+            // Tìm category_id dựa trên chuỗi danh_muc
+            $category_id = $this->model->getCategoryIdByName($danh_muc);
+            if (!$category_id) {
+                echo json_encode(['status' => 'error', 'msg' => 'Danh mục không hợp lệ!']);
+                exit;
+            }
+
             $anh = null;
             if (isset($_FILES['anh']) && $_FILES['anh']['tmp_name'] != '') {
                 $target_dir = __DIR__ . "/../uploads/";
@@ -1081,7 +1101,7 @@ class AdminController extends Controller
                 $anh = $_POST['current_anh'];
             }
 
-            if ($this->model->updateProduct($id, $ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh, $mo_ta)) {
+            if ($this->model->updateProduct($id, $ten_sp, $gia, $gia_cu, $category_id, $so_luong, $trang_thai, $anh, $mo_ta)) {
                 echo json_encode(['status' => 'success', 'msg' => 'Cập nhật sản phẩm thành công!']);
             } else {
                 echo json_encode(['status' => 'error', 'msg' => 'Lỗi khi cập nhật sản phẩm.']);

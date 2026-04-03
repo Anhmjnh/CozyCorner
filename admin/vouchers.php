@@ -140,7 +140,7 @@ require_once __DIR__ . '/includes/admin_header.php';
 
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <div>
-        <h2 style="margin: 0; color: #333;"><i class="fas fa-ticket-alt"></i> Quản Lý Mã Giảm Giá</h2>
+        <h2 style="margin: 0; color: #333;"></i> Quản Lý Mã Giảm Giá</h2>
         <p style="margin: 5px 0 0; color: #333; font-size: 14px;">Tổng số: <strong><?= number_format($total ?? 0) ?></strong> mã</p>
     </div>
     <div class="header-actions">
@@ -202,7 +202,7 @@ require_once __DIR__ . '/includes/admin_header.php';
                     <th>Số lượng</th>
                     <th>Thời hạn</th>
                     <th>Trạng thái</th>
-                    <th>Thao tác</th>
+                    <th>Hành động</th>
                 </tr>
             </thead>
             <tbody>
@@ -292,7 +292,7 @@ require_once __DIR__ . '/includes/admin_header.php';
                     <div class="form-group" style="flex:1;">
                         <label style="font-weight: bold; display: block; margin-bottom: 5px;">Giá trị giảm *</label>
                         <input type="number" id="gia_tri" name="gia_tri" class="form-control" required min="1" style="width: 100%; padding: 10px;">
-                        <small id="gia_tri_hint" style="color:#e74c3c;">Ví dụ: 20000 (giảm 20.000đ)</small>
+                        
                     </div>
                 </div>
 

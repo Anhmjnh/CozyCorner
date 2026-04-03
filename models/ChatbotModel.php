@@ -141,7 +141,7 @@ class ChatbotModel extends Model
         }
 
         if ($intent === 'PROMOTION' || $intent === 'OTHER') {
-            $voucherQuery = $this->conn->query("SELECT ma_voucher, loai_voucher, gia_tri, don_toi_thieu FROM vouchers WHERE trang_thai = 'HoatDong' AND (ngay_het_han IS NULL OR ngay_het_han >= NOW()) LIMIT 3");
+            $voucherQuery = $this->conn->query("SELECT ma_voucher, loai_voucher, gia_tri, don_toi_thieu FROM vouchers WHERE trang_thai = 'HoatDong' AND (ngay_het_han IS NULL OR ngay_het_han = '0000-00-00 00:00:00' OR DATE(ngay_het_han) >= CURDATE()) LIMIT 3");
             $knowledge .= "MÃ GIẢM GIÁ ĐANG CHẠY:\n";
             if ($voucherQuery && $voucherQuery->num_rows > 0) {
                 while ($v = $voucherQuery->fetch_assoc()) {

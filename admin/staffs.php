@@ -279,10 +279,11 @@ $current_role = $_SESSION['admin_role'] ?? 'Staff';
                 </div>
                 <div class="form-group">
                     <label>Trạng Thái</label>
-                    <select name="trang_thai" id="staff_trang_thai">
+                    <select id="staff_trang_thai" onchange="document.getElementById('staff_trang_thai_hidden').value = this.value">
                         <option value="HoatDong">Hoạt Động</option>
                         <option value="Khoa">Khóa</option>
                     </select>
+                    <input type="hidden" name="trang_thai" id="staff_trang_thai_hidden" value="HoatDong">
                 </div>
             </div>
             <div class="form-group">
@@ -319,6 +320,10 @@ $current_role = $_SESSION['admin_role'] ?? 'Staff';
 </div>
 
 <script>
+    // Lưu thông tin admin hiện tại để xử lý phân quyền trên JS
+    const CURRENT_ADMIN_ID = <?= $_SESSION['admin_id'] ?? 0 ?>;
+    const CURRENT_ADMIN_ROLE = '<?= $_SESSION['admin_role'] ?? 'Staff' ?>';
+
     function showDeleteConfirm(id, name) {
         document.getElementById('delete_staff_display_name').innerText = `"${name}"`;
         document.getElementById('delete_staff_id_input').value = id;

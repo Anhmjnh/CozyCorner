@@ -4,24 +4,26 @@ require_once __DIR__ . '/../core/Model.php';
 
 class OrderModel extends Model {
 
-    public function createOrder($user_id, $tong_tien_cuoi, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen, $giam_gia_thanh_vien = 0, $ma_voucher = null, $giam_gia_voucher = 0) {
+    public function createOrder($user_id, $tong_tien_cuoi, $ten_nguoi_nhan, $sdt_nguoi_nhan, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen, $giam_gia_thanh_vien = 0, $ma_voucher = null, $giam_gia_voucher = 0) {
        
         $this->conn->begin_transaction();
         try {
             // 1. Lưu thông tin Đơn hàng chung
-            $stmt = $this->conn->prepare("INSERT INTO orders (user_id, ghn_order_code, tong_tien, phi_van_chuyen, dia_chi_giao, phuong_thuc_thanh_toan, ghi_chu, giam_gia_thanh_vien, ma_voucher, giam_gia_voucher) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("isddsssisi", $user_id, $ghn_order_code, $tong_tien_cuoi, $phi_van_chuyen, $dia_chi_giao, $phuong_thuc, $ghi_chu, $giam_gia_thanh_vien, $ma_voucher, $giam_gia_voucher);
+            $stmt = $this->conn->prepare("INSERT INTO orders (user_id, ghn_order_code, tong_tien, phi_van_chuyen, ten_nguoi_nhan, sdt_nguoi_nhan, dia_chi_giao, phuong_thuc_thanh_toan, ghi_chu, giam_gia_thanh_vien, ma_voucher, giam_gia_voucher) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("isddsssssisi", $user_id, $ghn_order_code, $tong_tien_cuoi, $phi_van_chuyen, $ten_nguoi_nhan, $sdt_nguoi_nhan, $dia_chi_giao, $phuong_thuc, $ghi_chu, $giam_gia_thanh_vien, $ma_voucher, $giam_gia_voucher);
             $stmt->execute();
             $order_id = $this->conn->insert_id;
             $stmt->close();
 
             // 2. Lưu Chi tiết Đơn hàng & Trừ Tồn Kho
-            $stmt_detail = $this->conn->prepare("INSERT INTO order_details (order_id, product_id, so_luong, gia) VALUES (?, ?, ?, ?)");
+            $stmt_detail = $this->conn->prepare("INSERT INTO order_details (order_id, product_id, ten_sp_snapshot, anh_sp_snapshot, so_luong, gia) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt_stock = $this->conn->prepare("UPDATE products SET so_luong_ton = GREATEST(0, so_luong_ton - ?), luot_ban = luot_ban + ? WHERE id = ?");
 
             foreach ($cartItems as $item) {
+                $ten_sp = $item['name'] ?? 'Sản phẩm';
+                $anh_sp = $item['anh'] ?? null;
                 // Lưu sản phẩm
-                $stmt_detail->bind_param("iiid", $order_id, $item['product_id'], $item['quantity'], $item['price']);
+                $stmt_detail->bind_param("iissid", $order_id, $item['product_id'], $ten_sp, $anh_sp, $item['quantity'], $item['price']);
                 $stmt_detail->execute();
 
                 // Cập nhật kho và lượt bán
@@ -76,7 +78,8 @@ class OrderModel extends Model {
     }
     
     public function getOrderDetails($order_id) {
-        $stmt = $this->conn->prepare("SELECT od.*, p.ten_sp, p.anh FROM order_details od JOIN products p ON od.product_id = p.id WHERE od.order_id = ?");
+        // Đổi sang LEFT JOIN và lấy dữ liệu Snapshot nếu sản phẩm đã bị xóa
+        $stmt = $this->conn->prepare("SELECT od.*, IFNULL(p.ten_sp, od.ten_sp_snapshot) as ten_sp, IFNULL(p.anh, od.anh_sp_snapshot) as anh FROM order_details od LEFT JOIN products p ON od.product_id = p.id WHERE od.order_id = ?");
         $stmt->bind_param("i", $order_id);
         $stmt->execute();
         $details = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

@@ -11,9 +11,9 @@ class ReviewModel {
 
     public function getReviewsByProductId($product_id) {
         $stmt = $this->conn->prepare("
-            SELECT r.*, u.ho_ten, u.avatar 
+            SELECT r.*, IFNULL(u.ho_ten, 'Người dùng đã xóa') AS ho_ten, IFNULL(u.avatar, 'default-avatar.png') AS avatar 
             FROM reviews r 
-            JOIN users u ON r.user_id = u.id 
+            LEFT JOIN users u ON r.user_id = u.id 
             WHERE r.product_id = ? 
             ORDER BY r.created_at DESC
         ");

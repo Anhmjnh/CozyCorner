@@ -231,9 +231,11 @@ require_once __DIR__ . '/includes/admin_header.php';
                         <td>
                             <button class="btn-icon text-blue" onclick="openUserModal(<?= $user['id'] ?>)" title="Chỉnh sửa"><i
                                     class="fas fa-edit"></i></button>
+                            <?php if (isset($_SESSION['admin_role']) && $_SESSION['admin_role'] === 'Admin'): ?>
                             <button class="btn-icon text-red" onclick="showDeleteConfirm(<?= $user['id'] ?>)" title="Xóa tài khoản">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -314,7 +316,7 @@ require_once __DIR__ . '/includes/admin_header.php';
                     <label>Trạng Thái</label>
                     <select name="trang_thai" id="user_trang_thai">
                         <option value="HoatDong">Hoạt Động</option>
-                        <option value="Khoa">Khóa (Chặn Đăng Nhập)</option>
+                        <option value="Khoa">Khóa </option>
                     </select>
                 </div>
             </div>

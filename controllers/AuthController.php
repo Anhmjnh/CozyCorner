@@ -12,7 +12,7 @@ require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Thêm dòng này để nạp thư viện Google đã cài bằng Composer
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 class AuthController
@@ -72,6 +72,13 @@ class AuthController
             $user = $userModel->getUserByEmail($email);
 
             if ($user) {
+                // Kiểm tra nếu tài khoản User bị khóa
+                if ($user['trang_thai'] === 'Khoa') {
+                    $_SESSION['error_message'] = 'Tài khoản của bạn đã bị khóa.';
+                    header("Location: " . BASE_URL . "index.php?url=auth/showLogin&redirect=" . urlencode($redirect));
+                    exit;
+                }
+
                 if (password_verify($password, $user['mat_khau'])) {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['user_name'] = $user['ho_ten'];
@@ -423,7 +430,7 @@ class AuthController
                 $google_id = $google_account_info->id;
                 $avatar = $google_account_info->picture;
 
-                // --- START: SỬA LỖI ADMIN ---
+                
                 // 3a. Kiểm tra xem email có phải của admin không
                 $adminModel = new AdminModel();
                 $admin = $adminModel->getAdminByEmailOrUsername($email);
@@ -440,7 +447,7 @@ class AuthController
                     header("Location: " . BASE_URL . "admin");
                     exit;
                 }
-                // --- END: SỬA LỖI ADMIN ---
+               
 
                 $userModel = new UserModel();
                 $user_by_email = $userModel->getUserByEmail($email);
@@ -458,6 +465,11 @@ class AuthController
                         // Nếu chưa có google_id -> Cập nhật để liên kết tài khoản
                         $userModel->updateGoogleId($user['id'], $google_id);
                     }
+                }
+
+                // Kiểm tra nếu tài khoản User bị khóa khi đăng nhập bằng Google
+                if ($user['trang_thai'] === 'Khoa') {
+                    throw new Exception("Tài khoản của bạn đã bị khóa.");
                 }
 
                 // 4. Thiết lập session đăng nhập

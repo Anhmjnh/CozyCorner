@@ -92,9 +92,6 @@ class OrderController extends Controller
                 exit;
             }
 
-            // Gộp thông tin liên hệ vào địa chỉ giao để dễ hiển thị
-            $dia_chi_giao_day_du = "Người nhận: $ho_ten | SĐT: $so_dien_thoai | Địa chỉ: $dia_chi";
-
             // --- BẮT ĐẦU TÍCH HỢP GHN ---
 
             // Lấy sản phẩm từ Giỏ hàng
@@ -210,7 +207,7 @@ class OrderController extends Controller
 
                 // Lưu đơn hàng vào CSDL của bạn
                 $orderModel = $this->model('OrderModel');
-                $order_id = $orderModel->createOrder($user_id, $tong_tien_cuoi, $dia_chi_giao_day_du, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db);
+                $order_id = $orderModel->createOrder($user_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db);
 
                 if ($order_id) {
                     if (!empty($ma_voucher)) {

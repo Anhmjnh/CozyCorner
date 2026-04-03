@@ -11,7 +11,7 @@ class ProductModel extends Model {
      * @return array|null Trả về mảng thông tin sản phẩm hoặc null nếu không tìm thấy.
      */
     public function findById(int $id): ?array {
-        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id = ? AND trang_thai IN ('HienThi', 'HetHang')");
+        $stmt = $this->conn->prepare("SELECT p.*, c.ten_danh_muc as danh_muc, c.slug as category_slug FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = ? AND p.trang_thai IN ('HienThi', 'HetHang')");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -26,7 +26,7 @@ class ProductModel extends Model {
     }
 
     public function getSimilarProducts($id, $limit = 4) {
-        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id != ? AND trang_thai IN ('HienThi', 'HetHang') ORDER BY created_at DESC LIMIT ?");
+        $stmt = $this->conn->prepare("SELECT p.*, c.ten_danh_muc as danh_muc, c.slug as category_slug FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id != ? AND p.trang_thai IN ('HienThi', 'HetHang') ORDER BY p.created_at DESC LIMIT ?");
         $stmt->bind_param("ii", $id, $limit);
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -42,7 +42,7 @@ class ProductModel extends Model {
     }
 
     public function getBestsellerProducts($limit = 9) {
-        $stmt = $this->conn->prepare("SELECT * FROM products WHERE trang_thai IN ('HienThi', 'HetHang') ORDER BY luot_ban DESC LIMIT ?");
+        $stmt = $this->conn->prepare("SELECT p.*, c.ten_danh_muc as danh_muc, c.slug as category_slug FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.trang_thai IN ('HienThi', 'HetHang') ORDER BY p.luot_ban DESC LIMIT ?");
         $stmt->bind_param("i", $limit);
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -58,7 +58,7 @@ class ProductModel extends Model {
     }
 
     public function getNewProducts($limit = 9) {
-        $stmt = $this->conn->prepare("SELECT * FROM products WHERE trang_thai IN ('HienThi', 'HetHang') ORDER BY created_at DESC LIMIT ?");
+        $stmt = $this->conn->prepare("SELECT p.*, c.ten_danh_muc as danh_muc, c.slug as category_slug FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.trang_thai IN ('HienThi', 'HetHang') ORDER BY p.created_at DESC LIMIT ?");
         $stmt->bind_param("i", $limit);
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -80,13 +80,13 @@ class ProductModel extends Model {
     }
 
     public function getFilteredProducts($filters, $limit, $offset) {
-        $where = ["trang_thai IN ('HienThi', 'HetHang')"];
+        $where = ["p.trang_thai IN ('HienThi', 'HetHang')"];
         $params = [];
         $types = "";
 
         // Lọc theo từ khóa tìm kiếm
         if (!empty($filters['search'])) {
-            $where[] = "ten_sp LIKE ?";
+            $where[] = "p.ten_sp LIKE ?";
             $params[] = "%" . $filters['search'] . "%";
             $types .= "s";
         }
@@ -94,7 +94,11 @@ class ProductModel extends Model {
         // Lọc theo mảng danh mục
         if (!empty($filters['categories'])) {
             $cat_placeholders = implode(',', array_fill(0, count($filters['categories']), '?'));
-            $where[] = "danh_muc IN ($cat_placeholders)";
+            $where[] = "(c.slug IN ($cat_placeholders) OR c.ten_danh_muc IN ($cat_placeholders))";
+            foreach ($filters['categories'] as $cat) {
+                $params[] = $cat;
+                $types .= "s";
+            }
             foreach ($filters['categories'] as $cat) {
                 $params[] = $cat;
                 $types .= "s";
@@ -104,13 +108,13 @@ class ProductModel extends Model {
         $where_clause = implode(" AND ", $where);
         
         // Sắp xếp
-        $order_by = "created_at DESC"; // Mặc định Mới nhất
-        if (($filters['sort'] ?? '') === 'price_asc') $order_by = "gia ASC";
-        elseif (($filters['sort'] ?? '') === 'price_desc') $order_by = "gia DESC";
-        elseif (($filters['sort'] ?? '') === 'bestseller') $order_by = "luot_ban DESC";
+        $order_by = "p.created_at DESC"; // Mặc định Mới nhất
+        if (($filters['sort'] ?? '') === 'price_asc') $order_by = "p.gia ASC";
+        elseif (($filters['sort'] ?? '') === 'price_desc') $order_by = "p.gia DESC";
+        elseif (($filters['sort'] ?? '') === 'bestseller') $order_by = "p.luot_ban DESC";
 
         // Đếm tổng số lượng để phân trang
-        $count_sql = "SELECT COUNT(id) as total FROM products WHERE $where_clause";
+        $count_sql = "SELECT COUNT(p.id) as total FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE $where_clause";
         $stmt_count = $this->conn->prepare($count_sql);
         if ($types) { $stmt_count->bind_param($types, ...$params); }
         $stmt_count->execute();
@@ -118,7 +122,7 @@ class ProductModel extends Model {
         $stmt_count->close();
 
         // Lấy dữ liệu sản phẩm
-        $sql = "SELECT * FROM products WHERE $where_clause ORDER BY $order_by LIMIT ? OFFSET ?";
+        $sql = "SELECT p.*, c.ten_danh_muc as danh_muc, c.slug as category_slug FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE $where_clause ORDER BY $order_by LIMIT ? OFFSET ?";
         $stmt = $this->conn->prepare($sql);
         
         $types .= "ii";

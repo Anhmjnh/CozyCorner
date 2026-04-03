@@ -650,7 +650,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     }
                 }
 
-                updateInputWidth(this); ô
+                updateInputWidth(this);
                 updatePrice(inputId);
             });
 
@@ -810,7 +810,8 @@ require_once __DIR__ . '/../../includes/header.php';
 
             fetch('<?= BASE_URL ?>index.php?url=cart/add', {
                 method: 'POST',
-                body: formData
+            body: formData,
+            credentials: 'same-origin'
             })
                 .then(res => res.json())
                 .then(res => {
@@ -818,9 +819,12 @@ require_once __DIR__ . '/../../includes/header.php';
                         if (action === 'buy_now') {
                             window.location.href = '<?= BASE_URL ?>index.php?url=order/checkout';
                         } else {
-                            // Kích hoạt script cart.js gốc để mở modal giỏ hàng
-                            const cartBtn = document.querySelector('.js__cart-btn');
-                            if (cartBtn) cartBtn.click();
+                        // Gọi hàm vẽ lại HTML giỏ hàng từ cart.js và mở sidebar
+                        if (typeof window.renderCart === 'function') {
+                            window.renderCart(res);
+                        }
+                        const modalCart = document.querySelector('.js__cart-modal');
+                        if (modalCart) modalCart.classList.add('open');
                         }
                     } else {
                         alert(res.msg || 'Thêm vào giỏ hàng thất bại!');

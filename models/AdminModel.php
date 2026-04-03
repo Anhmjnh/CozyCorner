@@ -178,35 +178,65 @@ class AdminModel extends Model
         return $stats;
     }
 
-    // Lấy dữ liệu biểu đồ (Doanh thu 7 ngày gần nhất)
+    // Lấy dữ liệu biểu đồ 
     public function getRevenueChartData()
     {
+        $data = ['labels' => [], 'revenues' => []];
+        $tempData = [];
+
+        // Khởi tạo mảng 7 ngày gần nhất (bao gồm hôm nay) với doanh thu mặc định = 0
+        for ($i = 6; $i >= 0; $i--) {
+            $dateString = date('Y-m-d', strtotime("-$i days"));
+            $label = date('d/m', strtotime($dateString));
+            $data['labels'][] = $label;
+            $tempData[$label] = 0;
+        }
+
+        // Truy vấn dữ liệu thực tế từ CSDL
         $sql = "SELECT DATE(created_at) as date, SUM(tong_tien) as revenue 
                 FROM orders 
-                WHERE (trang_thai = 'HoanThanh' OR (trang_thai = 'DangGiao' AND phuong_thuc_thanh_toan = 'ChuyenKhoan')) AND created_at >= DATE(NOW()) - INTERVAL 7 DAY
+                WHERE (trang_thai = 'HoanThanh' OR (trang_thai = 'DangGiao' AND phuong_thuc_thanh_toan = 'ChuyenKhoan')) 
+                AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
                 GROUP BY DATE(created_at) ORDER BY date ASC";
         $result = $this->conn->query($sql);
-        $data = ['labels' => [], 'revenues' => []];
-        while ($row = $result->fetch_assoc()) {
-            $data['labels'][] = date('d/m', strtotime($row['date']));
-            $data['revenues'][] = $row['revenue'];
+        
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $label = date('d/m', strtotime($row['date']));
+                if (isset($tempData[$label])) {
+                    $tempData[$label] = (float)$row['revenue'];
+                }
+            }
         }
+        
+        // Đưa mảng giá trị vào revenues để Chart.js đọc
+        $data['revenues'] = array_values($tempData);
+
         return $data;
     }
 
     // --- QUẢN LÝ SẢN PHẨM ---
+    // Hàm hỗ trợ map tên danh mục ra ID
+    public function getCategoryIdByName($name) {
+        $stmt = $this->conn->prepare("SELECT id FROM categories WHERE ten_danh_muc = ? OR slug = ?");
+        $stmt->bind_param("ss", $name, $name);
+        $stmt->execute();
+        $res = $stmt->get_result()->fetch_assoc();
+        return $res ? $res['id'] : null;
+    }
+
     public function getProducts($limit = 10, $offset = 0, $search = '', $category = '')
     {
-        $sql = "SELECT * FROM products WHERE 1=1";
+        $sql = "SELECT p.*, c.ten_danh_muc as danh_muc FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE 1=1";
         if (!empty($search)) {
             $search_esc = $this->conn->real_escape_string($search);
-            $sql .= " AND ten_sp LIKE '%$search_esc%'";
+            $sql .= " AND p.ten_sp LIKE '%$search_esc%'";
         }
         if (!empty($category)) {
             $cat_esc = $this->conn->real_escape_string($category);
-            $sql .= " AND danh_muc = '$cat_esc'";
+            $sql .= " AND (c.ten_danh_muc = '$cat_esc' OR c.slug = '$cat_esc')";
         }
-        $sql .= " ORDER BY id DESC LIMIT ? OFFSET ?";
+        $sql .= " ORDER BY p.id DESC LIMIT ? OFFSET ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("ii", $limit, $offset);
         $stmt->execute();
@@ -215,27 +245,26 @@ class AdminModel extends Model
 
     public function getTotalProductsCount($search = '', $category = '')
     {
-        $sql = "SELECT COUNT(id) as total FROM products WHERE 1=1";
+        $sql = "SELECT COUNT(p.id) as total FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE 1=1";
         if (!empty($search)) {
             $search_esc = $this->conn->real_escape_string($search);
-            $sql .= " AND ten_sp LIKE '%$search_esc%'";
+            $sql .= " AND p.ten_sp LIKE '%$search_esc%'";
         }
         if (!empty($category)) {
             $cat_esc = $this->conn->real_escape_string($category);
-            $sql .= " AND danh_muc = '$cat_esc'";
+            $sql .= " AND (c.ten_danh_muc = '$cat_esc' OR c.slug = '$cat_esc')";
         }
         $res = $this->conn->query($sql);
         return $res->fetch_assoc()['total'];
     }
 
-    public function addProduct($ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh, $mo_ta)
+    public function addProduct($ten_sp, $gia, $gia_cu, $category_id, $so_luong, $trang_thai, $anh, $mo_ta)
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $ten_sp)));
-        $sql = "INSERT INTO products (ten_sp, slug, gia, gia_cu, danh_muc, so_luong_ton, trang_thai, anh, mo_ta) 
+        $sql = "INSERT INTO products (ten_sp, slug, gia, gia_cu, category_id, so_luong_ton, trang_thai, anh, mo_ta) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->conn->prepare($sql);
-        // 9 biến: ten(s), slug(s), gia(d), gia_cu(d), danh_muc(s), so_luong(i), trang_thai(s), anh(s), mo_ta(s)
-        $stmt->bind_param("ssddsisss", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh, $mo_ta);
+        $stmt->bind_param("ssddiisss", $ten_sp, $slug, $gia, $gia_cu, $category_id, $so_luong, $trang_thai, $anh, $mo_ta);
         return $stmt->execute();
     }
 
@@ -248,38 +277,36 @@ class AdminModel extends Model
 
     public function getProductById($id)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM products WHERE id = ?");
+        $stmt = $this->conn->prepare("SELECT p.*, c.ten_danh_muc as danh_muc FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.id = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc();
     }
 
-    public function updateProduct($id, $ten_sp, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $anh = null, $mo_ta)
+    public function updateProduct($id, $ten_sp, $gia, $gia_cu, $category_id, $so_luong, $trang_thai, $anh = null, $mo_ta)
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $ten_sp)));
-        $sql = "UPDATE products SET ten_sp = ?, slug = ?, gia = ?, gia_cu = ?, danh_muc = ?, so_luong_ton = ?, trang_thai = ?, mo_ta = ?" . ($anh ? ", anh = ?" : "") . " WHERE id = ?";
+        $sql = "UPDATE products SET ten_sp = ?, slug = ?, gia = ?, gia_cu = ?, category_id = ?, so_luong_ton = ?, trang_thai = ?, mo_ta = ?" . ($anh ? ", anh = ?" : "") . " WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
-        // Có ảnh (10 biến)
         if ($anh)
-            $stmt->bind_param("ssddsisssi", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $mo_ta, $anh, $id);
-        // Không ảnh (9 biến)
+            $stmt->bind_param("ssddiisssi", $ten_sp, $slug, $gia, $gia_cu, $category_id, $so_luong, $trang_thai, $mo_ta, $anh, $id);
         else
-            $stmt->bind_param("ssddsisssi", $ten_sp, $slug, $gia, $gia_cu, $danh_muc, $so_luong, $trang_thai, $mo_ta, $id);
+            $stmt->bind_param("ssddiissi", $ten_sp, $slug, $gia, $gia_cu, $category_id, $so_luong, $trang_thai, $mo_ta, $id);
         return $stmt->execute();
     }
 
     public function getProductsForExport($search = '', $category = '')
     {
-        $sql = "SELECT id, ten_sp, slug, gia, gia_cu, mo_ta, anh, danh_muc, weight, so_luong_ton, luot_ban, trang_thai, created_at FROM products WHERE 1=1";
+        $sql = "SELECT p.id, p.ten_sp, p.slug, p.gia, p.gia_cu, p.mo_ta, p.anh, c.ten_danh_muc as danh_muc, p.weight, p.so_luong_ton, p.luot_ban, p.trang_thai, p.created_at FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE 1=1";
         if (!empty($search)) {
             $search_esc = $this->conn->real_escape_string($search);
-            $sql .= " AND ten_sp LIKE '%$search_esc%'";
+            $sql .= " AND p.ten_sp LIKE '%$search_esc%'";
         }
         if (!empty($category)) {
             $cat_esc = $this->conn->real_escape_string($category);
-            $sql .= " AND danh_muc = '$cat_esc'";
+            $sql .= " AND (c.ten_danh_muc = '$cat_esc' OR c.slug = '$cat_esc')";
         }
-        $sql .= " ORDER BY id DESC";
+        $sql .= " ORDER BY p.id DESC";
         $result = $this->conn->query($sql);
         return $result->fetch_all(MYSQLI_ASSOC);
     }
@@ -401,7 +428,7 @@ class AdminModel extends Model
 
     public function getOrdersList($limit = 15, $offset = 0, $search = '', $trang_thai = '', $from_date = '', $to_date = '')
     {
-        $sql = "SELECT o.*, u.ho_ten as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
+        $sql = "SELECT o.*, IFNULL(u.ho_ten, o.ten_nguoi_nhan) as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("ii", $limit, $offset);
         $stmt->execute();
@@ -425,7 +452,7 @@ class AdminModel extends Model
         $sql = "SELECT 
                     o.id,
                     o.ghn_order_code,
-                    u.ho_ten as user_name,
+                    IFNULL(u.ho_ten, o.ten_nguoi_nhan) as user_name,
                     o.tong_tien,
                     o.phi_van_chuyen,
                     o.giam_gia_thanh_vien,
@@ -446,7 +473,7 @@ class AdminModel extends Model
 
     public function getOrderById($id)
     {
-        $stmt = $this->conn->prepare("SELECT o.*, u.ho_ten as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.id = ?");
+        $stmt = $this->conn->prepare("SELECT o.*, IFNULL(u.ho_ten, o.ten_nguoi_nhan) as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.id = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc();

@@ -9,8 +9,14 @@ document.addEventListener("DOMContentLoaded", function () {
         const addBtn = e.target.closest('.js__add-to-cart');
         if (addBtn) {
             e.preventDefault();
+            
             const productId = addBtn.dataset.productId;
-            addToCart(productId, 1);
+
+            if (productId) {
+                addToCart(productId, 1);
+            } else {
+                alert('LỖI: Không thể xác định được mã sản phẩm. Vui lòng tải lại trang!');
+            }
         }
     });
 
@@ -52,7 +58,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function loadCart() {
-        fetch(baseUrl + 'index.php?url=cart/get')
+        // Thêm tham số chống cache để trình duyệt luôn lấy dữ liệu mới nhất từ CSDL
+        const timestamp = new Date().getTime();
+        return fetch(baseUrl + 'index.php?url=cart/get&t=' + timestamp, {
+            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+            credentials: 'same-origin'
+        })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -69,17 +80,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
         fetch(baseUrl + 'index.php?url=cart/add', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'same-origin'
         })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                loadCart();
-                // Bật modal sau khi thêm
+                // Dùng luôn dữ liệu server trả về để vẽ lại giỏ hàng 
+                if (data.items) {
+                    renderCart(data);
+                }
                 const modalCart = document.querySelector('.js__cart-modal');
                 if (modalCart) modalCart.classList.add('open');
             } else {
-                alert('Có lỗi xảy ra khi thêm vào giỏ hàng.');
+                alert(data.msg || data.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng.');
             }
         })
         .catch(error => console.error('Lỗi:', error));
@@ -90,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
         formData.append('cart_item_id', cartItemId);
         formData.append('quantity', quantity);
 
-        fetch(baseUrl + 'index.php?url=cart/update', { method: 'POST', body: formData })
+        fetch(baseUrl + 'index.php?url=cart/update', { method: 'POST', body: formData, credentials: 'same-origin' })
             .then(res => res.json())
             .then(data => { if (data.status === 'success') loadCart(); });
     }
@@ -99,7 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const formData = new FormData();
         formData.append('cart_item_id', cartItemId);
 
-        fetch(baseUrl + 'index.php?url=cart/remove', { method: 'POST', body: formData })
+        fetch(baseUrl + 'index.php?url=cart/remove', { method: 'POST', body: formData, credentials: 'same-origin' })
             .then(res => res.json())
             .then(data => { if (data.status === 'success') loadCart(); });
     }
@@ -148,4 +162,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const cartCountHeader = document.querySelector('.navbar__cart-count');
         if (cartCountHeader) cartCountHeader.innerText = data.total_quantity;
     }
+
+    // Cho phép gọi renderCart từ các file khác 
+    window.renderCart = renderCart;
 });

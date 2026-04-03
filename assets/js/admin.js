@@ -578,6 +578,8 @@ function openStaffModal(id = null) {
     document.getElementById('staff_username').readOnly = false;
     document.getElementById('staff_password').required = true;
     document.getElementById('staff_pw_hint').innerText = '(*) Bắt buộc khi thêm mới';
+    document.getElementById('staff_trang_thai').disabled = false;
+    document.getElementById('staff_trang_thai_hidden').value = 'HoatDong';
 
     if (id) {
         title.innerText = 'Sửa Thông Tin Nhân Sự';
@@ -597,6 +599,17 @@ function openStaffModal(id = null) {
                     document.getElementById('staff_sdt').value = s.so_dien_thoai;
                     document.getElementById('staff_vai_tro').value = s.vai_tro;
                     document.getElementById('staff_trang_thai').value = s.trang_thai;
+                    document.getElementById('staff_trang_thai_hidden').value = s.trang_thai;
+                    
+                    // Khóa thay đổi trạng thái nếu là Staff hoặc Admin đang tự sửa chính mình
+                    if (typeof CURRENT_ADMIN_ROLE !== 'undefined' && CURRENT_ADMIN_ROLE === 'Staff') {
+                        document.getElementById('staff_trang_thai').disabled = true;
+                    } else if (typeof CURRENT_ADMIN_ID !== 'undefined' && id == CURRENT_ADMIN_ID) {
+                        document.getElementById('staff_trang_thai').disabled = true;
+                    } else {
+                        document.getElementById('staff_trang_thai').disabled = false;
+                    }
+                    
                     modal.style.display = 'flex';
                 }
             });
