@@ -2,10 +2,12 @@
 // models/OrderModel.php
 require_once __DIR__ . '/../core/Model.php';
 
-class OrderModel extends Model {
+class OrderModel extends Model
+{
 
-    public function createOrder($user_id, $tong_tien_cuoi, $ten_nguoi_nhan, $sdt_nguoi_nhan, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen, $giam_gia_thanh_vien = 0, $ma_voucher = null, $giam_gia_voucher = 0) {
-       
+    public function createOrder($user_id, $tong_tien_cuoi, $ten_nguoi_nhan, $sdt_nguoi_nhan, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen, $giam_gia_thanh_vien = 0, $ma_voucher = null, $giam_gia_voucher = 0)
+    {
+
         $this->conn->begin_transaction();
         try {
             // 1. Lưu thông tin Đơn hàng chung
@@ -49,7 +51,7 @@ class OrderModel extends Model {
 
     public function cancelOrder($order_id, $user_id)
     {
-        
+
         $stmt = $this->conn->prepare("
             UPDATE orders 
             SET trang_thai = 'Huy' 
@@ -61,14 +63,28 @@ class OrderModel extends Model {
         $stmt->bind_param("ii", $order_id, $user_id);
         $stmt->execute();
 
-        
+
         $affected_rows = $stmt->affected_rows;
         $stmt->close();
 
         return $affected_rows > 0;
     }
+    // Hủy các đơn hàng QR quá 10 phút
+    public function cancelExpiredQROrders()
+    {
+        $sql = "UPDATE orders 
+                SET trang_thai = 'Huy' 
+                WHERE trang_thai = 'ChoXacNhan' 
+                AND phuong_thuc_thanh_toan = 'ChuyenKhoan' 
+                AND created_at <= (NOW() - INTERVAL 10 MINUTE)";
 
-    public function getOrderById($order_id, $user_id) {
+        $this->conn->query($sql);
+        return $this->conn->affected_rows;
+    }
+
+
+    public function getOrderById($order_id, $user_id)
+    {
         $stmt = $this->conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
         $stmt->bind_param("ii", $order_id, $user_id);
         $stmt->execute();
@@ -76,8 +92,9 @@ class OrderModel extends Model {
         $stmt->close();
         return $order;
     }
-    
-    public function getOrderDetails($order_id) {
+
+    public function getOrderDetails($order_id)
+    {
         // Đổi sang LEFT JOIN và lấy dữ liệu Snapshot nếu sản phẩm đã bị xóa
         $stmt = $this->conn->prepare("SELECT od.*, IFNULL(p.ten_sp, od.ten_sp_snapshot) as ten_sp, IFNULL(p.anh, od.anh_sp_snapshot) as anh FROM order_details od LEFT JOIN products p ON od.product_id = p.id WHERE od.order_id = ?");
         $stmt->bind_param("i", $order_id);
@@ -87,7 +104,8 @@ class OrderModel extends Model {
         return $details;
     }
 
-    public function getOrderForWebhook($order_id) {
+    public function getOrderForWebhook($order_id)
+    {
         $stmt = $this->conn->prepare("SELECT tong_tien, trang_thai FROM orders WHERE id = ?");
         $stmt->bind_param("i", $order_id);
         $stmt->execute();
@@ -96,7 +114,8 @@ class OrderModel extends Model {
         return $order;
     }
 
-    public function updateOrderStatus($order_id, $trang_thai) {
+    public function updateOrderStatus($order_id, $trang_thai)
+    {
         $stmt = $this->conn->prepare("UPDATE orders SET trang_thai = ? WHERE id = ?");
         $stmt->bind_param("si", $trang_thai, $order_id);
         $result = $stmt->execute();
@@ -104,7 +123,8 @@ class OrderModel extends Model {
         return $result;
     }
 
-    public function getUserIdByOrderId($order_id) {
+    public function getUserIdByOrderId($order_id)
+    {
         $stmt = $this->conn->prepare("SELECT user_id FROM orders WHERE id = ?");
         $stmt->bind_param("i", $order_id);
         $stmt->execute();
@@ -113,7 +133,8 @@ class OrderModel extends Model {
         return $result ? $result['user_id'] : null;
     }
 
-    public function getOrdersByUserId($user_id) {
+    public function getOrdersByUserId($user_id)
+    {
         $stmt = $this->conn->prepare("SELECT id, tong_tien, trang_thai, phuong_thuc_thanh_toan, created_at FROM orders WHERE user_id = ? ORDER BY created_at DESC");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();

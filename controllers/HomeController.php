@@ -5,6 +5,10 @@ require_once __DIR__ . '/../core/Controller.php';
 
 class HomeController extends Controller {
     public function index() {
+        //  Hủy các đơn hàng QR quá 10 phút
+        $orderModel = $this->model('OrderModel');
+        $orderModel->cancelExpiredQROrders();
+
         // Lấy danh sách sản phẩm từ Model
         $productModel = $this->model('ProductModel');
         $bestsellers = $productModel->getBestsellerProducts(9);

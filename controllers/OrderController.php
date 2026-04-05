@@ -324,6 +324,10 @@ class OrderController extends Controller
 
         $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $orderModel = $this->model('OrderModel');
+
+        // Quét dọn các đơn quá hạn trong lúc trình duyệt đang tự động kiểm tra
+        $orderModel->cancelExpiredQROrders();
+
         $order = $orderModel->getOrderById($order_id, $_SESSION['user_id']);
 
         if ($order) {

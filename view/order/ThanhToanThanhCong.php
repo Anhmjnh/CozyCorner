@@ -22,6 +22,14 @@ foreach ($order['items'] as $item) {
     $tong_san_pham += $item['gia'] * $item['so_luong'];
 }
 $phi_ship = $order['tong_tien'] - $tong_san_pham;
+
+// Tính thời gian đếm ngược 10 phút (600 giây)
+$remaining_seconds = 0;
+if ($isPendingPayment) {
+    $created_at_time = strtotime($order['created_at']);
+    $expire_time = $created_at_time + (10 * 60);
+    $remaining_seconds = max(0, $expire_time - time());
+}
 ?>
 <style>
     /* Layout Container */
@@ -352,7 +360,14 @@ $phi_ship = $order['tong_tien'] - $tong_san_pham;
             <h2 class="qr-title">Thanh Toán Bằng QR Code</h2>
             <p class="qr-subtitle">Mở ứng dụng ngân hàng và quét mã để thanh toán tự động.</p>
 
-            <div class="qr-img-wrapper">
+            <!-- BỘ ĐẾM NGƯỢC THỜI GIAN -->
+            <div id="qr-timer-container" style="text-align: center; margin-bottom: 15px; padding: 12px; background: #fff3f3; border-radius: 8px; border: 1px dashed #e74c3c;">
+                <p style="margin: 0; color: #c0392b; font-weight: bold; font-size: 15px;">
+                    Thời gian còn lại: <span id="countdown-timer" style="font-size: 18px;">--:--</span>
+                </p>
+            </div>
+
+            <div class="qr-img-wrapper" id="qr-container" style="position: relative;">
                 <?php
                
                 $bank = SEPAY_BANK_ID;
@@ -384,16 +399,47 @@ $phi_ship = $order['tong_tien'] - $tong_san_pham;
 
 <?php if ($isPendingPayment): ?>
     <script>
+        // JS Đếm ngược thời gian
+        let remainingSeconds = <?= $remaining_seconds ?>;
+        const countdownElement = document.getElementById('countdown-timer');
+        const qrContainer = document.getElementById('qr-container');
+
+        function updateTimerDisplay() {
+            if (remainingSeconds <= 0) {
+                countdownElement.innerHTML = "00:00";
+                if (qrContainer && !qrContainer.classList.contains('expired')) {
+                    qrContainer.classList.add('expired');
+                    qrContainer.style.opacity = "0.2";
+                    qrContainer.innerHTML += '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 10px 15px; border: 2px solid #e74c3c; border-radius: 5px; width: 85%; text-align: center; font-weight: bold; color: #e74c3c; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">MÃ QR ĐÃ HẾT HẠN</div>';
+                    
+                    alert("Thời gian thanh toán 10 phút đã hết. Đơn hàng của bạn đã tự động bị hủy!");
+                    window.location.href = "<?= BASE_URL ?>index.php?url=user/account&tab=orders";
+                }
+                return;
+            }
+
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+            countdownElement.innerHTML = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+            remainingSeconds--;
+        }
+
+        updateTimerDisplay(); // Chạy ngay lần đầu
+        const timerInterval = setInterval(updateTimerDisplay, 1000);
+
         // JS Tự động kiểm tra trạng thái đơn hàng (Polling) mỗi 3 giây
         setInterval(() => {
-            fetch('<?= BASE_URL ?>index.php?url=order/check_status&id=<?= $order['id'] ?>')
-                .then(res => res.json())
-                .then(data => {
-                    // Nếu webhook cập nhật trạng thái khác 'ChoXacNhan' (ví dụ: 'DangGiao')
-                    if (data.status === 'success' && data.trang_thai !== 'ChoXacNhan') {
-                        window.location.reload(); // Tự động load lại để hiện "Thanh toán thành công"
-                    }
-                });
+            // Chỉ kiểm tra trạng thái nếu mã QR chưa hết hạn
+            if (remainingSeconds > 0) {
+                fetch('<?= BASE_URL ?>index.php?url=order/check_status&id=<?= $order['id'] ?>')
+                    .then(res => res.json())
+                    .then(data => {
+                        // Nếu webhook cập nhật trạng thái khác 'ChoXacNhan' (ví dụ: 'DangGiao')
+                        if (data.status === 'success' && data.trang_thai !== 'ChoXacNhan') {
+                            window.location.reload(); // Tự động load lại để hiện "Thanh toán thành công"
+                        }
+                    });
+            }
         }, 3000);
     </script>
 <?php endif; ?>
