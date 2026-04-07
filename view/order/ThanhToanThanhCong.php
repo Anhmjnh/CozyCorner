@@ -27,6 +27,7 @@ $phi_ship = $order['tong_tien'] - $tong_san_pham;
 $remaining_seconds = 0;
 if ($isPendingPayment) {
     $created_at_time = strtotime($order['created_at']);
+
     $expire_time = $created_at_time + (10 * 60);
     $remaining_seconds = max(0, $expire_time - time());
 }
@@ -54,7 +55,7 @@ if ($isPendingPayment) {
         border: 1px solid #eaeaea;
     }
 
-    
+
     .success-main--center {
         max-width: 850px;
         margin: 0 auto;
@@ -361,7 +362,8 @@ if ($isPendingPayment) {
             <p class="qr-subtitle">Mở ứng dụng ngân hàng và quét mã để thanh toán tự động.</p>
 
             <!-- BỘ ĐẾM NGƯỢC THỜI GIAN -->
-            <div id="qr-timer-container" style="text-align: center; margin-bottom: 15px; padding: 12px; background: #fff3f3; border-radius: 8px; border: 1px dashed #e74c3c;">
+            <div id="qr-timer-container"
+                style="text-align: center; margin-bottom: 15px; padding: 12px; background: #fff3f3; border-radius: 8px; border: 1px dashed #e74c3c;">
                 <p style="margin: 0; color: #c0392b; font-weight: bold; font-size: 15px;">
                     Thời gian còn lại: <span id="countdown-timer" style="font-size: 18px;">--:--</span>
                 </p>
@@ -369,12 +371,12 @@ if ($isPendingPayment) {
 
             <div class="qr-img-wrapper" id="qr-container" style="position: relative;">
                 <?php
-               
+
                 $bank = SEPAY_BANK_ID;
                 $acc = SEPAY_BANK_ACC;
                 $accName = SEPAY_BANK_NAME;
 
-                $des = 'ORD' . $order['id']; 
+                $des = 'ORD' . $order['id'];
                 $qr_sepay_url = "https://qr.sepay.vn/img?acc={$acc}&bank={$bank}&amount=" . intval($order['tong_tien']) . "&des={$des}&accountName=" . urlencode($accName);
                 ?>
                 <img class="qr-img" src="<?= $qr_sepay_url ?>" alt="QR Code Thanh Toán SePay">
@@ -411,37 +413,53 @@ if ($isPendingPayment) {
                     qrContainer.classList.add('expired');
                     qrContainer.style.opacity = "0.2";
                     qrContainer.innerHTML += '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 10px 15px; border: 2px solid #e74c3c; border-radius: 5px; width: 85%; text-align: center; font-weight: bold; color: #e74c3c; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">MÃ QR ĐÃ HẾT HẠN</div>';
-                    
-                    alert("Thời gian thanh toán 10 phút đã hết. Đơn hàng của bạn đã tự động bị hủy!");
-                    window.location.href = "<?= BASE_URL ?>index.php?url=user/account&tab=orders";
-                }
-                return;
-            }
 
-            const minutes = Math.floor(remainingSeconds / 60);
-            const seconds = remainingSeconds % 60;
-            countdownElement.innerHTML = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
-            remainingSeconds--;
+                    // Gửi request ép Backend dọn dẹp ngay lập tức để chuyển trạng thái sang "Hủy" trong DB
+                    fetch('<?= BASE_URL ?>index.php?url=order/api_get_order&id=<?= $order['id'] ?>');
+
+                    // Hiện Modal thông báo đẹp mắt thay vì alert xấu xí
+                    const modalHtml = `
+                        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
+                            <div style="background: #fff; padding: 40px 30px; border-radius: 12px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: scale(1); animation: popIn 0.3s ease-out forwards;">
+                                <i class="fas fa-times-circle" style="font-size: 60px; color: #e74c3c; margin-bottom: 20px;"></i>
+                                <h3 style="color: #333; margin-top: 0; font-size: 22px; margin-bottom: 10px;">Đã Hết Thời Gian!</h3>
+                                <p style="color: #666; margin-bottom: 25px; line-height: 1.5;">Thời gian thanh toán cho đơn hàng này đã hết. Đơn hàng của bạn đã tự động bị hủy.</p>
+                                <a href="<?= BASE_URL ?>index.php?url=user/account&tab=orders" style="background: #355f2e; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; transition: background 0.3s; width: 100%; box-sizing: border-box;">Xem Lịch Sử Đơn Hàng</a>
+                            </div>
+                        </div>
+                        <style>
+                            @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+                        </style>
+                    `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+            return;
         }
 
-        updateTimerDisplay(); // Chạy ngay lần đầu
-        const timerInterval = setInterval(updateTimerDisplay, 1000);
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = remainingSeconds % 60;
+        countdownElement.innerHTML = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        remainingSeconds--;
+    }
 
-        // JS Tự động kiểm tra trạng thái đơn hàng (Polling) mỗi 3 giây
-        setInterval(() => {
-            // Chỉ kiểm tra trạng thái nếu mã QR chưa hết hạn
-            if (remainingSeconds > 0) {
-                fetch('<?= BASE_URL ?>index.php?url=order/check_status&id=<?= $order['id'] ?>')
-                    .then(res => res.json())
-                    .then(data => {
-                        // Nếu webhook cập nhật trạng thái khác 'ChoXacNhan' (ví dụ: 'DangGiao')
-                        if (data.status === 'success' && data.trang_thai !== 'ChoXacNhan') {
-                            window.location.reload(); // Tự động load lại để hiện "Thanh toán thành công"
-                        }
-                    });
-            }
-        }, 3000);
-    </script>
+    updateTimerDisplay(); // Chạy ngay lần đầu
+    const timerInterval = setInterval(updateTimerDisplay, 1000);
+
+    // JS Tự động kiểm tra trạng thái đơn hàng (Polling) mỗi 3 giây
+    setInterval(() => {
+        // Chỉ kiểm tra trạng thái nếu mã QR chưa hết hạn
+        if (remainingSeconds > 0) {
+            fetch('<?= BASE_URL ?>index.php?url=order/check_status&id=<?= $order['id'] ?>')
+                .then(res => res.json())
+                .then(data => {
+                    // Nếu webhook cập nhật trạng thái khác 'ChoXacNhan' (ví dụ: 'DangGiao')
+                    if (data.status === 'success' && data.trang_thai !== 'ChoXacNhan') {
+                        window.location.reload(); // Tự động load lại để hiện "Thanh toán thành công"
+                    }
+                });
+        }
+    }, 3000);
+</script>
 <?php endif; ?>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
