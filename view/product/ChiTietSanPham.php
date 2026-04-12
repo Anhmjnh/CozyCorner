@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../includes/header.php';
 
 <!-- BREADCRUMB -->
 <ul class="breadcrumb">
+   
     <li><a href="<?= BASE_URL ?>">Trang chủ</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>
     <li><a href="<?= BASE_URL ?>index.php?url=product">Sản phẩm</a></li>
@@ -205,6 +206,7 @@ require_once __DIR__ . '/../../includes/header.php';
         box-sizing: border-box;
         vertical-align: middle;
     }
+   
 </style>
 <?php if (!$product): ?>
     <p style="text-align: center; padding: 50px; font-size: 1.2rem;">Sản phẩm không tồn tại hoặc đã bị ẩn.</p>

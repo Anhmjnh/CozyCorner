@@ -2,12 +2,13 @@
 
 .banner {
     position: relative;
-    height: 660px;
+    height: 600px;
     margin: 0 72px; 
     align-items: center;
     justify-content: center;
     color: white;
     border-radius: 24px;
+    margin-top: 100px;
 }
 
 .banner__content {

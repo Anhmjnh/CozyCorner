@@ -7,24 +7,11 @@ if (!isset($formData)) {
     exit;
 }
 
+$page_css = isset($page_css) ? $page_css : [];
+$page_css[] = 'assets/css/CapNhatTaiKhoan.css';
+
 require_once __DIR__ . '/../../includes/header.php';
 ?>
-
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cập Nhật Tài Khoản - COZY CORNER</title>
-
-    <!-- Reset CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/CapNhatTaiKhoan.css">
-</head>
-<body>
-
-<?php showSessionMessage(); ?>
 
 <ul class="breadcrumb">
     <li><a href="<?= BASE_URL ?>">Trang chủ</a></li>

@@ -21,21 +21,21 @@ require_once __DIR__ . '/../../includes/header.php';
 
     
     .breadcrumb-custom {
+       
         display: flex;
         align-items: center;
         gap: 12px;
         list-style: none;
         padding: 0;
         margin: 0 0 25px 0;
+        margin-top: 120px;
         font-size: 15px;
         color: #555;
     }
 
     .breadcrumb-custom a {
         text-decoration: none;
-        color: #333;
-        font-weight: 500;
-        transition: color 0.2s;
+        color: #9E9E9E;
     }
 
     .breadcrumb-custom a:hover {

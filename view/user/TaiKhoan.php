@@ -428,8 +428,8 @@ require_once __DIR__ . '/../../includes/header.php';
 </style>
 
 <ul class="breadcrumb"
-    style="max-width: 1200px; margin: 20px auto; padding: 0 20px; list-style: none; display: flex; gap: 10px; align-items: center; color: #555;">
-    <li><a href="<?= BASE_URL ?>" style="color: #333; text-decoration: none;">Trang chủ</a></li>
+    style="max-width: 1200px; margin: 20px auto;margin-top: 110px; padding: 0 20px; list-style: none; display: flex; gap: 10px; align-items: center; color: #555;">
+    <li><a href="<?= BASE_URL ?>" style="color: #9e9e9e; text-decoration: none;">Trang chủ</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt=">" style="width: 12px; opacity: 0.5;"></li>
     <li style="color: #333; text-decoration: none;">Tài khoản</li>
 </ul>
