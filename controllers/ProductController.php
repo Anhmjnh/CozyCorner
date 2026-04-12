@@ -51,6 +51,76 @@ class ProductController extends Controller {
             'page_css' => $page_css
         ]);
     }
+        // --- API Dành cho Tab Sản Phẩm Trang Chủ ---
+    public function api_get_products_by_tab() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        header('Content-Type: application/json');
+        
+        $tab = $_GET['tab'] ?? 'new';
+        $productModel = $this->model('ProductModel');
+        $products = [];
+
+        if ($tab === 'new') {
+            $products = $productModel->getNewProducts(9);
+        } elseif ($tab === 'sale') {
+            $products = $productModel->getSaleProducts(9);
+        } elseif ($tab === 'foryou') {
+            $user_id = $_SESSION['user_id'] ?? null;
+            $session_id = session_id();
+            $products = $productModel->getPersonalizedProducts($user_id, $session_id, 9);
+        }
+
+        if (empty($products)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Chưa có sản phẩm nào.']);
+            exit;
+        }
+
+        $html = '';
+        $base_url = BASE_URL;
+        
+        foreach ($products as $row) {
+            $id = $row['id'];
+            $anh = htmlspecialchars($row['anh']);
+            $ten_sp = htmlspecialchars($row['ten_sp']);
+            $gia = number_format($row['gia']) . 'đ';
+            
+            $gia_cu_html = '';
+            if ($row['gia_cu'] > 0) {
+                $gia_cu = number_format($row['gia_cu']) . 'đ';
+                $gia_cu_html = "<span class=\"product__list-old-price\">{$gia_cu}</span>";
+            }
+            
+            $btn_html = '';
+            if ($row['so_luong_ton'] > 0) {
+                $btn_html = "<a href=\"javascript:void(0)\" class=\"product__list-cart-button js__add-to-cart\" data-product-id=\"{$id}\">
+                                <img src=\"{$base_url}assets/icon/Icon-cart.svg\" alt=\"button cart\">
+                            </a>";
+            } else {
+                $btn_html = "<span class=\"product__list-cart-button\" style=\"border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; padding: 12px; text-decoration: none;\" title=\"Hết hàng\">Hết hàng</span>";
+            }
+
+            $html .= "
+            <div class=\"product__list-item\">
+                <a href=\"{$base_url}view/product/ChiTietSanPham.php?id={$id}\">
+                    <img src=\"{$base_url}uploads/{$anh}\" alt=\"{$ten_sp}\" class=\"product__list-image\">
+                </a>
+                <div class=\"product__list-text\">
+                    <p class=\"product__list-item-title\">
+                        {$ten_sp} <br>
+                        <span class=\"product__list-price\">
+                            {$gia}
+                            {$gia_cu_html}
+                        </span>
+                    </p>
+                    {$btn_html}
+                </div>
+            </div>";
+        }
+
+        echo json_encode(['status' => 'success', 'html' => $html]);
+        exit;
+    }
+
 
     // Trang Chi tiết 1 sản phẩm
     public function detail() {
@@ -80,6 +150,12 @@ class ProductController extends Controller {
             }
             $avg_rating = round($total_rating_sum / $total_reviews, 1);
         }
+                // Ghi nhận lịch sử xem sản phẩm
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $user_id = $_SESSION['user_id'] ?? null;
+        $session_id = session_id();
+        $productModel->logProductView($id, $user_id, $session_id);
+
 
         // Thông tin User (để hiển thị form đánh giá nếu đã đăng nhập)
         $is_logged_in = isset($_SESSION['user_id']);

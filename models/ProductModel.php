@@ -143,4 +143,87 @@ class ProductModel extends Model {
         
         return ['products' => $products, 'total' => $total];
     }
+
+    // --- SẢN PHẨM TRANG CHỦ ---
+
+    public function logProductView($product_id, $user_id = null, $session_id = null) {
+        $stmt = $this->conn->prepare("INSERT INTO product_views (product_id, user_id, session_id) VALUES (?, ?, ?)");
+        $stmt->bind_param("iis", $product_id, $user_id, $session_id);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    public function getSaleProducts($limit = 9) {
+        $stmt = $this->conn->prepare("SELECT p.*, c.ten_danh_muc as danh_muc, c.slug as category_slug FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.trang_thai IN ('HienThi', 'HetHang') AND p.gia_cu > p.gia ORDER BY (p.gia_cu - p.gia) DESC LIMIT ?");
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        foreach ($result as &$product) {
+            if ($product['trang_thai'] === 'HetHang') {
+                $product['so_luong_ton'] = 0;
+            }
+        }
+        return $result;
+    }
+
+    public function getPersonalizedProducts($user_id, $session_id, $limit = 9) {
+        $cat_ids = [];
+        // 1. Phân tích danh mục từ lịch sử mua hàng 
+        if ($user_id) {
+            $stmt = $this->conn->prepare("SELECT p.category_id, COUNT(*) as cnt FROM order_details od JOIN orders o ON od.order_id = o.id JOIN products p ON od.product_id = p.id WHERE o.user_id = ? GROUP BY p.category_id ORDER BY cnt DESC LIMIT 2");
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while($row = $res->fetch_assoc()) {
+                $cat_ids[] = $row['category_id'];
+            }
+            $stmt->close();
+        }
+
+        // 2. Phân tích từ lịch sử xem sản phẩm 
+        if (count($cat_ids) < 2) {
+            $view_query = $user_id ? "user_id = ?" : "session_id = ?";
+            $param = $user_id ? $user_id : $session_id;
+            $stmt = $this->conn->prepare("SELECT p.category_id, COUNT(*) as cnt FROM product_views pv JOIN products p ON pv.product_id = p.id WHERE pv.$view_query GROUP BY p.category_id ORDER BY cnt DESC LIMIT 2");
+            if ($user_id) {
+                $stmt->bind_param("i", $param);
+            } else {
+                $stmt->bind_param("s", $param);
+            }
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while($row = $res->fetch_assoc()) {
+                if (!in_array($row['category_id'], $cat_ids)) {
+                    $cat_ids[] = $row['category_id'];
+                }
+            }
+            $stmt->close();
+        }
+
+        // 3. Truy xuất sản phẩm thuộc các danh mục đó 
+        if (!empty($cat_ids)) {
+            $cat_placeholders = implode(',', array_fill(0, count($cat_ids), '?'));
+            $sql = "SELECT p.*, c.ten_danh_muc as danh_muc, c.slug as category_slug FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.trang_thai IN ('HienThi', 'HetHang') AND p.category_id IN ($cat_placeholders) ORDER BY RAND() LIMIT ?";
+            $stmt = $this->conn->prepare($sql);
+            $types = str_repeat('i', count($cat_ids)) . 'i';
+            $params = $cat_ids;
+            $params[] = $limit;
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+            
+            if (count($result) >= 4) { // Nếu có đủ sản phẩm để hiển thị đẹp
+                foreach ($result as &$product) {
+                    if ($product['trang_thai'] === 'HetHang') $product['so_luong_ton'] = 0;
+                }
+                return $result;
+            }
+        }
+
+        // 4. Fallback: Nếu không có dữ liệu cá nhân, trả về Top sản phẩm Bán Chạy nhất
+        return $this->getBestsellerProducts($limit);
+    }
 }

@@ -193,6 +193,7 @@
 
 .product__card-image {
     height: 230px;
+    width:230px;
     border-radius: 8px;
 }
 
@@ -428,9 +429,9 @@
 }
 
 .about__description {
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 150%;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 200%;
     margin: 0;
 }
 
@@ -440,7 +441,7 @@
 }
 
 .about__image img {
-    width: 50vw;
+    width: 40vw;
 }
 
 /* TIN TUC */

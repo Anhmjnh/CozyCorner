@@ -135,11 +135,18 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-<!-- SẢN PHẨM MỚI -->
+<!-- SẢN PHẨM  -->
 <div class="product__list">
     <div class="product__list-title">Sản Phẩm</div>
 
-    <div class="product__list-items">
+    <!-- Tabs Bộ Lọc Sản Phẩm -->
+    <div class="product__tabs">
+        <button class="product__tab-btn active" data-tab="new">Mới</button>
+        <button class="product__tab-btn" data-tab="foryou">Dành riêng cho bạn</button>
+        <button class="product__tab-btn" data-tab="sale">Đang khuyến mãi</button>
+    </div>
+
+    <div class="product__list-items" id="home-product-grid">
         <?php if (!empty($new_products)): ?>
             <?php foreach ($new_products as $row): ?>
                 <div class="product__list-item">
@@ -182,24 +189,92 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 
 <!-- VỀ CHÚNG TÔI -->
-<div class="about">
+<<div class="about">
     <div class="about__content">
         <div class="about__title">Về Chúng Tôi</div>
+        
         <p class="about__description">
-            Chào mừng bạn đến với trang web chuyên cung cấp sản phẩm gia dụng bếp chất lượng cao.
-            Chúng tôi mang đến các giải pháp tiện ích và hiện đại, giúp bạn tận hưởng không gian bếp trọn vẹn hơn.
+            Chào mừng bạn đến với cửa hàng của chúng tôi – nơi mang đến những sản phẩm gia dụng nhà bếp chất lượng cao, 
+            hiện đại và tiện ích. Chúng tôi luôn đặt trải nghiệm của khách hàng lên hàng đầu, với mong muốn giúp mỗi gia đình 
+            có một không gian bếp tiện nghi, ấm cúng và đầy cảm hứng.
         </p>
+
         <p class="about__description">
-            Với đa dạng sản phẩm từ dụng cụ nhà bếp đến thiết bị thông minh, chúng tôi cam kết chất lượng và an toàn,
-            đáp ứng mọi nhu cầu của gia đình bạn.
+            Các sản phẩm của chúng tôi được lựa chọn kỹ lưỡng từ những thương hiệu uy tín, đảm bảo độ bền, an toàn và tính thẩm mỹ. 
+            Từ những dụng cụ nhà bếp cơ bản đến các thiết bị thông minh, tất cả đều nhằm giúp bạn tiết kiệm thời gian và nâng cao chất lượng cuộc sống.
+        </p>
+
+        <p class="about__description">
+            Chúng tôi không chỉ bán sản phẩm, mà còn mong muốn đồng hành cùng bạn trong hành trình chăm sóc gia đình, 
+            mang lại những bữa ăn ngon và khoảnh khắc sum vầy đáng nhớ.
         </p>
     </div>
+
     <div class="about__image">
         <img src="<?= BASE_URL ?>assets/img/img-about.png" alt="Gian bếp ấm cúng">
     </div>
 </div>
 
 <style>
+        /* --- CSS cho Tabs Sản Phẩm --- */
+    .product__tabs {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 40px;
+        border-bottom: 2px solid #EEEEEE;
+        padding-bottom: 5px;
+    }
+
+    .product__tab-btn {
+        background: none;
+        border: none;
+        font-size: 18px;
+        font-weight: 600;
+        color: #9E9E9E;
+        cursor: pointer;
+        padding: 10px 20px;
+        position: relative;
+        transition: all 0.3s ease;
+       
+    }
+
+    .product__tab-btn:hover {
+        color: #355F2E;
+    }
+
+    .product__tab-btn.active {
+        color: #355F2E;
+        font-weight: 700;
+    }
+
+    .product__tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -7px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: #355F2E;
+        border-radius: 3px;
+    }
+
+    #home-product-grid {
+        transition: opacity 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+        .product__tabs {
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .product__tab-btn {
+            font-size: 14px;
+            padding: 8px 10px;
+        }
+    }
+
+
     /* Đồng bộ chiều cao ảnh và căn chỉnh nội dung bài viết tin tức ở trang chủ */
     .news__item {
         display: flex;
@@ -278,6 +353,47 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- SCRIPT: Xử lý Tab Sản Phẩm (AJAX) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.product__tab-btn');
+    const productGrid = document.getElementById('home-product-grid');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Nếu click vào tab đang active thì bỏ qua không load lại
+            if (this.classList.contains('active')) return;
+
+            // Đổi trạng thái hiển thị của Tab
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            const tabType = this.getAttribute('data-tab');
+            
+            // Hiệu ứng mờ lưới sản phẩm khi đang tải
+            productGrid.style.opacity = '0.4';
+
+            // Gửi request ngầm xuống API
+            fetch(`<?= BASE_URL ?>index.php?url=product/api_get_products_by_tab&tab=${tabType}`)
+                .then(response => response.json())
+                .then(res => {
+                    productGrid.style.opacity = '1';
+                    if (res.status === 'success') {
+                        productGrid.innerHTML = res.html;
+                    } else {
+                        productGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #777; font-size: 16px; margin: 40px 0;">${res.msg || 'Chưa có sản phẩm nào.'}</p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching tab products:', error);
+                    productGrid.style.opacity = '1';
+                    productGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: red; margin: 40px 0;">Lỗi kết nối. Vui lòng thử lại sau.</p>';
+                });
+        });
+    });
+});
+</script>
 
 <!-- SCRIPT: Cuộn sản phẩm bán chạy -->
 <script>
