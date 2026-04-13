@@ -431,35 +431,47 @@
 .product__similar-title {
     font-size: 40px;
     font-weight: 700;
-    height: 54px;
+    height: auto; /* Bỏ fix cứng chiều cao */
     margin-bottom: 32px;
 }
 
+/* Đổi thành Grid chia 4 cột cho đều và đẹp đẽ như phần trên */
 .product__cards {
-    display: flex;
-    justify-content: space-around;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); 
     gap: 24px;
 }
+
 .product__card {
-    display: inline-block;
-    width: 306px;
-    height: fit-content;
     background: white;
     border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
     text-align: center;
+    display: flex; /* Dùng flex để dễ căn chỉnh nút và chữ */
+    flex-direction: column;
+    overflow: hidden; /* Cực kỳ quan trọng để ảnh không lòi ra khỏi bo góc */
 }
+
+/* Ép ảnh tràn viền, lấp kín và không bị méo */
 .product__card-image {
-    height: 230px;
-    border-radius: 8px;
+    width: 100%;
+    height:auto;
+    margin: 0;
+    aspect-ratio: 1 / 1; /* Tỷ lệ vuông chuẩn */
+    object-fit: cover; 
+    border-radius: 8px 8px 0 0; /* Chỉ bo góc trên */
+    display: block; /* Xóa khoảng hở nhỏ dưới ảnh */
 }
+
 .product__card-name {
     font-size: 16px;
     font-weight: 600;
     text-align: left;
     margin: 0;
+    margin-bottom: 5px; /* Thêm tí khoảng cách với phần giá */
     line-height: 150%;
 }
+
 .product__card-price {
     font-size: 20px;
     color: #355F2E;
@@ -468,6 +480,7 @@
     margin: 0;
     line-height: 150%;
 }
+
 .product__card-old-price {  
     font-size: 12px;
     color: #BDBDBD;
@@ -476,10 +489,14 @@
     margin-left: 5px;
 }
 
-.product__card-text{
+/* Căn chỉnh thẳng hàng chữ, giá và nút giỏ hàng */
+.product__card-text {
     padding: 16px;
     display: flex;
+    gap: 8px;
     justify-content: space-between;
+    align-items: center; /* Nút và chữ được căn giữa theo chiều dọc */
+    flex-grow: 1;
 }
 
 .product__card-cart {
@@ -487,11 +504,12 @@
     border: 1px solid #355F2E;
     border-radius: 5px;
     background-color: white;
+    flex-shrink: 0; /* Chống bị ép móp nút khi tên SP quá dài */
 }
 
 .product__card-cart:hover {
     background: #355F2E;
-    transition: background 0.5s ease;
+    transition: background 0.3s ease; /* Chuyển 0.3s cho hiệu ứng nhanh gọn mượt hơn */
     cursor: pointer;
 }
 

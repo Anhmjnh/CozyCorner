@@ -11,7 +11,6 @@ if (!isset($product)) {
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
-<!-- BREADCRUMB -->
 <ul class="breadcrumb">
    
     <li><a href="<?= BASE_URL ?>">Trang chủ</a></li>
@@ -22,6 +21,48 @@ require_once __DIR__ . '/../../includes/header.php';
 </ul>
 
 <style>
+    
+  
+    .review {
+        width: 100% !important; 
+    }
+
+    
+    @media (min-width: 481px) {
+        .review { 
+            margin-top: 300px !important; 
+        }
+    }
+    
+    /* Giữ khoảng cách gọn gàng trên điện thoại */
+    @media (max-width: 480px) {
+        .review { margin-top: 48px !important; }
+    }
+
+    /* 2. Giữ MÔ TẢ ở cột trái cân đối (Máy tính 75%, Điện thoại 100%) */
+    @media (min-width: 481px) {
+        .product__description { width: 75% !important; margin-top: 48px; }
+    }
+    @media (max-width: 480px) {
+        .product__description { width: 100% !important; margin-top: 48px; }
+    }
+    
+    /* 3. Sửa lỗi hiển thị Đánh giá trên điện thoại khi đưa vào Sidebar */
+    @media (max-width: 480px) {
+        .product__sidebar {
+            display: block !important; 
+            width: 100% !important;
+            margin: 0 !important;
+        }
+        /* Ẩn các phần trùng lặp của Desktop trên Mobile để không bị lặp tên, giá 2 lần */
+        .product__sidebar > .product__title,
+        .product__sidebar > .product__rating,
+        .product__sidebar > .product__price,
+        .product__sidebar > .product__actions-form {
+            display: none !important; 
+        }
+    }
+
     /* ---  LIGHTBOX PHÓNG TO ẢNH --- */
     .lightbox {
         display: none;
@@ -214,11 +255,8 @@ require_once __DIR__ . '/../../includes/header.php';
     exit;  ?>
 <?php endif; ?>
 
-<!-- CONTENT -->
 <div class="product">
-    <!-- LEFT -->
     <div class="product__left">
-        <!-- Gallery -->
         <div class="product__gallery">
             <div class="product__image" id="product-image-container">
                 <?php if ($product && $product['anh']): ?>
@@ -232,7 +270,6 @@ require_once __DIR__ . '/../../includes/header.php';
             
         </div>
 
-        <!-- SIDEBAR__MOBILE -->
         <div class="product__mobile-sidebar">
             <div class="product__mobile-title"><?= htmlspecialchars($product['ten_sp'] ?? 'Sản phẩm') ?></div>
 
@@ -264,7 +301,6 @@ require_once __DIR__ . '/../../includes/header.php';
                 <?php endif; ?>
             </div>
 
-            <!-- Form thêm vào giỏ hàng -->
             <form id="form-add-to-cart-mobile" class="product__mobile-actions-form">
                 <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                 <div class="product__mobile-quantity">
@@ -295,7 +331,6 @@ require_once __DIR__ . '/../../includes/header.php';
             </form>
         </div>
 
-        <!-- Mô Tả Sản Phẩm -->
         <div class="product__description">
             <div class="product__description-title">Mô Tả</div>
             <?php if ($product && !empty($product['mo_ta'])): ?>
@@ -306,8 +341,69 @@ require_once __DIR__ . '/../../includes/header.php';
                 <p class="product__description-text">Chưa có mô tả cho sản phẩm này.</p>
             <?php endif; ?>
         </div>
+        </div>
 
-        <!-- Đánh Giá -->
+    <div class="product__sidebar">
+        <div class="product__title"><?= htmlspecialchars($product['ten_sp'] ?? 'Sản phẩm') ?></div>
+
+        <?php if ($total_reviews > 0): ?>
+            <div class="product__rating">
+                <span class="product__stars">
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <?php if ($i <= floor($avg_rating)): ?>
+                            <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star">
+                        <?php else: ?>
+                            <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star off"
+                                style="filter: grayscale(100%) opacity(30%);">
+                        <?php endif; ?>
+                    <?php endfor; ?>
+                </span>
+                <span class="product__reviews">(<?= $total_reviews ?> đánh giá)</span>
+            </div>
+        <?php endif; ?>
+
+        <div class="product__price">
+            <?php if ($product): ?>
+                <span
+                    class="product__price-old"><?= $product['gia_cu'] > $product['gia'] ? number_format($product['gia_cu']) . 'đ' : '' ?></span>
+                <span class="product__price-new" id="desktop-price"><?= number_format($product['gia']) ?>đ</span>
+                <?php if ($product['gia_cu'] > $product['gia']): ?>
+                    <span
+                        class="product__discount">-<?= round((($product['gia_cu'] - $product['gia']) / $product['gia_cu']) * 100) ?>%</span>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+
+        <form id="form-add-to-cart-desktop" class="product__actions-form">
+            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+
+            <div class="product__quantity">
+                <p class="product__label">Số lượng</p>
+                <?php if ($product['so_luong_ton'] > 0): ?>
+                    <button type="button" class="product__quantity-btn"
+                        onclick="changeQty('desktop-quantity', -1)">−</button>
+                    <input id="desktop-quantity" name="quantity" class="product__quantity-value" type="number" value="1"
+                        min="1" max="<?= $product['so_luong_ton'] ?>">
+                    <button type="button" class="product__quantity-btn"
+                        onclick="changeQty('desktop-quantity', 1)">+</button>
+                <?php else: ?>
+                    <span style="color: #e74c3c; font-weight: bold; font-size: 16px;">Hết hàng</span>
+                <?php endif; ?>
+            </div>
+
+            <div class="product__actions">
+                <?php if ($product['so_luong_ton'] > 0): ?>
+                    <button type="submit" name="action" value="buy_now" class="product__buy">MUA NGAY</button>
+                    <button type="submit" name="action" value="add_to_cart" class="product__cart">
+                        <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                    </button>
+                <?php else: ?>
+                    <button type="button" disabled class="product__buy"
+                        style="background: #ccc; cursor: not-allowed; width: 100%;">HẾT HÀNG</button>
+                <?php endif; ?>
+            </div>
+        </form>
+
         <div class="review">
             <div class="review__title">Đánh Giá</div>
 
@@ -343,7 +439,6 @@ require_once __DIR__ . '/../../includes/header.php';
                 </div>
             </div>
 
-            <!-- Danh sách đánh giá -->
             <div class="review__list">
                 <?php if (empty($reviews)): ?>
                     <p style="text-align: center; color: #888; padding: 30px 0;">Chưa có đánh giá nào cho sản phẩm này.</p>
@@ -396,74 +491,9 @@ require_once __DIR__ . '/../../includes/header.php';
                 </button>
             <?php endif; ?>
         </div>
-    </div>
-
-    <!-- SIDEBAR -->
-    <div class="product__sidebar">
-        <div class="product__title"><?= htmlspecialchars($product['ten_sp'] ?? 'Sản phẩm') ?></div>
-
-        <?php if ($total_reviews > 0): ?>
-            <div class="product__rating">
-                <span class="product__stars">
-                    <?php for ($i = 1; $i <= 5; $i++): ?>
-                        <?php if ($i <= floor($avg_rating)): ?>
-                            <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star">
-                        <?php else: ?>
-                            <img src="<?= BASE_URL ?>assets/icon/icon-sao.svg" alt="star off"
-                                style="filter: grayscale(100%) opacity(30%);">
-                        <?php endif; ?>
-                    <?php endfor; ?>
-                </span>
-                <span class="product__reviews">(<?= $total_reviews ?> đánh giá)</span>
-            </div>
-        <?php endif; ?>
-
-        <div class="product__price">
-            <?php if ($product): ?>
-                <span
-                    class="product__price-old"><?= $product['gia_cu'] > $product['gia'] ? number_format($product['gia_cu']) . 'đ' : '' ?></span>
-                <span class="product__price-new" id="desktop-price"><?= number_format($product['gia']) ?>đ</span>
-                <?php if ($product['gia_cu'] > $product['gia']): ?>
-                    <span
-                        class="product__discount">-<?= round((($product['gia_cu'] - $product['gia']) / $product['gia_cu']) * 100) ?>%</span>
-                <?php endif; ?>
-            <?php endif; ?>
         </div>
-
-        <!-- Form thêm vào giỏ hàng -->
-        <form id="form-add-to-cart-desktop" class="product__actions-form">
-            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-
-            <div class="product__quantity">
-                <p class="product__label">Số lượng</p>
-                <?php if ($product['so_luong_ton'] > 0): ?>
-                    <button type="button" class="product__quantity-btn"
-                        onclick="changeQty('desktop-quantity', -1)">−</button>
-                    <input id="desktop-quantity" name="quantity" class="product__quantity-value" type="number" value="1"
-                        min="1" max="<?= $product['so_luong_ton'] ?>">
-                    <button type="button" class="product__quantity-btn"
-                        onclick="changeQty('desktop-quantity', 1)">+</button>
-                <?php else: ?>
-                    <span style="color: #e74c3c; font-weight: bold; font-size: 16px;">Hết hàng</span>
-                <?php endif; ?>
-            </div>
-
-            <div class="product__actions">
-                <?php if ($product['so_luong_ton'] > 0): ?>
-                    <button type="submit" name="action" value="buy_now" class="product__buy">MUA NGAY</button>
-                    <button type="submit" name="action" value="add_to_cart" class="product__cart">
-                        <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
-                    </button>
-                <?php else: ?>
-                    <button type="button" disabled class="product__buy"
-                        style="background: #ccc; cursor: not-allowed; width: 100%;">HẾT HÀNG</button>
-                <?php endif; ?>
-            </div>
-        </form>
-    </div>
 </div>
 
-<!-- SẢN PHẨM TƯƠNG TỰ -->
 <div class="product__similar">
     <div class="product__similar-title">Sản Phẩm Tương Tự</div>
 
@@ -504,7 +534,6 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
-<!-- LỢI ÍCH -->
 <div class="benefits">
     <div class="benefits__list">
         <div class="benefits__item">
@@ -526,7 +555,6 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
-<!-- Form Modal Đánh Giá -->
 <div class="review__modal js__rating-modal">
     <div class="review__modal-content js__rating-content">
         <div class="review__modal-title">Đánh Giá</div>
@@ -560,7 +588,6 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
-<!-- Custom Notification Modal -->
 <div id="notificationModal" class="custom-notification-modal">
     <div class="custom-notification-modal-content">
         <div class="custom-notification-modal-body">
@@ -571,7 +598,6 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
-<!-- Lightbox Modal HTML -->
 <div id="imageLightbox" class="lightbox">
     <span class="lightbox-close" id="closeLightbox">&times;</span>
     <img class="lightbox-content" id="lightboxImage">
