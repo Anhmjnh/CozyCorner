@@ -319,6 +319,33 @@ class ChatbotModel extends Model
         return "Xin lỗi, Cozy Bot đang bị quá tải, bạn vui lòng thử lại sau ít phút nhé.";
     }
 
+    public function generateAIComparison($products) {
+        if (empty($this->apiKey)) return "<p>Hệ thống AI chưa được cấu hình API Key.</p>";
+        
+        $prompt = "Bạn là chuyên gia đánh giá sản phẩm gia dụng. Hãy phân tích và so sánh các sản phẩm sau đây để giúp khách hàng đưa ra quyết định mua sắm. Trình bày bằng HTML (chỉ dùng thẻ div, p, ul, li, strong, br). KHÔNG dùng Markdown. Cấu trúc cần có: 1. Ưu điểm nổi bật của từng sản phẩm. 2. Gợi ý lựa chọn (Ai nên mua sản phẩm nào).\n\n";
+        foreach ($products as $p) {
+            $prompt .= "- Sản phẩm: " . $p['ten_sp'] . " | Giá: " . number_format($p['gia']) . "đ | Mô tả: " . $p['mo_ta'] . "\n";
+        }
+
+        $url = $this->apiUrl . '?key=' . $this->apiKey;
+        $payload = [
+            "contents" => [["role" => "user", "parts" => [["text" => $prompt]]]],
+            "generationConfig" => ["temperature" => 0.4, "maxOutputTokens" => 800]
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $response = curl_exec($ch);
+        curl_close($ch);
+        
+        $result = json_decode($response, true);
+        return $result['candidates'][0]['content']['parts'][0]['text'] ?? "<p>Xin lỗi, AI đang quá tải, không thể đưa ra đánh giá lúc này.</p>";
+    }
+
     public function saveMessage($user_id, $session_id, $role, $content)
     {
         if ($user_id) {

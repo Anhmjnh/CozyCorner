@@ -1,34 +1,15 @@
 <?php
 // views/user/DangNhap.php
 ob_start();
-require_once __DIR__ . '/../../includes/header.php';
 require_once __DIR__ . '/../../config.php';
 
 $redirect = $_GET['redirect'] ?? BASE_URL;
+
+// Thêm CSS của trang đăng nhập vào mảng page_css để load vào header chung
+$page_css = ['assets/css/DangNhap.css'];
+require_once __DIR__ . '/../../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Nhập - COZY CORNER</title>
-
-    <!-- Reset CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-
-    <!-- Font Open Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-
-    <!-- CSS chính -->
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/DangNhap.css">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-</head>
 <style>
     .login__divider {
         display: flex;
@@ -61,7 +42,6 @@ $redirect = $_GET['redirect'] ?? BASE_URL;
         border-color: #4285F4;
     }
 </style>
-<body>
 
 <!-- BREADCRUMB -->
 <ul class="breadcrumb">
@@ -75,6 +55,13 @@ $redirect = $_GET['redirect'] ?? BASE_URL;
     <form class="login__form" method="POST" action="<?= BASE_URL ?>index.php?url=auth/login">
         <input type="hidden" name="redirect" value="<?= htmlspecialchars($redirect) ?>">
         <h1 class="login__title">Đăng Nhập</h1>
+
+        <?php if (isset($_SESSION['error_message'])): ?>
+            <div class="login__error" style="color: #e74c3c; background: #fde8e8; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 16px; font-weight: 600;">
+                <?= htmlspecialchars($_SESSION['error_message']) ?>
+            </div>
+            <?php unset($_SESSION['error_message']); ?>
+        <?php endif; ?>
 
         <div class="login__group">
             <label for="email" class="login__label">Email / Tên đăng nhập</label>
@@ -140,5 +127,3 @@ document.getElementById('toggle-password').addEventListener('click', function() 
 </script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
-</body>
-</html>

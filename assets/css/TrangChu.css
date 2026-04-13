@@ -11,6 +11,26 @@
     margin-top: 100px;
 }
 
+/* 
+ * Khắc phục lỗi thông báo đẩy banner xuống quá xa: 
+ * Biến các div thông báo (alert) thành dạng Toast nổi (fixed) để không chiếm không gian hiển thị của banner
+ */
+.alert, [class*="alert-"], .message, .success-message, .flash-message {
+    position: fixed !important;
+    top: 100px !important;
+    right: 24px !important;
+    z-index: 9999 !important;
+    min-width: 250px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    animation: slideInRight 0.5s ease forwards;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
 .banner__content {
     width: 100%;
     height: 660px;

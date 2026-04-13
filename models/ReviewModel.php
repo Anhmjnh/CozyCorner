@@ -24,6 +24,26 @@ class ReviewModel {
         return $result;
     }
 
+    public function getAverageRatings(array $product_ids) {
+        if (empty($product_ids)) return [];
+        $placeholders = implode(',', array_fill(0, count($product_ids), '?'));
+        $types = str_repeat('i', count($product_ids));
+        $sql = "SELECT product_id, AVG(rating) as avg_rating, COUNT(id) as total_reviews 
+                FROM reviews 
+                WHERE product_id IN ($placeholders) 
+                GROUP BY product_id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param($types, ...$product_ids);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        $ratings = [];
+        foreach ($result as $row) {
+            $ratings[$row['product_id']] = ['avg_rating' => round($row['avg_rating'], 1), 'total_reviews' => $row['total_reviews']];
+        }
+        return $ratings;
+    }
+
     public function addReview($product_id, $user_id, $rating, $comment) {
         $stmt = $this->conn->prepare("INSERT INTO reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("iiis", $product_id, $user_id, $rating, $comment);

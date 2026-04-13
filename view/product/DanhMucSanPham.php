@@ -56,9 +56,10 @@ require_once __DIR__ . '/../../includes/header.php';
                         <input type="checkbox" id="cat_<?= $cat['id'] ?>" class="filter__checkbox cat-checkbox"
                             value="<?= htmlspecialchars($cat['ten_danh_muc']) ?>" onchange="updateFilter(this)"
                             <?= in_array($cat['ten_danh_muc'], $categories_filter) ? 'checked' : '' ?>
-                            style="margin-right: 8px; cursor: pointer;">
+                            <?= $compare_mode ? 'disabled' : '' ?>
+                            style="margin-right: 8px; cursor: <?= $compare_mode ? 'not-allowed' : 'pointer' ?>;">
                         <label for="cat_<?= $cat['id'] ?>" class="filter__label-text"
-                            style="cursor: pointer;"><?= htmlspecialchars($cat['ten_danh_muc']) ?></label>
+                            style="cursor: <?= $compare_mode ? 'not-allowed' : 'pointer' ?>; <?= $compare_mode ? 'color: #aaa;' : '' ?>"><?= htmlspecialchars($cat['ten_danh_muc']) ?></label>
                     </li>
                 <?php endforeach; ?>
             </ul>
@@ -95,9 +96,10 @@ require_once __DIR__ . '/../../includes/header.php';
                         <input type="checkbox" id="m_cat_<?= $cat['id'] ?>" class="filter__checkbox cat-checkbox"
                             value="<?= htmlspecialchars($cat['ten_danh_muc']) ?>" onchange="updateFilter(this)"
                             <?= in_array($cat['ten_danh_muc'], $categories_filter) ? 'checked' : '' ?>
-                            style="margin-right: 8px; cursor: pointer;">
+                            <?= $compare_mode ? 'disabled' : '' ?>
+                            style="margin-right: 8px; cursor: <?= $compare_mode ? 'not-allowed' : 'pointer' ?>;">
                         <label for="m_cat_<?= $cat['id'] ?>" class="filter__label-text"
-                            style="cursor: pointer;"><?= htmlspecialchars($cat['ten_danh_muc']) ?></label>
+                            style="cursor: <?= $compare_mode ? 'not-allowed' : 'pointer' ?>; <?= $compare_mode ? 'color: #aaa;' : '' ?>"><?= htmlspecialchars($cat['ten_danh_muc']) ?></label>
                     </li>
                 <?php endforeach; ?>
             </ul>
@@ -106,6 +108,12 @@ require_once __DIR__ . '/../../includes/header.php';
 
     <!-- Sản phẩm  -->
     <div class="product">
+        <?php if ($compare_mode): ?>
+            <div style="background-color: #e8f5e9; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #355F2E; display: flex; align-items: center; justify-content: space-between;">
+                <div><strong style="color: #355F2E;"><i class="fas fa-balance-scale"></i> Chế độ thêm vào So sánh:</strong> Hãy nhấp vào ảnh sản phẩm bất kỳ để thêm vào danh sách.</div>
+                <a href="<?= BASE_URL ?>index.php?url=product/compare" style="color: #355F2E; font-weight: bold; text-decoration: underline; font-size: 14px;">Hủy bỏ</a>
+            </div>
+        <?php endif; ?>
         <div class="product__header">
             <span class="product__header-count">Hiển thị <?= $total ?> sản phẩm</span>
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -127,7 +135,11 @@ require_once __DIR__ . '/../../includes/header.php';
             <?php if (!empty($products)): ?>
                 <?php foreach ($products as $row): ?>
                     <div class="product__list-item">
-                        <a href="<?= BASE_URL ?>view/product/ChiTietSanPham.php?id=<?= $row['id'] ?>">
+                        <?php if ($compare_mode): ?>
+                            <a href="javascript:void(0)" onclick="addToCompare(<?= $row['id'] ?>, <?= $row['category_id'] ?>)">
+                        <?php else: ?>
+                            <a href="<?= BASE_URL ?>index.php?url=product/detail&id=<?= $row['id'] ?>">
+                        <?php endif; ?>
                             <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($row['anh']) ?>"
                                 alt="<?= htmlspecialchars($row['ten_sp']) ?>" class="product__list-image">
                         </a>
@@ -168,6 +180,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 $params = $_GET;
                 for ($i = 1; $i <= $totalPages; $i++):
                     $params['page'] = $i;
+                    if ($compare_mode) $params['compare_mode'] = 1;
                     $url = '?' . http_build_query($params);
                     ?>
                     <a href="<?= htmlspecialchars($url) ?>"
@@ -201,6 +214,8 @@ require_once __DIR__ . '/../../includes/header.php';
 </div>
 
 <script>
+    const compareMode = <?= $compare_mode ? 'true' : 'false' ?>;
+
     function updateFilter(element) {
         const urlParams = new URLSearchParams(window.location.search);
 
@@ -223,7 +238,25 @@ require_once __DIR__ . '/../../includes/header.php';
             });
         }
 
+        if (compareMode) {
+            urlParams.set('compare_mode', '1');
+        }
+
         window.location.href = window.location.pathname + '?' + urlParams.toString();
+    }
+
+    function addToCompare(pid, catid) {
+        fetch('<?= BASE_URL ?>index.php?url=product/api_compare_add', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({product_id: pid, category_id: catid})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success' || data.status === 'conflict') {
+                window.location.href = '<?= BASE_URL ?>index.php?url=product/compare';
+            }
+        });
     }
 </script>
 

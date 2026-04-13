@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../includes/header.php';
 ?>
 
 <ul class="breadcrumb">
-   
+
     <li><a href="<?= BASE_URL ?>">Trang chủ</a></li>
     <li><img src="<?= BASE_URL ?>assets/icon/icon-next.svg" alt="icon next"></li>
     <li><a href="<?= BASE_URL ?>index.php?url=product">Sản phẩm</a></li>
@@ -21,45 +21,53 @@ require_once __DIR__ . '/../../includes/header.php';
 </ul>
 
 <style>
-    
-  
     .review {
-        width: 100% !important; 
+        width: 100% !important;
     }
 
-    
+
     @media (min-width: 481px) {
-        .review { 
-            margin-top: 300px !important; 
+        .review {
+            margin-top: 300px !important;
         }
     }
-    
+
     /* Giữ khoảng cách gọn gàng trên điện thoại */
     @media (max-width: 480px) {
-        .review { margin-top: 48px !important; }
+        .review {
+            margin-top: 48px !important;
+        }
     }
 
     /* 2. Giữ MÔ TẢ ở cột trái cân đối (Máy tính 75%, Điện thoại 100%) */
     @media (min-width: 481px) {
-        .product__description { width: 75% !important; margin-top: 48px; }
+        .product__description {
+            width: 75% !important;
+            margin-top: 48px;
+        }
     }
+
     @media (max-width: 480px) {
-        .product__description { width: 100% !important; margin-top: 48px; }
+        .product__description {
+            width: 100% !important;
+            margin-top: 48px;
+        }
     }
-    
+
     /* 3. Sửa lỗi hiển thị Đánh giá trên điện thoại khi đưa vào Sidebar */
     @media (max-width: 480px) {
         .product__sidebar {
-            display: block !important; 
+            display: block !important;
             width: 100% !important;
             margin: 0 !important;
         }
+
         /* Ẩn các phần trùng lặp của Desktop trên Mobile để không bị lặp tên, giá 2 lần */
-        .product__sidebar > .product__title,
-        .product__sidebar > .product__rating,
-        .product__sidebar > .product__price,
-        .product__sidebar > .product__actions-form {
-            display: none !important; 
+        .product__sidebar>.product__title,
+        .product__sidebar>.product__rating,
+        .product__sidebar>.product__price,
+        .product__sidebar>.product__actions-form {
+            display: none !important;
         }
     }
 
@@ -228,7 +236,7 @@ require_once __DIR__ . '/../../includes/header.php';
         }
     }
 
-   
+
     .product__quantity-value,
     .product__mobile-quantity-value {
         padding: 0 5px !important;
@@ -247,12 +255,16 @@ require_once __DIR__ . '/../../includes/header.php';
         box-sizing: border-box;
         vertical-align: middle;
     }
-   
+
+    .product__cart:hover i, .product__mobile-cart:hover i {
+        color: #fff !important;
+        transition: color 0.3s ease;
+    }
 </style>
 <?php if (!$product): ?>
     <p style="text-align: center; padding: 50px; font-size: 1.2rem;">Sản phẩm không tồn tại hoặc đã bị ẩn.</p>
     <?php require_once __DIR__ . '/../../includes/footer.php';
-    exit;  ?>
+    exit; ?>
 <?php endif; ?>
 
 <div class="product">
@@ -267,7 +279,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 <?php endif; ?>
                 <div class="zoom-icon"><i class="fas fa-search-plus"></i></div>
             </div>
-            
+
         </div>
 
         <div class="product__mobile-sidebar">
@@ -323,6 +335,9 @@ require_once __DIR__ . '/../../includes/header.php';
                         <button type="submit" name="action" value="add_to_cart" class="product__mobile-cart">
                             <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
                         </button>
+                        <button type="button" class="product__mobile-cart js__add-to-compare" data-id="<?= $product['id'] ?>" data-cat="<?= $product['category_id'] ?>" title="So sánh sản phẩm này">
+                            <i class="fas fa-balance-scale" style="font-size: 24px; color: #355F2E;"></i>
+                        </button>
                     <?php else: ?>
                         <button type="button" disabled class="product__mobile-buy"
                             style="background: #ccc; cursor: not-allowed; width: 100%;">HẾT HÀNG</button>
@@ -341,7 +356,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 <p class="product__description-text">Chưa có mô tả cho sản phẩm này.</p>
             <?php endif; ?>
         </div>
-        </div>
+    </div>
 
     <div class="product__sidebar">
         <div class="product__title"><?= htmlspecialchars($product['ten_sp'] ?? 'Sản phẩm') ?></div>
@@ -396,6 +411,9 @@ require_once __DIR__ . '/../../includes/header.php';
                     <button type="submit" name="action" value="buy_now" class="product__buy">MUA NGAY</button>
                     <button type="submit" name="action" value="add_to_cart" class="product__cart">
                         <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                    </button>
+                    <button type="button" class="product__cart js__add-to-compare" data-id="<?= $product['id'] ?>" data-cat="<?= $product['category_id'] ?>" title="So sánh sản phẩm này">
+                        <i class="fas fa-balance-scale" style="font-size: 24px; color: #355F2E;"></i>
                     </button>
                 <?php else: ?>
                     <button type="button" disabled class="product__buy"
@@ -491,7 +509,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 </button>
             <?php endif; ?>
         </div>
-        </div>
+    </div>
 </div>
 
 <div class="product__similar">
@@ -530,6 +548,47 @@ require_once __DIR__ . '/../../includes/header.php';
             <?php endforeach; ?>
         <?php else: ?>
             <p>Chưa có sản phẩm tương tự.</p>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- GỢI Ý SẢN PHẨM MUA KÈM -->
+<div class="product__similar" style="margin-top: 48px;">
+    <div class="product__similar-title">Gợi Ý Sản Phẩm Mua Kèm</div>
+
+    <div class="product__cards">
+        <?php if (!empty($bought_together_products)): ?>
+            <?php foreach ($bought_together_products as $item): ?>
+                <div class="product__card">
+                    <a href="<?= BASE_URL ?>index.php?url=product/detail&id=<?= $item['id'] ?>">
+                        <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['anh']) ?>"
+                            alt="<?= htmlspecialchars($item['ten_sp']) ?>" class="product__card-image">
+                    </a>
+                    <div class="product__card-text">
+                        <p class="product__card-name">
+                            <?= htmlspecialchars($item['ten_sp']) ?> <br>
+                            <span class="product__card-price">
+                                <?= number_format($item['gia']) ?>đ
+                                <?php if ($item['gia_cu'] > 0): ?>
+                                    <span class="product__card-old-price"><?= number_format($item['gia_cu']) ?>đ</span>
+                                <?php endif; ?>
+                            </span>
+                        </p>
+                        <?php if ($item['so_luong_ton'] > 0): ?>
+                            <a href="javascript:void(0)" class="product__card-cart js__add-to-cart"
+                                data-product-id="<?= $item['id'] ?>">
+                                <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                            </a>
+                        <?php else: ?>
+                            <span class="product__card-cart"
+                                style="border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; text-decoration: none;"
+                                title="Hết hàng">Hết hàng</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p>Chưa có gợi ý mua kèm.</p>
         <?php endif; ?>
     </div>
 </div>
@@ -597,6 +656,7 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
     </div>
 </div>
+
 
 <div id="imageLightbox" class="lightbox">
     <span class="lightbox-close" id="closeLightbox">&times;</span>
@@ -809,16 +869,44 @@ require_once __DIR__ . '/../../includes/header.php';
             }
         };
 
-        // --- LOGIC XEM THÊM ĐÁNH GIÁ ---
+        // --- LOGIC XEM THÊM / THU GỌN ĐÁNH GIÁ ---
         const loadMoreBtn = document.querySelector('.js__load-more-reviews');
         if (loadMoreBtn) {
+            // Khởi tạo trạng thái mặc định là chưa mở rộng hết
+            loadMoreBtn.dataset.expanded = 'false';
+
             loadMoreBtn.addEventListener('click', function () {
-                const hiddenReviews = document.querySelectorAll('.js__review-item[style*="display: none"]');
-                for (let i = 0; i < 3 && i < hiddenReviews.length; i++) {
-                    hiddenReviews[i].style.display = 'block';
-                }
-                if (document.querySelectorAll('.js__review-item[style*="display: none"]').length === 0) {
-                    loadMoreBtn.style.display = 'none';
+                const isExpanded = this.dataset.expanded === 'true';
+
+                if (isExpanded) {
+                    // 1. NẾU ĐANG MỞ RỘNG -> THU GỌN LẠI
+                    const allReviews = document.querySelectorAll('.js__review-item');
+                    // Ẩn tất cả các đánh giá từ vị trí thứ 4 trở đi (index 3)
+                    for (let i = 3; i < allReviews.length; i++) {
+                        allReviews[i].style.display = 'none';
+                    }
+                    // Trả lại text XEM THÊM và mũi tên hướng xuống
+                    this.innerHTML = 'XEM THÊM<img src="<?= BASE_URL ?>assets/icon/icon-down-green.svg" alt="icon down">';
+                    this.dataset.expanded = 'false';
+
+                    // Cuộn màn hình nhẹ lên phần đầu của đánh giá để user không bị lạc
+                    document.querySelector('.review').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                } else {
+                    // 2. NẾU ĐANG THU GỌN -> HIỂN THỊ THÊM 3 ĐÁNH GIÁ
+                    const hiddenReviews = document.querySelectorAll('.js__review-item[style*="display: none"]');
+                    for (let i = 0; i < 3 && i < hiddenReviews.length; i++) {
+                        hiddenReviews[i].style.display = 'block';
+                    }
+
+                    // Kiểm tra xem sau khi mở, còn cái nào bị ẩn không?
+                    const remainingHidden = document.querySelectorAll('.js__review-item[style*="display: none"]').length;
+
+                    if (remainingHidden === 0) {
+                        // Nếu đã hiển thị hết -> Đổi nút thành THU GỌN và xoay ngược mũi tên lên 180 độ
+                        this.innerHTML = 'THU GỌN<img src="<?= BASE_URL ?>assets/icon/icon-down-green.svg" alt="icon up" style="transform: rotate(180deg); transition: 0.3s;">';
+                        this.dataset.expanded = 'true';
+                    }
                 }
             });
         }
@@ -838,8 +926,8 @@ require_once __DIR__ . '/../../includes/header.php';
 
             fetch('<?= BASE_URL ?>index.php?url=cart/add', {
                 method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
+                body: formData,
+                credentials: 'same-origin'
             })
                 .then(res => res.json())
                 .then(res => {
@@ -847,12 +935,12 @@ require_once __DIR__ . '/../../includes/header.php';
                         if (action === 'buy_now') {
                             window.location.href = '<?= BASE_URL ?>index.php?url=order/checkout';
                         } else {
-                        // Gọi hàm vẽ lại HTML giỏ hàng từ cart.js và mở sidebar
-                        if (typeof window.renderCart === 'function') {
-                            window.renderCart(res);
-                        }
-                        const modalCart = document.querySelector('.js__cart-modal');
-                        if (modalCart) modalCart.classList.add('open');
+                            // Gọi hàm vẽ lại HTML giỏ hàng từ cart.js và mở sidebar
+                            if (typeof window.renderCart === 'function') {
+                                window.renderCart(res);
+                            }
+                            const modalCart = document.querySelector('.js__cart-modal');
+                            if (modalCart) modalCart.classList.add('open');
                         }
                     } else {
                         alert(res.msg || 'Thêm vào giỏ hàng thất bại!');
@@ -871,6 +959,34 @@ require_once __DIR__ . '/../../includes/header.php';
         // Kích hoạt chức năng nhập tay
         setupManualInput('desktop-quantity');
         setupManualInput('mobile-quantity');
+
+        // --- LOGIC THÊM VÀO SO SÁNH ---
+        document.querySelectorAll('.js__add-to-compare').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const pid = this.dataset.id;
+                const catid = this.dataset.cat;
+                fetch('<?= BASE_URL ?>index.php?url=product/api_compare_add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({product_id: pid, category_id: catid})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'conflict') {
+                        // Xử lý xung đột danh mục cực thông minh
+                        if (confirm(data.msg)) {
+                            fetch('<?= BASE_URL ?>index.php?url=product/api_compare_add', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({product_id: pid, category_id: catid, force_clear: true})
+                            }).then(() => window.location.href = '<?= BASE_URL ?>index.php?url=product/compare');
+                        }
+                    } else if (data.status === 'success') {
+                        window.location.href = '<?= BASE_URL ?>index.php?url=product/compare';
+                    }
+                });
+            });
+        });
     });
 </script>
 

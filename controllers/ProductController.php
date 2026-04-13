@@ -3,14 +3,16 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../core/Controller.php';
 
-class ProductController extends Controller {
-    
+class ProductController extends Controller
+{
+
     // Trang Danh sách / Lọc sản phẩm
-    public function index() {
+    public function index()
+    {
         $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-        $limit = 12; 
+        $limit = 12;
         $offset = ($page - 1) * $limit;
-        
+
         $search = trim($_GET['search'] ?? '');
         $sort = trim($_GET['sort'] ?? 'newest');
 
@@ -38,8 +40,9 @@ class ProductController extends Controller {
         $products = $result['products'];
         $total = $result['total'];
         $totalPages = ceil($total / $limit);
-        
+
         $page_css = ['assets/css/DanhMucSanPham.css'];
+        $compare_mode = isset($_GET['compare_mode']) ? 1 : 0;
         $this->view('product/DanhMucSanPham', [
             'products' => $products,
             'total' => $total,
@@ -48,14 +51,17 @@ class ProductController extends Controller {
             'categories_filter' => $categories_filter,
             'sort' => $sort,
             'page' => $page,
-            'page_css' => $page_css
+            'page_css' => $page_css,
+            'compare_mode' => $compare_mode
         ]);
     }
-        // --- API Dành cho Tab Sản Phẩm Trang Chủ ---
-    public function api_get_products_by_tab() {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+    // --- API Dành cho Tab Sản Phẩm Trang Chủ ---
+    public function api_get_products_by_tab()
+    {
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
         header('Content-Type: application/json');
-        
+
         $tab = $_GET['tab'] ?? 'new';
         $productModel = $this->model('ProductModel');
         $products = [];
@@ -77,19 +83,19 @@ class ProductController extends Controller {
 
         $html = '';
         $base_url = BASE_URL;
-        
+
         foreach ($products as $row) {
             $id = $row['id'];
             $anh = htmlspecialchars($row['anh']);
             $ten_sp = htmlspecialchars($row['ten_sp']);
             $gia = number_format($row['gia']) . 'đ';
-            
+
             $gia_cu_html = '';
             if ($row['gia_cu'] > 0) {
                 $gia_cu = number_format($row['gia_cu']) . 'đ';
                 $gia_cu_html = "<span class=\"product__list-old-price\">{$gia_cu}</span>";
             }
-            
+
             $btn_html = '';
             if ($row['so_luong_ton'] > 0) {
                 $btn_html = "<a href=\"javascript:void(0)\" class=\"product__list-cart-button js__add-to-cart\" data-product-id=\"{$id}\">
@@ -123,9 +129,10 @@ class ProductController extends Controller {
 
 
     // Trang Chi tiết 1 sản phẩm
-    public function detail() {
+    public function detail()
+    {
         $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-        
+
         if ($id <= 0) {
             header('Location: ' . BASE_URL . 'index.php?url=product');
             exit;
@@ -133,7 +140,13 @@ class ProductController extends Controller {
 
         $productModel = $this->model('ProductModel');
         $product = $productModel->findById($id);
-        $similar_products = $productModel->getSimilarProducts($id, 4);
+
+        $similar_products = [];
+        $bought_together_products = [];
+        if ($product) {
+            $similar_products = $productModel->getSimilarProducts($id, $product['category_id'], 4);
+            $bought_together_products = $productModel->getBoughtTogetherProducts($id, 4);
+        }
 
         // Lấy Đánh giá
         $reviewModel = $this->model('ReviewModel');
@@ -146,12 +159,14 @@ class ProductController extends Controller {
             $total_rating_sum = 0;
             foreach ($reviews as $review) {
                 $total_rating_sum += $review['rating'];
-                if (isset($rating_counts[$review['rating']])) $rating_counts[$review['rating']]++;
+                if (isset($rating_counts[$review['rating']]))
+                    $rating_counts[$review['rating']]++;
             }
             $avg_rating = round($total_rating_sum / $total_reviews, 1);
         }
-                // Ghi nhận lịch sử xem sản phẩm
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        // Ghi nhận lịch sử xem sản phẩm
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
         $user_id = $_SESSION['user_id'] ?? null;
         $session_id = session_id();
         $productModel->logProductView($id, $user_id, $session_id);
@@ -169,6 +184,7 @@ class ProductController extends Controller {
         $this->view('product/ChiTietSanPham', [
             'product' => $product,
             'similar_products' => $similar_products,
+            'bought_together_products' => $bought_together_products,
             'reviews' => $reviews,
             'total_reviews' => $total_reviews,
             'avg_rating' => $avg_rating,
@@ -177,5 +193,89 @@ class ProductController extends Controller {
             'user_info' => $user_info,
             'page_css' => $page_css
         ]);
+    }
+
+    // --- CHỨC NĂNG SO SÁNH SẢN PHẨM ---
+    public function api_compare_add() {
+        header('Content-Type: application/json');
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        
+        $data = json_decode(file_get_contents('php://input'), true);
+        $product_id = intval($data['product_id'] ?? 0);
+        $category_id = intval($data['category_id'] ?? 0);
+        $force_clear = $data['force_clear'] ?? false;
+
+        if ($force_clear) {
+            unset($_SESSION['compare_list']);
+        }
+        if (!isset($_SESSION['compare_list'])) {
+            $_SESSION['compare_list'] = ['category_id' => $category_id, 'items' => []];
+        }
+        // Giải quyết góc khuất: Xung đột danh mục
+        if ($_SESSION['compare_list']['category_id'] !== $category_id && !empty($_SESSION['compare_list']['items'])) {
+            echo json_encode(['status' => 'conflict', 'msg' => 'Bạn chỉ có thể so sánh các sản phẩm cùng danh mục. Bạn có muốn tạo danh sách so sánh mới không?']);
+            exit;
+        }
+        if (!in_array($product_id, $_SESSION['compare_list']['items'])) {
+            $_SESSION['compare_list']['category_id'] = $category_id;
+            $_SESSION['compare_list']['items'][] = $product_id;
+            // Thuật toán FIFO: Nếu vượt quá 3, đẩy cái cũ nhất ra
+            if (count($_SESSION['compare_list']['items']) > 3) {
+                array_shift($_SESSION['compare_list']['items']);
+            }
+        }
+        echo json_encode(['status' => 'success']);
+        exit;
+    }
+
+    public function api_compare_remove() {
+        header('Content-Type: application/json');
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $data = json_decode(file_get_contents('php://input'), true);
+        $product_id = intval($data['product_id'] ?? 0);
+        if (isset($_SESSION['compare_list']['items'])) {
+            $_SESSION['compare_list']['items'] = array_values(array_filter($_SESSION['compare_list']['items'], function($id) use ($product_id) {
+                return $id != $product_id;
+            }));
+            if (empty($_SESSION['compare_list']['items'])) unset($_SESSION['compare_list']);
+        }
+        echo json_encode(['status' => 'success']);
+        exit;
+    }
+
+    public function compare() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $compare_items = $_SESSION['compare_list']['items'] ?? [];
+        if (empty($compare_items)) {
+            header("Location: " . BASE_URL . "index.php?url=product");
+            exit;
+        }
+        $productModel = $this->model('ProductModel');
+        $products = $productModel->getProductsByIds($compare_items);
+        
+
+        // Cấp độ 2: Heuristic Scoring - Chấm điểm gắn nhãn
+        $reviewModel = $this->model('ReviewModel');
+        $ratings = $reviewModel->getAverageRatings(array_column($products, 'id'));
+        $cheapest_id = null; $bestseller_id = null; $highest_rated_id = null;
+        $min_price = PHP_INT_MAX; $max_sales = -1; $max_rating = -1;
+
+        foreach ($products as &$p) {
+            $id = $p['id'];
+            $p['rating'] = $ratings[$id]['avg_rating'] ?? 0;
+            $p['total_reviews'] = $ratings[$id]['total_reviews'] ?? 0;
+            if ($p['gia'] < $min_price) { $min_price = $p['gia']; $cheapest_id = $id; }
+            if ($p['luot_ban'] > $max_sales) { $max_sales = $p['luot_ban']; $bestseller_id = $id; }
+            if ($p['rating'] > $max_rating) { $max_rating = $p['rating']; $highest_rated_id = $id; }
+            $p['badges'] = [];
+        }
+
+        foreach ($products as &$p) {
+            if ($p['id'] == $cheapest_id && count($products) > 1) $p['badges'][] = ['text' => '💰 Rẻ nhất', 'bg' => '#e74c3c'];
+            if ($p['id'] == $bestseller_id && $max_sales > 0 && count($products) > 1) $p['badges'][] = ['text' => '🔥 Bán chạy', 'bg' => '#f39c12'];
+            if ($p['id'] == $highest_rated_id && $max_rating > 0 && count($products) > 1) $p['badges'][] = ['text' => '⭐ Tốt nhất', 'bg' => '#28a745'];
+        }
+
+        $this->view('product/SoSanh', ['products' => $products]);
     }
 }
