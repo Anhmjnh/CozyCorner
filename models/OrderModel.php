@@ -5,7 +5,7 @@ require_once __DIR__ . '/../core/Model.php';
 class OrderModel extends Model
 {
 
-    public function createOrder($user_id, $tong_tien_cuoi, $ten_nguoi_nhan, $sdt_nguoi_nhan, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen, $giam_gia_thanh_vien = 0, $ma_voucher = null, $giam_gia_voucher = 0)
+    public function createOrder($user_id, $cart_id, $tong_tien_cuoi, $ten_nguoi_nhan, $sdt_nguoi_nhan, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen, $giam_gia_thanh_vien = 0, $ma_voucher = null, $giam_gia_voucher = 0)
     {
 
         $this->conn->begin_transaction();
@@ -19,27 +19,28 @@ class OrderModel extends Model
 
             // 2. Lưu Chi tiết Đơn hàng & Trừ Tồn Kho
             $stmt_detail = $this->conn->prepare("INSERT INTO order_details (order_id, product_id, ten_sp_snapshot, anh_sp_snapshot, so_luong, gia) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt_stock = $this->conn->prepare("UPDATE products SET so_luong_ton = GREATEST(0, so_luong_ton - ?), luot_ban = luot_ban + ? WHERE id = ?");
 
             foreach ($cartItems as $item) {
                 $ten_sp = $item['name'] ?? 'Sản phẩm';
                 $anh_sp = $item['anh'] ?? null;
-                // Lưu sản phẩm
+                // Lưu chi tiết đơn hàng. Trigger `trg_tru_ton_kho_khi_dat_hang` trong database sẽ tự động trừ tồn kho.
                 $stmt_detail->bind_param("iissid", $order_id, $item['product_id'], $ten_sp, $anh_sp, $item['quantity'], $item['price']);
                 $stmt_detail->execute();
-
-                // Cập nhật kho và lượt bán
-                $stmt_stock->bind_param("iii", $item['quantity'], $item['quantity'], $item['product_id']);
-                $stmt_stock->execute();
             }
             $stmt_detail->close();
-            $stmt_stock->close();
 
-            // 3. Xóa các sản phẩm đã mua khỏi Giỏ hàng
-            $stmt_clear = $this->conn->prepare("DELETE ci FROM cart_items ci JOIN carts c ON ci.cart_id = c.id WHERE c.user_id = ?");
-            $stmt_clear->bind_param("i", $user_id);
-            $stmt_clear->execute();
-            $stmt_clear->close();
+            // 3. Xóa các sản phẩm đã mua khỏi Giỏ hàng và xóa luôn giỏ hàng
+            if ($cart_id) {
+                $stmt_clear_items = $this->conn->prepare("DELETE FROM cart_items WHERE cart_id = ?");
+                $stmt_clear_items->bind_param("i", $cart_id);
+                $stmt_clear_items->execute();
+                $stmt_clear_items->close();
+
+                $stmt_clear_cart = $this->conn->prepare("DELETE FROM carts WHERE id = ?");
+                $stmt_clear_cart->bind_param("i", $cart_id);
+                $stmt_clear_cart->execute();
+                $stmt_clear_cart->close();
+            }
 
             $this->conn->commit();
             return $order_id; // Trả về ID đơn hàng để tạo QR
@@ -83,11 +84,26 @@ class OrderModel extends Model
     }
 
 
-    public function getOrderById($order_id, $user_id)
+    public function getOrderByIdAndUser($order_id, $user_id)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
-        $stmt->bind_param("ii", $order_id, $user_id);
+        if ($user_id) {
+            $stmt = $this->conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
+            $stmt->bind_param("ii", $order_id, $user_id);
+        } else {
+            // Dành cho khách, chỉ kiểm tra id đơn hàng và user_id phải là NULL
+            $stmt = $this->conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id IS NULL");
+            $stmt->bind_param("i", $order_id);
+        }
         $stmt->execute();
+        $order = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $order;
+    }
+
+    public function getOrderById($order_id)
+    {
+        $stmt = $this->conn->prepare("SELECT * FROM orders WHERE id = ?");
+        $stmt->bind_param("i", $order_id);
         $order = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         return $order;

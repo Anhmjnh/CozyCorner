@@ -17,11 +17,6 @@ class ProductModel extends Model {
         $result = $stmt->get_result();
         $product = $result->fetch_assoc();
         $stmt->close();
-        
-        if ($product && $product['trang_thai'] === 'HetHang') {
-            $product['so_luong_ton'] = 0;
-        }
-        
         return $product;
     }
 
@@ -31,13 +26,6 @@ class ProductModel extends Model {
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        
-        foreach ($result as &$product) {
-            if ($product['trang_thai'] === 'HetHang') {
-                $product['so_luong_ton'] = 0;
-            }
-        }
-        
         return $result;
     }
 
@@ -116,13 +104,6 @@ class ProductModel extends Model {
             $result = array_merge($result, $fallback_result);
         }
         
-        // Đồng bộ logic số lượng tồn kho với các module khác
-        foreach ($result as &$product) {
-            if ($product['trang_thai'] === 'HetHang') {
-                $product['so_luong_ton'] = 0;
-            }
-        }
-        
         return $result;
     }
 
@@ -132,13 +113,6 @@ class ProductModel extends Model {
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        
-        foreach ($result as &$product) {
-            if ($product['trang_thai'] === 'HetHang') {
-                $product['so_luong_ton'] = 0;
-            }
-        }
-        
         return $result;
     }
 
@@ -148,13 +122,6 @@ class ProductModel extends Model {
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        
-        foreach ($result as &$product) {
-            if ($product['trang_thai'] === 'HetHang') {
-                $product['so_luong_ton'] = 0;
-            }
-        }
-        
         return $result;
     }
 
@@ -248,13 +215,6 @@ class ProductModel extends Model {
         $result = $stmt->get_result();
         $products = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        
-        foreach ($products as &$product) {
-            if ($product['trang_thai'] === 'HetHang') {
-                $product['so_luong_ton'] = 0;
-            }
-        }
-        
         return ['products' => $products, 'total' => $total];
     }
 
@@ -273,12 +233,6 @@ class ProductModel extends Model {
         $stmt->execute();
         $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        
-        foreach ($result as &$product) {
-            if ($product['trang_thai'] === 'HetHang') {
-                $product['so_luong_ton'] = 0;
-            }
-        }
         return $result;
     }
 

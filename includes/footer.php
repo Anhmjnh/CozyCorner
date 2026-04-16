@@ -79,15 +79,11 @@ require_once __DIR__ . '/../config.php';  // Include config để lấy BASE_URL
         <div class="footer__column footer__policy">
             <div class="footer__title font600">Chính Sách</div>
             <ul class="footer__list font400">
-                <li class="footer__item">
-                    <a href="#" class="footer__link">Chính Sách Hoàn Tiền</a>
-                </li>
+               
                 <li class="footer__item">
                     <a href="#" class="footer__link">Chính Sách Giao Hàng</a>
                 </li>
-                <li class="footer__item">
-                    <a href="#" class="footer__link">Chính Sách Bảo Hành Thu Đổi</a>
-                </li>
+             
                 <li class="footer__item">
                     <a href="#" class="footer__link">Chính Sách Khách Hàng Thân Thiết</a>
                 </li>

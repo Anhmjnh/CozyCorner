@@ -268,6 +268,7 @@ require_once __DIR__ . '/../../includes/header.php';
     exit; ?>
 <?php endif; ?>
 
+<?php $isPreOrder = ($product['so_luong_ton'] <= 0 || $product['trang_thai'] == 'HetHang'); ?>
 <div class="product">
     <div class="product__left">
         <div class="product__gallery">
@@ -314,37 +315,42 @@ require_once __DIR__ . '/../../includes/header.php';
                 <?php endif; ?>
             </div>
 
+            <div class="product__status" style="margin-top: 8px; margin-bottom: 12px;">
+                <?php if ($isPreOrder): ?>
+                    <span style="color: #F57F17; font-weight: bold;">
+                        <i class="fas fa-clock"></i> Hàng Đặt Trước
+                    </span>
+                <?php else: ?>
+                    <span style="color: #355F2E; font-weight: bold;">
+                        <i class="fas fa-check-circle"></i> Còn hàng (<?= $product['so_luong_ton'] ?> sản phẩm)
+                    </span>
+                <?php endif; ?>
+            </div>
+
             <form id="form-add-to-cart-mobile" class="product__mobile-actions-form">
                 <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                 <div class="product__mobile-quantity">
                     <p class="product__mobile-label">Số lượng</p>
-                    <?php if ($product['so_luong_ton'] > 0): ?>
-                        <button type="button" class="product__mobile-quantity-btn"
-                            onclick="changeQty('mobile-quantity', -1)">−</button>
-                        <input id="mobile-quantity" name="quantity" class="product__mobile-quantity-value" type="number"
-                            value="1" min="1" max="<?= $product['so_luong_ton'] ?>">
-                        <button type="button" class="product__mobile-quantity-btn"
-                            onclick="changeQty('mobile-quantity', 1)">+</button>
-                    <?php else: ?>
-                        <span style="color: #e74c3c; font-weight: bold; font-size: 16px;">Hết hàng</span>
-                    <?php endif; ?>
+                    <button type="button" class="product__mobile-quantity-btn"
+                        onclick="changeQty('mobile-quantity', -1)">−</button>
+                    <input id="mobile-quantity" name="quantity" class="product__mobile-quantity-value" type="number"
+                        value="1" min="1" <?= !$isPreOrder ? 'max="' . $product['so_luong_ton'] . '"' : '' ?>>
+                    <button type="button" class="product__mobile-quantity-btn"
+                        onclick="changeQty('mobile-quantity', 1)">+</button>
                 </div>
 
                 <div class="product__mobile-actions">
-                    <?php if ($product['so_luong_ton'] > 0): ?>
-                        <button type="submit" name="action" value="buy_now" class="product__mobile-buy">MUA NGAY</button>
-                        <button type="submit" name="action" value="add_to_cart" class="product__mobile-cart">
-                            <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
-                        </button>
-                        <button type="button" class="product__mobile-cart js__add-to-compare"
-                            data-id="<?= $product['id'] ?>" data-cat="<?= $product['category_id'] ?>"
-                            title="So sánh sản phẩm này">
-                            <i class="fas fa-balance-scale" style="font-size: 24px; color: #355F2E;"></i>
-                        </button>
-                    <?php else: ?>
-                        <button type="button" disabled class="product__mobile-buy"
-                            style="background: #ccc; cursor: not-allowed; width: 100%;">HẾT HÀNG</button>
-                    <?php endif; ?>
+                    <button type="submit" name="action" value="buy_now" class="product__mobile-buy">
+                        <?= $isPreOrder ? 'ĐẶT TRƯỚC NGAY' : 'MUA NGAY' ?>
+                    </button>
+                    <button type="submit" name="action" value="add_to_cart" class="product__mobile-cart">
+                        <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                    </button>
+                    <button type="button" class="product__mobile-cart js__add-to-compare"
+                        data-id="<?= $product['id'] ?>" data-cat="<?= $product['category_id'] ?>"
+                        title="So sánh sản phẩm này">
+                        <i class="fas fa-balance-scale" style="font-size: 24px; color: #355F2E;"></i>
+                    </button>
                 </div>
             </form>
         </div>
@@ -392,37 +398,42 @@ require_once __DIR__ . '/../../includes/header.php';
             <?php endif; ?>
         </div>
 
+        <div class="product__status" style="margin-top: 16px; margin-bottom: 16px;">
+            <?php if ($isPreOrder): ?>
+                <span style="color: #F57F17; font-weight: bold;">
+                    <i class="fas fa-clock"></i> Hàng Đặt Trước 
+                </span>
+            <?php else: ?>
+                <span style="color: #355F2E; font-weight: bold;">
+                    <i class="fas fa-check-circle"></i> Còn hàng (<?= $product['so_luong_ton'] ?> sản phẩm)
+                </span>
+            <?php endif; ?>
+        </div>
+
         <form id="form-add-to-cart-desktop" class="product__actions-form">
             <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
 
             <div class="product__quantity">
                 <p class="product__label">Số lượng</p>
-                <?php if ($product['so_luong_ton'] > 0): ?>
-                    <button type="button" class="product__quantity-btn"
-                        onclick="changeQty('desktop-quantity', -1)">−</button>
-                    <input id="desktop-quantity" name="quantity" class="product__quantity-value" type="number" value="1"
-                        min="1" max="<?= $product['so_luong_ton'] ?>">
-                    <button type="button" class="product__quantity-btn"
-                        onclick="changeQty('desktop-quantity', 1)">+</button>
-                <?php else: ?>
-                    <span style="color: #e74c3c; font-weight: bold; font-size: 16px;">Hết hàng</span>
-                <?php endif; ?>
+                <button type="button" class="product__quantity-btn"
+                    onclick="changeQty('desktop-quantity', -1)">−</button>
+                <input id="desktop-quantity" name="quantity" class="product__quantity-value" type="number" value="1"
+                    min="1" <?= !$isPreOrder ? 'max="' . $product['so_luong_ton'] . '"' : '' ?>>
+                <button type="button" class="product__quantity-btn"
+                    onclick="changeQty('desktop-quantity', 1)">+</button>
             </div>
 
             <div class="product__actions">
-                <?php if ($product['so_luong_ton'] > 0): ?>
-                    <button type="submit" name="action" value="buy_now" class="product__buy">MUA NGAY</button>
-                    <button type="submit" name="action" value="add_to_cart" class="product__cart">
-                        <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
-                    </button>
-                    <button type="button" class="product__cart js__add-to-compare" data-id="<?= $product['id'] ?>"
-                        data-cat="<?= $product['category_id'] ?>" title="So sánh sản phẩm này">
-                        <i class="fas fa-balance-scale" style="font-size: 24px; color: #355F2E;"></i>
-                    </button>
-                <?php else: ?>
-                    <button type="button" disabled class="product__buy"
-                        style="background: #ccc; cursor: not-allowed; width: 100%;">HẾT HÀNG</button>
-                <?php endif; ?>
+                <button type="submit" name="action" value="buy_now" class="product__buy">
+                    <?= $isPreOrder ? 'ĐẶT TRƯỚC NGAY' : 'MUA NGAY' ?>
+                </button>
+                <button type="submit" name="action" value="add_to_cart" class="product__cart">
+                    <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                </button>
+                <button type="button" class="product__cart js__add-to-compare" data-id="<?= $product['id'] ?>"
+                    data-cat="<?= $product['category_id'] ?>" title="So sánh sản phẩm này">
+                    <i class="fas fa-balance-scale" style="font-size: 24px; color: #355F2E;"></i>
+                </button>
             </div>
         </form>
 
@@ -521,8 +532,13 @@ require_once __DIR__ . '/../../includes/header.php';
 
     <div class="product__cards">
         <?php if (!empty($similar_products)): ?>
-            <?php foreach ($similar_products as $item): ?>
-                <div class="product__card">
+            <?php foreach ($similar_products as $item): 
+                $isPreOrder = ($item['so_luong_ton'] <= 0 || $item['trang_thai'] == 'HetHang');
+            ?>
+                <div class="product__card" style="position: relative;">
+                    <?php if ($isPreOrder): ?>
+                        <div style="position: absolute; top: 10px; left: 10px; background: #F57F17; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 2;">HÀNG ĐẶT TRƯỚC</div>
+                    <?php endif; ?>
                     <a href="<?= BASE_URL ?>index.php?url=product/detail&id=<?= $item['id'] ?>">
                         <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['anh']) ?>"
                             alt="<?= htmlspecialchars($item['ten_sp']) ?>" class="product__card-image">
@@ -537,16 +553,10 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <?php endif; ?>
                             </span>
                         </p>
-                        <?php if ($item['so_luong_ton'] > 0): ?>
-                            <a href="javascript:void(0)" class="product__card-cart js__add-to-cart"
-                                data-product-id="<?= $item['id'] ?>">
-                                <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
-                            </a>
-                        <?php else: ?>
-                            <span class="product__card-cart"
-                                style="border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; text-decoration: none;"
-                                title="Hết hàng">Hết hàng</span>
-                        <?php endif; ?>
+                        <a href="javascript:void(0)" class="product__card-cart js__add-to-cart"
+                            data-product-id="<?= $item['id'] ?>" title="<?= $isPreOrder ? 'Đặt hàng trước' : 'Thêm vào giỏ' ?>">
+                            <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                        </a>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -562,8 +572,13 @@ require_once __DIR__ . '/../../includes/header.php';
 
     <div class="product__cards">
         <?php if (!empty($bought_together_products)): ?>
-            <?php foreach ($bought_together_products as $item): ?>
-                <div class="product__card">
+            <?php foreach ($bought_together_products as $item): 
+                $isPreOrder = ($item['so_luong_ton'] <= 0 || $item['trang_thai'] == 'HetHang');
+            ?>
+                <div class="product__card" style="position: relative;">
+                    <?php if ($isPreOrder): ?>
+                        <div style="position: absolute; top: 10px; left: 10px; background: #F57F17; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 2;">HÀNG ĐẶT TRƯỚC</div>
+                    <?php endif; ?>
                     <a href="<?= BASE_URL ?>index.php?url=product/detail&id=<?= $item['id'] ?>">
                         <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['anh']) ?>"
                             alt="<?= htmlspecialchars($item['ten_sp']) ?>" class="product__card-image">
@@ -578,16 +593,10 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <?php endif; ?>
                             </span>
                         </p>
-                        <?php if ($item['so_luong_ton'] > 0): ?>
-                            <a href="javascript:void(0)" class="product__card-cart js__add-to-cart"
-                                data-product-id="<?= $item['id'] ?>">
-                                <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
-                            </a>
-                        <?php else: ?>
-                            <span class="product__card-cart"
-                                style="border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; text-decoration: none;"
-                                title="Hết hàng">Hết hàng</span>
-                        <?php endif; ?>
+                        <a href="javascript:void(0)" class="product__card-cart js__add-to-cart"
+                            data-product-id="<?= $item['id'] ?>" title="<?= $isPreOrder ? 'Đặt hàng trước' : 'Thêm vào giỏ' ?>">
+                            <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                        </a>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -736,8 +745,10 @@ require_once __DIR__ . '/../../includes/header.php';
             let currentValue = parseInt(qtyInput.value);
             let newValue = currentValue + amount;
             const max = parseInt(qtyInput.max);
-            if (newValue < 1) newValue = 1;
-            if (newValue > max) newValue = max;
+            if (newValue < 1)
+                newValue = 1;
+            if (!isNaN(max) && newValue > max)
+                newValue = max;
             qtyInput.value = newValue;
             updatePrice(inputId);
 

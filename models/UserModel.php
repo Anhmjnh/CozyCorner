@@ -128,6 +128,38 @@ class UserModel extends Model {
         return false;
     }
 
+    public function checkCredentialExists($field, $value) {
+        // Whitelist fields to prevent SQL injection
+        if (!in_array($field, ['email', 'so_dien_thoai'])) {
+            return false;
+        }
+
+        // Check in users table
+        $sql_user = "SELECT id FROM users WHERE `$field` = ?";
+        $stmt_user = $this->conn->prepare($sql_user);
+        $stmt_user->bind_param("s", $value);
+        $stmt_user->execute();
+        if ($stmt_user->get_result()->num_rows > 0) {
+            $stmt_user->close();
+            return true;
+        }
+        $stmt_user->close();
+
+        // Check in admins table
+        $sql_admin = "SELECT id FROM admins WHERE `$field` = ?";
+        $stmt_admin = $this->conn->prepare($sql_admin);
+        $stmt_admin->bind_param("s", $value);
+        $stmt_admin->execute();
+        if ($stmt_admin->get_result()->num_rows > 0) {
+            $stmt_admin->close();
+            return true;
+        }
+        $stmt_admin->close();
+
+        return false;
+    }
+
+
     // --- CÁC HÀM CHO ĐĂNG NHẬP GOOGLE ---
 
     /**

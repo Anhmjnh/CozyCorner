@@ -86,9 +86,14 @@ require_once __DIR__ . '/../includes/header.php';
 
     <div class="product__container" id="product_scroll">
         <?php if (!empty($bestsellers)): ?>
-            <?php foreach ($bestsellers as $row): ?>
-                <div class="product__card">
-                    <a href="<?= BASE_URL ?>view/product/ChiTietSanPham.php?id=<?= $row['id'] ?>" draggable="false">
+            <?php foreach ($bestsellers as $row): 
+                $isPreOrder = ($row['so_luong_ton'] <= 0 || $row['trang_thai'] == 'HetHang');
+            ?>
+                <div class="product__card" style="position: relative;">
+                    <?php if ($isPreOrder): ?>
+                        <div style="position: absolute; top: 10px; left: 10px; background: #F57F17; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 2;">ĐẶT TRƯỚC</div>
+                    <?php endif; ?>
+                    <a href="<?= BASE_URL ?>index.php?url=product/detail&id=<?= $row['id'] ?>" draggable="false">
                         <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($row['anh']) ?>"
                             alt="<?= htmlspecialchars($row['ten_sp']) ?>" class="product__card-image" draggable="false">
                     </a>
@@ -102,16 +107,10 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php endif; ?>
                             </span>
                         </p>
-                        <?php if ($row['so_luong_ton'] > 0): ?>
-                            <a href="javascript:void(0)" class="product__card-cart js__add-to-cart"
-                                data-product-id="<?= $row['id'] ?>">
-                                <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
-                            </a>
-                        <?php else: ?>
-                            <span class="product__card-cart"
-                                style="border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; text-decoration: none;"
-                                title="Hết hàng">Hết hàng</span>
-                        <?php endif; ?>
+                        <a href="javascript:void(0)" class="product__card-cart js__add-to-cart"
+                            data-product-id="<?= $row['id'] ?>" title="<?= $isPreOrder ? 'Đặt hàng trước' : 'Thêm vào giỏ' ?>">
+                            <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                        </a>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -148,9 +147,14 @@ require_once __DIR__ . '/../includes/header.php';
 
     <div class="product__list-items" id="home-product-grid">
         <?php if (!empty($new_products)): ?>
-            <?php foreach ($new_products as $row): ?>
-                <div class="product__list-item">
-                    <a href="<?= BASE_URL ?>view/product/ChiTietSanPham.php?id=<?= $row['id'] ?>">
+            <?php foreach ($new_products as $row): 
+                $isPreOrder = ($row['so_luong_ton'] <= 0 || $row['trang_thai'] == 'HetHang');
+            ?>
+                <div class="product__list-item" style="position: relative;">
+                    <?php if ($isPreOrder): ?>
+                        <div style="position: absolute; top: 10px; left: 10px; background: #F57F17; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 2;">ĐẶT TRƯỚC</div>
+                    <?php endif; ?>
+                    <a href="<?= BASE_URL ?>index.php?url=product/detail&id=<?= $row['id'] ?>">
                         <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($row['anh']) ?>"
                             alt="<?= htmlspecialchars($row['ten_sp']) ?>" class="product__list-image">
                     </a>
@@ -164,16 +168,10 @@ require_once __DIR__ . '/../includes/header.php';
                                 <?php endif; ?>
                             </span>
                         </p>
-                        <?php if ($row['so_luong_ton'] > 0): ?>
-                            <a href="javascript:void(0)" class="product__list-cart-button js__add-to-cart"
-                                data-product-id="<?= $row['id'] ?>">
-                                <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
-                            </a>
-                        <?php else: ?>
-                            <span class="product__list-cart-button"
-                                style="border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; padding: 12px; text-decoration: none;"
-                                title="Hết hàng">Hết hàng</span>
-                        <?php endif; ?>
+                        <a href="javascript:void(0)" class="product__list-cart-button js__add-to-cart"
+                            data-product-id="<?= $row['id'] ?>" title="<?= $isPreOrder ? 'Đặt hàng trước' : 'Thêm vào giỏ' ?>">
+                            <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
+                        </a>
                     </div>
                 </div>
             <?php endforeach; ?>

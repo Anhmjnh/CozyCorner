@@ -590,20 +590,24 @@ require_once __DIR__ . '/../../includes/header.php';
                 class="checkout__form">
                 <div class="checkout__group">
                     <label for="ho_ten" class="checkout__label">Họ và tên *</label>
-                    <input type="text" id="ho_ten" name="ho_ten" class="checkout__input"
-                        value="<?= htmlspecialchars($defaultName) ?>" required>
+                    <input type="text" id="ho_ten" name="ho_ten" class="checkout__input" value="<?= htmlspecialchars($data['user']['ho_ten'] ?? '') ?>" required>
                 </div>
 
-                <div class="checkout__group">
-                    <label for="email" class="checkout__label">Email *</label>
-                    <input type="email" id="email" name="email" class="checkout__input"
-                        value="<?= htmlspecialchars($user['email'] ?? '') ?>" required readonly>
-                </div>
+                <?php if ($data['is_guest']): ?>
+                    <div class="checkout__group">
+                        <label for="email" class="checkout__label">Email  </label>
+                        <input type="email" id="email" name="email" class="checkout__input" value="" required placeholder="Nhập email của bạn...">
+                    </div>
+                <?php else: ?>
+                    <div class="checkout__group">
+                        <label for="email" class="checkout__label">Email *</label>
+                        <input type="email" id="email" name="email" class="checkout__input" value="<?= htmlspecialchars($data['user']['email'] ?? '') ?>" required readonly>
+                    </div>
+                <?php endif; ?>
 
                 <div class="checkout__group">
                     <label for="so_dien_thoai" class="checkout__label">Số điện thoại *</label>
-                    <input type="tel" id="so_dien_thoai" name="so_dien_thoai" class="checkout__input"
-                        value="<?= htmlspecialchars($defaultPhone) ?>" required>
+                    <input type="tel" id="so_dien_thoai" name="so_dien_thoai" class="checkout__input" value="<?= htmlspecialchars($data['user']['so_dien_thoai'] ?? '') ?>" required>
                 </div>
 
                 <div class="checkout__group">
@@ -664,8 +668,8 @@ require_once __DIR__ . '/../../includes/header.php';
 
                 <!-- Danh sách sản phẩm mua -->
                 <ul class="checkout__product-list">
-                    <?php if (!empty($cartItems)): ?>
-                        <?php foreach ($cartItems as $item): ?>
+                    <?php if (!empty($data['cartItems'])): ?>
+                        <?php foreach ($data['cartItems'] as $item): ?>
                             <li class="checkout__product-item">
                                 <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['image']) ?>"
                                     alt="<?= htmlspecialchars($item['name']) ?>" class="checkout__product-img">
@@ -683,28 +687,30 @@ require_once __DIR__ . '/../../includes/header.php';
                     <?php endif; ?>
                 </ul>
 
-                <div class="voucher-section">
-                    <h4 class="voucher-title">Mã giảm giá / Freeship</h4>
-                    <div class="voucher-input-group">
-                        <input type="text" id="ma_voucher_input" placeholder="Nhập mã..." autocomplete="off">
-                        <button type="button" id="btn-show-vouchers" class="btn-select-voucher"><i
-                                class="fas fa-ticket-alt"></i> Chọn</button>
-                        <button type="button" id="btn-apply-voucher" class="btn-apply-voucher">Áp dụng</button>
+                <?php if (!$data['is_guest']): ?>
+                    <div class="voucher-section">
+                        <h4 class="voucher-title">Mã giảm giá / Freeship</h4>
+                        <div class="voucher-input-group">
+                            <input type="text" id="ma_voucher_input" placeholder="Nhập mã..." autocomplete="off">
+                            <button type="button" id="btn-show-vouchers" class="btn-select-voucher"><i
+                                    class="fas fa-ticket-alt"></i> Chọn</button>
+                            <button type="button" id="btn-apply-voucher" class="btn-apply-voucher">Áp dụng</button>
+                        </div>
+                        <div id="voucher-message" class="voucher-message"></div>
                     </div>
-                    <div id="voucher-message" class="voucher-message"></div>
-                </div>
+                <?php endif; ?>
 
                 <div class="checkout__totals">
                     <div class="checkout__total-line">
                         <span>Tạm tính:</span>
-                        <span id="summary-total-price" data-price="<?= $totalPrice ?>"
-                            style="font-weight: 600;"><?= number_format($totalPrice) ?>đ</span>
+                        <span id="summary-total-price" data-price="<?= $data['totalPrice'] ?>"
+                            style="font-weight: 600;"><?= number_format($data['totalPrice']) ?>đ</span>
                     </div>
 
-                    <?php if (isset($giamGiaThanhVien) && $giamGiaThanhVien > 0): ?>
+                    <?php if (!$data['is_guest'] && isset($data['giamGiaThanhVien']) && $data['giamGiaThanhVien'] > 0): ?>
                         <div class="checkout__total-line highlight-green">
-                            <span>Hạng <?= htmlspecialchars($user['hang'] ?? 'Đồng') ?> (-<?= $phanTramGiam ?>%):</span>
-                            <span>-<?= number_format($giamGiaThanhVien) ?>đ</span>
+                            <span>Hạng <?= htmlspecialchars($data['user']['hang'] ?? 'Đồng') ?> (-<?= $data['phanTramGiam'] ?>%):</span>
+                            <span>-<?= number_format($data['giamGiaThanhVien']) ?>đ</span>
                         </div>
                     <?php endif; ?>
 
@@ -712,14 +718,16 @@ require_once __DIR__ . '/../../includes/header.php';
                         <span>Phí vận chuyển:</span>
                         <span id="summary-shipping-fee" data-fee="0" style="font-weight: 600;">0đ</span>
                     </div>
-                    <div class="checkout__total-line highlight-green" id="voucher-discount-line" style="display: none;">
-                        <span>Mã giảm giá:</span>
-                        <span id="summary-voucher-discount">-0đ</span>
-                    </div>
+                    <?php if (!$data['is_guest']): ?>
+                        <div class="checkout__total-line highlight-green" id="voucher-discount-line" style="display: none;">
+                            <span>Mã giảm giá:</span>
+                            <span id="summary-voucher-discount">-0đ</span>
+                        </div>
+                    <?php endif; ?>
                     <div class="checkout__total-line checkout__total-line--final">
                         <span>Tổng thanh toán:</span>
                         <span id="summary-final-total" class="checkout__final-price">
-                            <?= number_format($totalPrice - ($giamGiaThanhVien ?? 0)) ?>đ
+                            <?= number_format($data['totalPrice'] - ($data['giamGiaThanhVien'] ?? 0)) ?>đ
                         </span>
                     </div>
                 </div>
@@ -757,8 +765,8 @@ require_once __DIR__ . '/../../includes/header.php';
             <span class="close-voucher-modal" id="close-voucher-modal">&times;</span>
         </div>
         <div class="voucher-list">
-            <?php if (!empty($activeVouchers)): ?>
-                <?php foreach ($activeVouchers as $v): ?>
+            <?php if (!$data['is_guest'] && !empty($data['activeVouchers'])): ?>
+                <?php foreach ($data['activeVouchers'] as $v): ?>
                     <div class="voucher-item">
                         <div class="voucher-icon">
                             <?= $v['loai_voucher'] == 'FreeShip' ? '<i class="fas fa-shipping-fast"></i>' : '<i class="fas fa-ticket-alt"></i>' ?>
@@ -908,7 +916,7 @@ require_once __DIR__ . '/../../includes/header.php';
 
         window.calculateFinalTotal = function () {
             let tongTienHang = parseInt(summaryTotalPrice.dataset.price) || 0;
-            let giamGiaThanhVien = <?= $giamGiaThanhVien ?? 0 ?>;
+            let giamGiaThanhVien = <?= $data['giamGiaThanhVien'] ?? 0 ?>;
             let phiShip = parseInt(summaryShippingFee.dataset.fee) || 0;
 
             let giamVoucherDonHang = 0;

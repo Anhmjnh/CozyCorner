@@ -103,4 +103,5 @@ document.getElementById('toggle-confirm-password').addEventListener('click', fun
     togglePassword('confirm_mat_khau', 'toggle-confirm-password');
 });
 </script>
+<script src="<?= BASE_URL ?>assets/js/register.js"></script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

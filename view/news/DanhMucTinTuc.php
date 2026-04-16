@@ -120,16 +120,13 @@ $current_category = isset($_GET['category']) ? $_GET['category'] : 'Tất cả';
     <div class="benefits__list">
         <div class="benefits__item">
             <img src="<?= BASE_URL ?>assets/icon/icon-box.svg" alt="Giao hàng miễn phí" class="benefits__icon">
-            <p class="benefits__text">Miễn Phí Giao Hàng Với Đơn Hàng Từ 900K</p>
+            <p class="benefits__text">Giao Hàng Toàn Quốc</p>
         </div>
         <div class="benefits__item">
             <img src="<?= BASE_URL ?>assets/icon/icon-Truck.svg" alt="Giao hàng tận nơi" class="benefits__icon">
             <p class="benefits__text">Hỗ Trợ Giao Hàng Tận Nơi</p>
         </div>
-        <div class="benefits__item">
-            <img src="<?= BASE_URL ?>assets/icon/icon-medal.svg" alt="Bảo hành chính hãng" class="benefits__icon">
-            <p class="benefits__text">Cam Kết Bảo Hành Chính Hãng</p>
-        </div>
+       
         <div class="benefits__item">
             <img src="<?= BASE_URL ?>assets/icon/icon-voucher.svg" alt="Ưu đãi voucher" class="benefits__icon">
             <p class="benefits__text">Ưu Đãi Voucher Lên Đến 500K</p>

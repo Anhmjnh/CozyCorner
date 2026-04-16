@@ -29,6 +29,9 @@ $user_title = $is_logged_in ? 'Tài khoản của tôi' : 'Đăng nhập / Đăn
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css?v=<?= time() ?>">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/TrangChu.css?v=<?= time() ?>">
 
+    <!-- Khai báo biến BASE_URL cho Javascript -->
+    <script>const BASE_URL = "<?= BASE_URL ?>";</script>
+
     <!-- CSS riêng cho từng trang -->
     <?php if (!empty($page_css) && is_array($page_css)): ?>
         <?php foreach ($page_css as $css): ?>

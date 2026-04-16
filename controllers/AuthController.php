@@ -138,6 +138,8 @@ class AuthController
 
     public function register()
     {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
         $formData = [
             'ho_ten' => trim($_POST['ho_ten'] ?? ''),
             'email' => trim($_POST['email'] ?? ''),
@@ -150,52 +152,172 @@ class AuthController
         $errors = [];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $userModel = new UserModel();
+
             // Validate
-            if ($formData['ho_ten'] === '') {
-                $errors[] = 'Vui lòng nhập họ tên.';
-            }
-
-            if ($formData['email'] === '' || !filter_var($formData['email'], FILTER_VALIDATE_EMAIL)) {
+            if (empty($formData['ho_ten'])) $errors[] = 'Vui lòng nhập họ tên.';
+            if (empty($formData['email']) || !filter_var($formData['email'], FILTER_VALIDATE_EMAIL)) {
                 $errors[] = 'Email không hợp lệ.';
+            } else if ($userModel->checkCredentialExists('email', $formData['email'])) {
+                $errors[] = 'Email đã được sử dụng.';
             }
 
-            if ($password === '' || strlen($password) < 6) {
-                $errors[] = 'Mật khẩu phải có ít nhất 6 ký tự.';
+            if (!empty($formData['so_dien_thoai']) && $userModel->checkCredentialExists('so_dien_thoai', $formData['so_dien_thoai'])) {
+                $errors[] = 'Số điện thoại đã được sử dụng.';
             }
 
-            if ($password !== $confirmPassword) {
-                $errors[] = 'Mật khẩu xác nhận không khớp.';
-            }
+            if (empty($password) || strlen($password) < 6) $errors[] = 'Mật khẩu phải có ít nhất 6 ký tự.';
+            if ($password !== $confirmPassword) $errors[] = 'Mật khẩu xác nhận không khớp.';
 
             if (empty($errors)) {
-                $userModel = new UserModel();
+                // All good, generate OTP and send email
+                $otp = rand(100000, 999999);
                 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-                $result = $userModel->registerUser(
-                    $formData['ho_ten'],
-                    $formData['email'],
-                    $hashedPassword,
-                    $formData['so_dien_thoai'],
-                    $formData['gioi_tinh'],
-                    $formData['ngay_sinh']
-                );
+                // Store data in session to be used after OTP verification
+                $_SESSION['registration_data'] = [
+                    'ho_ten' => $formData['ho_ten'],
+                    'email' => $formData['email'],
+                    'hashed_password' => $hashedPassword,
+                    'so_dien_thoai' => $formData['so_dien_thoai'],
+                    'gioi_tinh' => $formData['gioi_tinh'],
+                    'ngay_sinh' => $formData['ngay_sinh'],
+                    'otp' => $otp,
+                    'otp_expire' => time() + 300 // 5 minutes
+                ];
 
-                if ($result === 'email_exists') {
-                    $errors[] = 'Email đã được sử dụng.';
-                } elseif ($result) {
-                    $_SESSION['success_message'] = 'Đăng ký thành công! Vui lòng đăng nhập.';
-                    header('Location: ' . BASE_URL . 'index.php?url=auth/showLogin');
+                // Send email
+                $mail = new PHPMailer(true);
+                try {
+                    $mail->isSMTP();
+                    $mail->Host = SMTP_HOST;
+                    $mail->SMTPAuth = true;
+                    $mail->Username = SMTP_USERNAME;
+                    $mail->Password = SMTP_PASSWORD;
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                    $mail->Port = SMTP_PORT;
+                    $mail->CharSet = 'UTF-8';
+
+                    $mail->setFrom(SMTP_USERNAME, 'COZY CORNER');
+                    $mail->addAddress($formData['email']);
+
+                    $mail->isHTML(true);
+                    $mail->Subject = "Mã xác thực đăng ký tài khoản - COZY CORNER";
+                    $mail->Body = "Xin chào,<br><br>Mã xác thực để hoàn tất đăng ký tài khoản của bạn là: <strong style='font-size: 20px; color: #355F2E;'>$otp</strong><br>Mã có hiệu lực trong 5 phút.<br>Nếu không phải bạn, vui lòng bỏ qua email này.";
+
+                    $mail->send();
+
+                    // Redirect to OTP verification page
+                    header("Location: " . BASE_URL . "index.php?url=auth/showVerifyOtp");
                     exit;
-                } else {
-                    $errors[] = 'Có lỗi xảy ra, vui lòng thử lại.';
+
+                } catch (Exception $e) {
+                    $errors[] = 'Không thể gửi email xác thực. Vui lòng thử lại. Lỗi: ' . $mail->ErrorInfo;
                 }
             }
         }
 
-        // Nếu là GET request hoặc có lỗi validation, hiển thị lại form với dữ liệu đã nhập
+        // If GET request or validation errors, show form again with entered data
         require_once __DIR__ . '/../view/user/DangKy.php';
     }
 
+    public function showVerifyOtp() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (!isset($_SESSION['registration_data'])) {
+            header('Location: ' . BASE_URL . 'index.php?url=auth/showRegister');
+            exit;
+        }
+        
+        require_once __DIR__ . '/../view/user/XacThucOTP.php';
+    }
+
+    public function verifyRegistration() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (!isset($_SESSION['registration_data'])) {
+            header('Location: ' . BASE_URL . 'index.php?url=auth/showRegister');
+            exit;
+        }
+
+        $error = '';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $otp_input = trim($_POST['otp'] ?? '');
+            $reg_data = $_SESSION['registration_data'];
+
+            if (empty($otp_input)) {
+                $error = 'Vui lòng nhập mã OTP!';
+            } elseif ($otp_input != $reg_data['otp']) {
+                $error = 'Mã OTP không đúng!';
+            } elseif (time() > $reg_data['otp_expire']) {
+                $error = 'Mã OTP đã hết hạn! Vui lòng thử lại.';
+                unset($_SESSION['registration_data']);
+            } else {
+                $userModel = new UserModel();
+                $result = $userModel->registerUser($reg_data['ho_ten'], $reg_data['email'], $reg_data['hashed_password'], $reg_data['so_dien_thoai'], $reg_data['gioi_tinh'], $reg_data['ngay_sinh']);
+
+                if ($result) {
+                    unset($_SESSION['registration_data']);
+                    $_SESSION['success_message'] = 'Xác thực thành công! Vui lòng đăng nhập.';
+                    header('Location: ' . BASE_URL . 'index.php?url=auth/showLogin');
+                    exit;
+                } else {
+                    $error = 'Có lỗi xảy ra khi tạo tài khoản, vui lòng thử lại.';
+                }
+            }
+        }
+
+        require_once __DIR__ . '/../view/user/XacThucOTP.php';
+    }
+
+
+
+
+
+    public function resendOtp() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (!isset($_SESSION['registration_data'])) {
+            header('Location: ' . BASE_URL . 'index.php?url=auth/showRegister');
+            exit;
+        }
+
+        $reg_data = $_SESSION['registration_data'];
+        $otp = rand(100000, 999999);
+        
+        $_SESSION['registration_data']['otp'] = $otp;
+        $_SESSION['registration_data']['otp_expire'] = time() + 300; // Reset expiry
+
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host = SMTP_HOST;
+            $mail->SMTPAuth = true;
+            $mail->Username = SMTP_USERNAME;
+            $mail->Password = SMTP_PASSWORD;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port = SMTP_PORT;
+            $mail->CharSet = 'UTF-8';
+
+            $mail->setFrom(SMTP_USERNAME, 'COZY CORNER');
+            $mail->addAddress($reg_data['email']);
+
+            $mail->isHTML(true);
+            $mail->Subject = "Mã xác thực đăng ký tài khoản - COZY CORNER";
+            $mail->Body = "Xin chào,<br><br>Mã xác thực mới của bạn là: <strong style='font-size: 20px; color: #355F2E;'>$otp</strong><br>Mã có hiệu lực trong 5 phút.";
+
+            $mail->send();
+
+            $_SESSION['success_message'] = 'Đã gửi lại mã OTP mới vào email của bạn.';
+            header("Location: " . BASE_URL . "index.php?url=auth/showVerifyOtp");
+            exit;
+
+        } catch (Exception $e) {
+            $_SESSION['error_message'] = 'Không thể gửi lại mã OTP. Lỗi: ' . $mail->ErrorInfo;
+            header("Location: " . BASE_URL . "index.php?url=auth/showVerifyOtp");
+            exit;
+        }
+    }
 
 
 
@@ -489,6 +611,24 @@ class AuthController
 
         // Nếu không có 'code' hoặc 'error', chuyển hướng về trang đăng nhập
         header("Location: " . BASE_URL . "index.php?url=auth/showLogin");
+        exit;
+    }
+
+    public function api_check_existence() {
+        header('Content-Type: application/json');
+        $field = $_GET['field'] ?? '';
+        $value = trim($_GET['value'] ?? '');
+
+        if (!in_array($field, ['email', 'so_dien_thoai']) || empty($value)) {
+            echo json_encode(['exists' => false, 'error' => 'Invalid field']);
+            exit;
+        }
+
+        $userModel = new UserModel();
+        // Giả sử bạn đã có hàm checkCredentialExists trong UserModel
+        $exists = $userModel->checkCredentialExists($field, $value);
+
+        echo json_encode(['exists' => $exists]);
         exit;
     }
 }

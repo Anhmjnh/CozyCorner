@@ -1202,8 +1202,18 @@ class AdminController extends Controller
             $id = $_POST['id'] ?? 0;
             $trang_thai = $_POST['trang_thai'] ?? '';
 
-            if ($id > 0 && in_array($trang_thai, ['ChoXacNhan', 'DangGiao', 'HoanThanh', 'Huy'])) {
-                
+            if ($id > 0 && in_array($trang_thai, ['ChoXacNhan', 'DangGiao', 'HoanThanh', 'Huy'])) {               
+                // Nếu admin hủy đơn, cần gửi yêu cầu hủy sang GHN
+                if ($trang_thai === 'Huy') {
+                    $order = $this->model->getOrderById($id);
+                    if ($order && !empty($order['ghn_order_code'])) {
+                        // Không cần require vì đã có trong autoloader hoặc base controller
+                        $ghnModel = $this->model('GHNModel');
+                        $ghnModel->cancelOrder($order['ghn_order_code']);
+                        // Lưu ý: Kể cả khi GHN từ chối hủy (do đã giao), ta vẫn cập nhật trạng thái ở local
+                    }
+                }
+
 
                 if ($this->model->updateOrderStatus($id, $trang_thai)) {
                     $user_id = $this->model->getUserIdByOrderId($id);

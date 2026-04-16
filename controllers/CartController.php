@@ -71,15 +71,6 @@ class CartController extends Controller
             $quantity = intval($_POST['quantity'] ?? 1);
 
             if ($product_id > 0 && $quantity > 0) {
-                // KIỂM TRA TỒN KHO (LỚP BẢO VỆ SERVER)
-                $productModel = $this->model('ProductModel');
-                $product_stock = $productModel->findById($product_id);
-
-                if (!$product_stock || $product_stock['so_luong_ton'] <= 0) {
-                    echo json_encode(['status' => 'error', 'msg' => 'Sản phẩm đã hết hàng!']);
-                    exit;
-                }
-
                 $cart_id = $this->getCurrentCartId();
                 $this->cartModel->addToCart($cart_id, $product_id, $quantity);
 

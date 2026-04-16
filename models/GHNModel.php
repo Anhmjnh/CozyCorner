@@ -11,7 +11,7 @@ class GHNModel
     {
         $url = $this->api_url . $endpoint;
         $headers = [
-            'token: ' . GHN_API_TOKEN, 
+            'token: ' . GHN_API_TOKEN,
             'Content-Type: application/json'
         ];
 
@@ -31,12 +31,12 @@ class GHNModel
             }
         }
 
-       
+
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
         $response = curl_exec($ch);
-        $error = curl_error($ch); 
+        $error = curl_error($ch);
         curl_close($ch);
 
         if ($error) {
@@ -53,7 +53,7 @@ class GHNModel
 
     public function getDistricts($province_id)
     {
-       
+
         return $this->request('/master-data/district', ['province_id' => intval($province_id)], 'POST');
     }
 
@@ -68,7 +68,7 @@ class GHNModel
             'service_type_id' => 2,
             'from_district_id' => intval(GHN_FROM_DISTRICT_ID),
             'to_district_id' => intval($to_district_id),
-            'to_ward_code' => (string) $to_ward_code, 
+            'to_ward_code' => (string) $to_ward_code,
             'weight' => intval($weight)
         ];
         return $this->request('/v2/shipping-order/fee', $data, 'POST', true);
@@ -79,4 +79,39 @@ class GHNModel
         // Endpoint để tạo đơn hàng
         return $this->request('/v2/shipping-order/create', $orderData, 'POST', true);
     }
+
+
+    public function cancelOrder($ghn_order_code)
+    {
+        if (empty($ghn_order_code))
+            return false;
+
+        $url = 'https://dev-online-gateway.ghn.vn/shiip/public-api/v2/switch-status/cancel'; // Dùng URL production nếu cần
+        $data = [
+            'order_codes' => [$ghn_order_code]
+        ];
+        $headers = [
+            'Content-Type: application/json',
+            'ShopId: ' . GHN_SHOP_ID,
+            'Token: ' . GHN_API_TOKEN
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $result = json_decode($response, true);
+
+        // Ghi log lại kết quả hủy đơn từ GHN để debug khi cần
+        error_log("GHN Cancel Order Response for code $ghn_order_code: " . $response);
+
+        return $http_code == 200 && isset($result['code']) && $result['code'] == 200;
+    }
+
 }

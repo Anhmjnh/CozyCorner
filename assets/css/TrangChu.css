@@ -209,6 +209,7 @@
     border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
     text-align: center;
+    position: relative;
 }
 
 .product__card-image {
@@ -344,6 +345,7 @@
     border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
     overflow: hidden; 
+    position: relative;
 }
 
 /* Ảnh vẫn giữ tỷ lệ vuông khít viền */

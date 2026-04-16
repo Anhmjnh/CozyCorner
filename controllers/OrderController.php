@@ -16,44 +16,51 @@ class OrderController extends Controller
     // Trang Thanh Toán (Checkout)
     public function checkout()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
 
-        // 1. Kiểm tra trạng thái đăng nhập
-        if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
-            header("Location: " . BASE_URL . "index.php?url=auth/showLogin&redirect=" . urlencode($_SERVER['REQUEST_URI']));
-            exit;
-        }
-
-        $userId = $_SESSION['user_id'];
-        $userModel = $this->model('UserModel');
-        $user = $userModel->getUserById($userId);
+        $is_guest = !isset($_SESSION['user_id']) || empty($_SESSION['user_id']);
+        $userId = $_SESSION['user_id'] ?? null;
+        $user = null;
+        $giamGiaThanhVien = 0;
+        $phanTramGiam = 0;
 
         $cartModel = $this->model('CartModel');
         $cart_id = $cartModel->getCartId($userId, session_id());
         $cartItems = $cart_id ? $cartModel->getCartItems($cart_id) : [];
-        
+
+        // Nếu giỏ hàng trống, chuyển hướng về trang giỏ hàng, không cho vào thanh toán
+        if (empty($cartItems)) {
+            header("Location: " . BASE_URL . "index.php?url=cart");
+            exit;
+        }
+
         $totalPrice = 0;
         foreach ($cartItems as $item) {
             $totalPrice += ($item['price'] * $item['quantity']);
         }
 
-        // Tính giảm giá hạng thành viên
-        $hang = $user['hang'] ?? 'Đồng';
-        $phanTramGiam = 0;
-        if ($hang === 'Kim Cương') $phanTramGiam = 10;
-        elseif ($hang === 'Vàng') $phanTramGiam = 5;
-        elseif ($hang === 'Bạc') $phanTramGiam = 2;
-        $giamGiaThanhVien = ($totalPrice * $phanTramGiam) / 100;
+        if (!$is_guest) {
+            $userModel = $this->model('UserModel');
+            $user = $userModel->getUserById($userId);
 
-        // Lấy danh sách Voucher đang hoạt động
-        $voucherModel = $this->model('VoucherModel');
-        $activeVouchers = $voucherModel->getActiveVouchers();
+            // Tính giảm giá hạng thành viên
+            $hang = $user['hang'] ?? 'Đồng';
+            if ($hang === 'Kim Cương')
+                $phanTramGiam = 10;
+            elseif ($hang === 'Vàng')
+                $phanTramGiam = 5;
+            elseif ($hang === 'Bạc')
+                $phanTramGiam = 2;
+            $giamGiaThanhVien = ($totalPrice * $phanTramGiam) / 100;
+        }
+
+        // Khách không được thấy voucher
+        $activeVouchers = !$is_guest ? $this->model('VoucherModel')->getActiveVouchers() : [];
 
         $this->view('order/ThanhToan', [
             'user' => $user,
-            'defaultName' => $user['ho_ten'] ?? '',
-            'defaultPhone' => $user['so_dien_thoai'] ?? '',
-            'defaultAddress' => $user['dia_chi'] ?? '',
+            'is_guest' => $is_guest,
             'cartItems' => $cartItems,
             'totalPrice' => $totalPrice,
             'phanTramGiam' => $phanTramGiam,
@@ -70,66 +77,237 @@ class OrderController extends Controller
         if (session_status() === PHP_SESSION_NONE)
             session_start();
 
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . BASE_URL . 'index.php?url=auth/showLogin');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
             exit;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $user_id = $_SESSION['user_id'];
+        $is_guest = !isset($_SESSION['user_id']) || empty($_SESSION['user_id']);
+
+        if ($is_guest) {
+            $this->processGuestCheckoutStep1();
+        } else {
+            $this->processLoggedInUserCheckout();
+        }
+    }
+
+    private function processGuestCheckoutStep1()
+    {
+        try {
+            $email = trim($_POST['email'] ?? '');
             $ho_ten = trim($_POST['ho_ten'] ?? '');
             $so_dien_thoai = trim($_POST['so_dien_thoai'] ?? '');
             $dia_chi = trim($_POST['dia_chi'] ?? '');
-            $dia_chi_chi_tiet = trim($_POST['dia_chi_chi_tiet'] ?? ''); // Số nhà, tên đường
+            $dia_chi_chi_tiet = trim($_POST['dia_chi_chi_tiet'] ?? '');
+            $to_district_id = intval($_POST['to_district_id'] ?? 0);
+            $to_ward_code = trim($_POST['to_ward_code'] ?? '');
+
+            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new Exception('Vui lòng nhập địa chỉ email hợp lệ.');
+            }
+            if (empty($ho_ten) || empty($so_dien_thoai) || empty($dia_chi) || empty($to_district_id) || empty($to_ward_code)) {
+                throw new Exception('Vui lòng điền đầy đủ thông tin giao hàng.');
+            }
+
+            $cartModel = $this->model('CartModel');
+            $cart_id = $cartModel->getCartId(null, session_id());
+            $cartItems = $cart_id ? $cartModel->getCartItems($cart_id) : [];
+
+            if (empty($cartItems)) {
+                throw new Exception('Giỏ hàng của bạn đang trống!');
+            }
+
+            $otp = rand(100000, 999999);
+
+            // Lưu tất cả dữ liệu thanh toán vào session
+            $_SESSION['guest_checkout_data'] = [
+                'post_data' => $_POST,
+                'cart_items' => $cartItems,
+                'cart_id' => $cart_id,
+                'otp' => $otp,
+                'otp_expire' => time() + 300 // 5 phút
+            ];
+
+            // Gửi email OTP
+            $this->sendCheckoutOtpEmail($email, $otp);
+
+            header("Location: " . BASE_URL . "index.php?url=order/showVerifyCheckoutOtp");
+            exit;
+
+        } catch (Exception $e) {
+            $_SESSION['error_message'] = 'Lỗi: ' . $e->getMessage();
+            header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
+            exit;
+        }
+    }
+
+    public function showVerifyCheckoutOtp()
+    {
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
+
+        if (!isset($_SESSION['guest_checkout_data'])) {
+            header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
+            exit;
+        }
+
+        $email = $_SESSION['guest_checkout_data']['post_data']['email'] ?? '';
+        $this->view('order/XacThucThanhToan', [
+            'email' => $email
+        ]);
+    }
+
+    public function verifyGuestOrder()
+    {
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['guest_checkout_data'])) {
+            header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
+            exit;
+        }
+
+        $orderModel = $this->model('OrderModel');
+        $db = $orderModel->getDbConnection(); 
+        $ghn_order_code = null;
+
+        $db->begin_transaction();
+
+        try {
+            $otp_input = trim($_POST['otp'] ?? '');
+            $checkout_data = $_SESSION['guest_checkout_data'];
+
+            if (empty($otp_input) || $otp_input != $checkout_data['otp']) {
+                throw new Exception('Mã OTP không đúng!');
+            }
+            if (time() > $checkout_data['otp_expire']) {
+                unset($_SESSION['guest_checkout_data']);
+                throw new Exception('Mã OTP đã hết hạn!');
+            }
+
+            // --- Bắt đầu xử lý tạo đơn hàng cho khách ---
+            $user_id = null; // Khách
+            $cart_id = $checkout_data['cart_id'];
+            $cartItems = $checkout_data['cart_items'];
+            $_POST = $checkout_data['post_data']; // Nạp lại dữ liệu POST để tái sử dụng logic
+
+            $ho_ten = trim($_POST['ho_ten'] ?? '');
+            $so_dien_thoai = trim($_POST['so_dien_thoai'] ?? '');
+            $dia_chi = trim($_POST['dia_chi'] ?? '');
+            $dia_chi_chi_tiet = trim($_POST['dia_chi_chi_tiet'] ?? '');
             $to_district_id = intval($_POST['to_district_id'] ?? 0);
             $to_ward_code = trim($_POST['to_ward_code'] ?? '');
             $ghi_chu = trim($_POST['ghi_chu'] ?? '');
             $phuong_thuc = $_POST['phuong_thuc_thanh_toan'] ?? 'COD';
 
-            if (empty($ho_ten) || empty($so_dien_thoai) || empty($dia_chi) || empty($to_district_id) || empty($to_ward_code)) {
-                $_SESSION['error_message'] = 'Vui lòng điền đầy đủ thông tin giao hàng!';
-                header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
-                exit;
-            }
-
-            // --- BẮT ĐẦU TÍCH HỢP GHN ---
-
-            // Lấy sản phẩm từ Giỏ hàng
-            $cartModel = $this->model('CartModel');
-            $cart_id = $cartModel->getCartId($user_id, session_id());
-            $cartItems = $cart_id ? $cartModel->getCartItems($cart_id) : [];
-
             if (empty($cartItems)) {
-                $_SESSION['error_message'] = 'Giỏ hàng trống!';
-                header('Location: ' . BASE_URL . 'index.php?url=cart');
-                exit;
+                throw new Exception('Giỏ hàng của bạn đang trống!');
             }
 
-            // Tính tổng tiền hàng và tổng cân nặng
             $tong_tien = 0;
             $tong_can_nang = 0;
             $ghn_items = [];
             foreach ($cartItems as $item) {
                 $tong_tien += $item['price'] * $item['quantity'];
                 $tong_can_nang += ($item['weight'] ?? 200) * $item['quantity'];
-                $ghn_items[] = [
-                    "name" => $item['name'],
-                    "quantity" => $item['quantity'],
-                    "price" => intval($item['price']),
-                    "weight" => intval($item['weight'] ?? 200)
-                ];
+                $ghn_items[] = ["name" => $item['name'], "quantity" => $item['quantity'], "price" => intval($item['price']), "weight" => intval($item['weight'] ?? 200)];
             }
 
             $ghnModel = $this->model('GHNModel');
-            
-            // 1. Tính phí ship trước bằng API Fee của GHN
             $feeResponse = $ghnModel->calculateFee($to_district_id, $to_ward_code, $tong_can_nang);
-            $phi_van_chuyen_thuc_te = 0;
-            if (isset($feeResponse['code']) && $feeResponse['code'] == 200) {
-                $phi_van_chuyen_thuc_te = $feeResponse['data']['total'];
+            $phi_van_chuyen_thuc_te = (isset($feeResponse['code']) && $feeResponse['code'] == 200) ? $feeResponse['data']['total'] : 0;
+
+            // Khách không có giảm giá thành viên và voucher
+            $giam_gia_thanh_vien = 0;
+            $giam_gia_voucher = 0;
+            $giam_gia_freeship = 0;
+            $tien_giam_ghi_db = 0;
+            $ma_voucher = null;
+
+            $tien_hang_sau_giam = max(0, $tong_tien - $giam_gia_thanh_vien - $giam_gia_voucher);
+            $phi_ship_sau_giam = max(0, $phi_van_chuyen_thuc_te - $giam_gia_freeship);
+            $tong_tien_cuoi = $tien_hang_sau_giam + $phi_ship_sau_giam;
+            $cod_amount = ($phuong_thuc === 'COD') ? intval($tong_tien_cuoi) : 0;
+
+            $ghnOrderData = ["payment_type_id" => 2, "note" => $ghi_chu, "required_note" => "KHONGCHOXEMHANG", "to_name" => $ho_ten, "to_phone" => $so_dien_thoai, "to_address" => $dia_chi_chi_tiet, "to_ward_code" => $to_ward_code, "to_district_id" => $to_district_id, "cod_amount" => $cod_amount, "weight" => $tong_can_nang, "service_type_id" => 2, "items" => $ghn_items];
+
+            $ghnResponse = $ghnModel->createOrder($ghnOrderData);
+
+            if (!isset($ghnResponse['code']) || $ghnResponse['code'] != 200) {
+                throw new Exception($ghnResponse['message'] ?? 'Lỗi không xác định từ Giao Hàng Nhanh.');
+            }
+            $ghn_order_code = $ghnResponse['data']['order_code'];
+
+            $order_id = $orderModel->createOrder($user_id, $cart_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db);
+
+            if (!$order_id) {
+                throw new Exception("Không thể lưu đơn hàng vào cơ sở dữ liệu.");
             }
 
-            // 2. Tính giảm giá thành viên
+            $db->commit();
+
+            // Gửi email xác nhận cho khách
+            $guest_user_info = ['email' => $_POST['email'], 'ho_ten' => $ho_ten];
+            $this->sendOrderConfirmationEmail($guest_user_info, $order_id, $tong_tien_cuoi, $cartItems);
+
+            unset($_SESSION['guest_checkout_data']);
+            header('Location: ' . BASE_URL . 'index.php?url=order/success&id=' . $order_id);
+            exit;
+
+        } catch (Exception $e) {
+            $db->rollback();
+
+            if ($ghn_order_code) {
+                $ghnModel = $this->model('GHNModel');
+                $ghnModel->cancelOrder($ghn_order_code);
+            }
+
+            $_SESSION['otp_error_message'] = 'Lỗi khi xử lý đơn hàng: ' . $e->getMessage();
+            header('Location: ' . BASE_URL . 'index.php?url=order/showVerifyCheckoutOtp');
+            exit;
+        }
+    }
+
+    private function processLoggedInUserCheckout()
+    {
+        $orderModel = $this->model('OrderModel');
+        $db = $orderModel->getDbConnection();
+        $ghn_order_code = null;
+
+        $db->begin_transaction();
+
+        try {
+            $user_id = $_SESSION['user_id'];
+            $ho_ten = trim($_POST['ho_ten'] ?? '');
+            $so_dien_thoai = trim($_POST['so_dien_thoai'] ?? '');
+            $dia_chi = trim($_POST['dia_chi'] ?? '');
+            $dia_chi_chi_tiet = trim($_POST['dia_chi_chi_tiet'] ?? '');
+            $to_district_id = intval($_POST['to_district_id'] ?? 0);
+            $to_ward_code = trim($_POST['to_ward_code'] ?? '');
+            $ghi_chu = trim($_POST['ghi_chu'] ?? '');
+            $phuong_thuc = $_POST['phuong_thuc_thanh_toan'] ?? 'COD';
+
+            if (empty($ho_ten) || empty($so_dien_thoai) || empty($dia_chi) || empty($to_district_id) || empty($to_ward_code)) {
+                throw new Exception('Vui lòng điền đầy đủ thông tin giao hàng!');
+            }
+
+            $cartModel = $this->model('CartModel');
+            $cart_id = $cartModel->getCartId($user_id, session_id()); // Quan trọng: lấy cart_id
+            $cartItems = $cart_id ? $cartModel->getCartItems($cart_id) : [];
+
+            $tong_tien = 0;
+            $tong_can_nang = 0;
+            $ghn_items = [];
+            foreach ($cartItems as $item) {
+                $tong_tien += $item['price'] * $item['quantity'];
+                $tong_can_nang += ($item['weight'] ?? 200) * $item['quantity'];
+                $ghn_items[] = ["name" => $item['name'], "quantity" => $item['quantity'], "price" => intval($item['price']), "weight" => intval($item['weight'] ?? 200)];
+            }
+
+            $ghnModel = $this->model('GHNModel');
+            $feeResponse = $ghnModel->calculateFee($to_district_id, $to_ward_code, $tong_can_nang);
+            $phi_van_chuyen_thuc_te = (isset($feeResponse['code']) && $feeResponse['code'] == 200) ? $feeResponse['data']['total'] : 0;
+
             $userModel = $this->model('UserModel');
             $user = $userModel->getUserById($user_id);
             $hang = $user['hang'] ?? 'Đồng';
@@ -139,98 +317,72 @@ class OrderController extends Controller
             elseif ($hang === 'Bạc') $phanTramGiam = 2;
             $giam_gia_thanh_vien = ($tong_tien * $phanTramGiam) / 100;
 
-            // 3. Tính toán Voucher
             $ma_voucher = trim($_POST['ma_voucher'] ?? '');
             $giam_gia_voucher = 0;
             $giam_gia_freeship = 0;
-            $loai_voucher = '';
             $tien_giam_ghi_db = 0;
-
             if (!empty($ma_voucher)) {
                 $voucherModel = $this->model('VoucherModel');
                 $checkVoucher = $voucherModel->checkVoucher($ma_voucher);
                 if ($checkVoucher['status'] && $tong_tien >= $checkVoucher['data']['don_toi_thieu']) {
                     $vData = $checkVoucher['data'];
-                    $loai_voucher = $vData['loai_voucher'];
-                    
-                    if ($loai_voucher == 'TienMat') {
-                        $giam_gia_voucher = $vData['gia_tri'];
-                    } elseif ($loai_voucher == 'PhanTram') {
+                    if ($vData['loai_voucher'] == 'TienMat') $giam_gia_voucher = $vData['gia_tri'];
+                    elseif ($vData['loai_voucher'] == 'PhanTram') {
                         $giam_gia_voucher = ($tong_tien * $vData['gia_tri']) / 100;
-                        if ($vData['giam_toi_da'] > 0 && $giam_gia_voucher > $vData['giam_toi_da']) {
-                            $giam_gia_voucher = $vData['giam_toi_da'];
-                        }
-                    } elseif ($loai_voucher == 'FreeShip') {
-                        $giam_gia_freeship = min($phi_van_chuyen_thuc_te, $vData['gia_tri']);
-                    }
-                    
-                    $tien_giam_ghi_db = ($loai_voucher == 'FreeShip') ? $giam_gia_freeship : $giam_gia_voucher;
-                } else {
-                    $ma_voucher = null; // Hủy mã nếu không hợp lệ
-                }
+                        if ($vData['giam_toi_da'] > 0 && $giam_gia_voucher > $vData['giam_toi_da']) $giam_gia_voucher = $vData['giam_toi_da'];
+                    } elseif ($vData['loai_voucher'] == 'FreeShip') $giam_gia_freeship = min($phi_van_chuyen_thuc_te, $vData['gia_tri']);
+                    $tien_giam_ghi_db = ($vData['loai_voucher'] == 'FreeShip') ? $giam_gia_freeship : $giam_gia_voucher;
+                } else $ma_voucher = null;
             }
 
-            // 4. Chốt số tiền cuối cùng khách phải trả
-            $tien_hang_sau_giam = $tong_tien - $giam_gia_thanh_vien - $giam_gia_voucher;
-            if ($tien_hang_sau_giam < 0) $tien_hang_sau_giam = 0;
-
-            $phi_ship_sau_giam = $phi_van_chuyen_thuc_te - $giam_gia_freeship;
-            if ($phi_ship_sau_giam < 0) $phi_ship_sau_giam = 0;
-
+            $tien_hang_sau_giam = max(0, $tong_tien - $giam_gia_thanh_vien - $giam_gia_voucher);
+            $phi_ship_sau_giam = max(0, $phi_van_chuyen_thuc_te - $giam_gia_freeship);
             $tong_tien_cuoi = $tien_hang_sau_giam + $phi_ship_sau_giam;
-
-            // Xác định số tiền cần thu hộ (COD) trên tổng tiền ĐÃ GIẢM
             $cod_amount = ($phuong_thuc === 'COD') ? intval($tong_tien_cuoi) : 0;
 
-            // Chuẩn bị dữ liệu gửi lên GHN
-            $ghnOrderData = [
-                "payment_type_id" => 2, // 2: Shop trả phí ship
-                "note" => $ghi_chu,
-                "required_note" => "KHONGCHOXEMHANG", // Ví dụ: Không cho xem hàng
-                "to_name" => $ho_ten,
-                "to_phone" => $so_dien_thoai,
-                "to_address" => $dia_chi_chi_tiet,
-                "to_ward_code" => $to_ward_code,
-                "to_district_id" => $to_district_id,
-                "cod_amount" => $cod_amount,
-                "weight" => $tong_can_nang,
-                "service_type_id" => 2, // 2: Dịch vụ chuẩn
-                "items" => $ghn_items
-            ];
+            $ghnOrderData = ["payment_type_id" => 2, "note" => $ghi_chu, "required_note" => "KHONGCHOXEMHANG", "to_name" => $ho_ten, "to_phone" => $so_dien_thoai, "to_address" => $dia_chi_chi_tiet, "to_ward_code" => $to_ward_code, "to_district_id" => $to_district_id, "cod_amount" => $cod_amount, "weight" => $tong_can_nang, "service_type_id" => 2, "items" => $ghn_items];
 
-            // Gọi API tạo đơn hàng của GHN
             $ghnResponse = $ghnModel->createOrder($ghnOrderData);
 
-            // Xử lý kết quả từ GHN
-            if (isset($ghnResponse['code']) && $ghnResponse['code'] == 200) {
-                $ghn_order_code = $ghnResponse['data']['order_code'];
-
-                // Lưu đơn hàng vào CSDL của bạn
-                $orderModel = $this->model('OrderModel');
-                $order_id = $orderModel->createOrder($user_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db);
-
-                if ($order_id) {
-                    if (!empty($ma_voucher)) {
-                        $voucherModel->incrementVoucherUsage($ma_voucher); // Tăng lượt dùng voucher
-                    }
-                    
-                    // Chỉ gửi email ngay lập tức cho đơn COD
-                    if ($phuong_thuc === 'COD') {
-                        $this->sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems);
-                    }
-
-                    header('Location: ' . BASE_URL . 'index.php?url=order/success&id=' . $order_id);
-                } else {
-                    // Lỗi nghiêm trọng: Đã tạo đơn trên GHN nhưng không lưu được vào DB
-                    $_SESSION['error_message'] = 'Lỗi hệ thống! Đã tạo đơn trên GHN (' . $ghn_order_code . ') nhưng không thể lưu vào website. Vui lòng liên hệ admin.';
-                    header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
-                }
-            } else {
-                // Lỗi từ API của GHN
-                $ghn_error_message = $ghnResponse['message'] ?? 'Lỗi không xác định từ Giao Hàng Nhanh.';
-                $_SESSION['error_message'] = 'Lỗi tạo đơn hàng: ' . $ghn_error_message;
-                header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
+            if (!isset($ghnResponse['code']) || $ghnResponse['code'] != 200) {
+                throw new Exception($ghnResponse['message'] ?? 'Lỗi không xác định từ Giao Hàng Nhanh.');
             }
+            $ghn_order_code = $ghnResponse['data']['order_code'];
+
+            $order_id = $orderModel->createOrder($user_id, $cart_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db);
+
+            if (!$order_id) {
+                throw new Exception("Không thể lưu đơn hàng vào cơ sở dữ liệu.");
+            }
+
+            if (!empty($ma_voucher)) {
+                $voucherModel = $this->model('VoucherModel');
+                if (!$voucherModel->incrementVoucherUsage($ma_voucher)) {
+                    throw new Exception("Lỗi cập nhật voucher.");
+                }
+            }
+
+            $db->commit();
+
+            $this->sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems);
+            header('Location: ' . BASE_URL . 'index.php?url=order/success&id=' . $order_id);
+            exit;
+
+        } catch (Exception $e) {
+            $db->rollback();
+
+            if ($ghn_order_code) {
+                $ghnModel = $this->model('GHNModel');
+                $ghnModel->cancelOrder($ghn_order_code);
+            }
+
+            if ($e->getMessage() === "Không thể lưu đơn hàng vào cơ sở dữ liệu.") {
+                $_SESSION['error_message'] = 'Lỗi hệ thống! Đã tạo đơn trên GHN (' . $ghn_order_code . ') nhưng không thể lưu vào website. Vui lòng liên hệ admin.';
+            } else {
+                $_SESSION['error_message'] = 'Lỗi khi xử lý đơn hàng: ' . $e->getMessage();
+            }
+
+            header('Location: ' . BASE_URL . 'index.php?url=order/checkout');
             exit;
         }
     }
@@ -249,6 +401,14 @@ class OrderController extends Controller
 
         if ($order_id > 0) {
             $orderModel = $this->model('OrderModel');
+            $order = $orderModel->getOrderByIdAndUser($order_id, $user_id);
+
+            // Hủy đơn hàng trên GHN nếu có mã vận đơn
+            if ($order && !empty($order['ghn_order_code'])) {
+                $ghnModel = $this->model('GHNModel');
+                $ghnModel->cancelOrder($order['ghn_order_code']);
+            }
+
             if ($orderModel->cancelOrder($order_id, $user_id)) {
                 $_SESSION['success_message'] = "Đã hủy đơn hàng #ORD" . str_pad($order_id, 5, '0', STR_PAD_LEFT) . " thành công.";
             } else {
@@ -267,14 +427,19 @@ class OrderController extends Controller
     {
         if (session_status() === PHP_SESSION_NONE)
             session_start();
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . BASE_URL . 'index.php?url=auth/showLogin');
-            exit;
-        }
+
+        $user_id = $_SESSION['user_id'] ?? null;
 
         $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $orderModel = $this->model('OrderModel');
-        $order = $orderModel->getOrderById($order_id, $_SESSION['user_id']);
+
+        // Cho phép cả khách và người dùng đã đăng nhập xem đơn hàng
+        $order = $orderModel->getOrderByIdAndUser($order_id, $user_id);
+
+        // Nếu không tìm thấy với user_id hiện tại (có thể là khách), thử tìm với user_id là NULL
+        if (!$order && $user_id === null) {
+            $order = $orderModel->getOrderByIdAndUser($order_id, null);
+        }
 
         if (!$order) {
             die("Đơn hàng không tồn tại hoặc không thuộc về bạn.");
@@ -291,9 +456,9 @@ class OrderController extends Controller
     {
         header('Content-Type: application/json');
         if (session_status() === PHP_SESSION_NONE)
-            session_start();
+        session_start();
 
-        if (!isset($_SESSION['user_id'])) {
+        if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
             echo json_encode(['status' => 'error']);
             exit;
         }
@@ -317,18 +482,18 @@ class OrderController extends Controller
         if (session_status() === PHP_SESSION_NONE)
             session_start();
 
-        if (!isset($_SESSION['user_id'])) {
+        if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
             echo json_encode(['status' => 'error', 'msg' => 'Unauthorized']);
             exit;
         }
 
         $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $orderModel = $this->model('OrderModel');
-
+        
         // Quét dọn các đơn quá hạn trong lúc trình duyệt đang tự động kiểm tra
         $orderModel->cancelExpiredQROrders();
 
-        $order = $orderModel->getOrderById($order_id, $_SESSION['user_id']);
+        $order = $orderModel->getOrderByIdAndUser($order_id, $_SESSION['user_id']);
 
         if ($order) {
             $order['items'] = $orderModel->getOrderDetails($order_id);
@@ -389,6 +554,39 @@ class OrderController extends Controller
         exit;
     }
 
+    private function sendCheckoutOtpEmail($email, $otp)
+    {
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host = SMTP_HOST;
+            $mail->SMTPAuth = true;
+            $mail->Username = SMTP_USERNAME;
+            $mail->Password = SMTP_PASSWORD;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port = SMTP_PORT;
+            $mail->CharSet = 'UTF-8';
+
+            $mail->setFrom(SMTP_USERNAME, 'COZY CORNER');
+            $mail->addAddress($email);
+
+            $mail->isHTML(true);
+            $mail->Subject = "Mã xác nhận thanh toán - COZY CORNER";
+            $mail->Body = "Xin chào,<br><br>Mã xác thực để hoàn tất đơn hàng của bạn là: <strong style='font-size: 20px; color: #355F2E;'>$otp</strong><br>Mã có hiệu lực trong 5 phút.<br>Nếu không phải bạn, vui lòng bỏ qua email này.";
+
+            $mail->send();
+            return true;
+
+        } catch (Exception $e) {
+            // Ghi log lỗi và throw exception để bên ngoài bắt
+            error_log("Lỗi gửi mail OTP thanh toán: " . $mail->ErrorInfo);
+            throw new Exception('Không thể gửi email xác thực. Vui lòng thử lại.');
+        }
+    }
+
+
+
+
     // --- HÀM GỬI EMAIL XÁC NHẬN ĐƠN HÀNG ---
     private function sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems) {
         $mail = new PHPMailer(true);
@@ -413,9 +611,18 @@ class OrderController extends Controller
             foreach ($cartItems as $item) {
                 $subtotal = number_format($item['price'] * $item['quantity'], 0, ',', '.');
                 $price = number_format($item['price'], 0, ',', '.');
+                
+                // LOGIC UI: Thêm chữ [Đặt trước] nếu sản phẩm không có sẵn hoặc hết hàng
+                $preOrderTag = '';
+                if (isset($item['trang_thai']) && $item['trang_thai'] === 'HetHang' || (isset($item['so_luong_ton']) && $item['so_luong_ton'] < $item['quantity'])) {
+                    $preOrderTag = ' <span style="color: #F57F17; font-size: 12px; font-weight: bold;">[Đặt trước]</span>';
+                }
+                
+                $itemName = htmlspecialchars($item['name']) . $preOrderTag;
+                
                 $itemsHtml .= "
                     <tr>
-                        <td style='padding: 10px; border-bottom: 1px solid #eee;'>{$item['name']}</td>
+                        <td style='padding: 10px; border-bottom: 1px solid #eee;'>{$itemName}</td>
                         <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: center;'>{$item['quantity']}</td>
                         <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: right;'>{$price}đ</td>
                         <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: right;'>{$subtotal}đ</td>

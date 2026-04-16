@@ -95,32 +95,30 @@ class ProductController extends Controller
                 $gia_cu = number_format($row['gia_cu']) . 'đ';
                 $gia_cu_html = "<span class=\"product__list-old-price\">{$gia_cu}</span>";
             }
-
-            $btn_html = '';
-            if ($row['so_luong_ton'] > 0) {
-                $btn_html = "<a href=\"javascript:void(0)\" class=\"product__list-cart-button js__add-to-cart\" data-product-id=\"{$id}\">
-                                <img src=\"{$base_url}assets/icon/Icon-cart.svg\" alt=\"button cart\">
-                            </a>";
-            } else {
-                $btn_html = "<span class=\"product__list-cart-button\" style=\"border-color: #ccc; background-color: #f5f5f5; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #999; padding: 12px; text-decoration: none;\" title=\"Hết hàng\">Hết hàng</span>";
-            }
+        
+        $isPreOrder = ($row['so_luong_ton'] <= 0 || $row['trang_thai'] == 'HetHang');
+        $preOrderLabel = $isPreOrder ? '<div style="position: absolute; top: 10px; left: 10px; background: #F57F17; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 2;">ĐẶT TRƯỚC</div>' : '';
+        $cartButtonTitle = $isPreOrder ? 'Đặt hàng trước' : 'Thêm vào giỏ';
 
             $html .= "
-            <div class=\"product__list-item\">
-                <a href=\"{$base_url}view/product/ChiTietSanPham.php?id={$id}\">
-                    <img src=\"{$base_url}uploads/{$anh}\" alt=\"{$ten_sp}\" class=\"product__list-image\">
+        <div class=\"product__list-item\" style=\"position: relative;\">
+            {$preOrderLabel}
+            <a href=\"{$base_url}index.php?url=product/detail&id={$id}\">
+                <img src=\"{$base_url}uploads/{$anh}\" alt=\"{$ten_sp}\" class=\"product__list-image\">
+            </a>
+            <div class=\"product__list-text\">
+                <p class=\"product__list-item-title\">
+                    {$ten_sp} <br>
+                    <span class=\"product__list-price\">
+                        {$gia}
+                        {$gia_cu_html}
+                    </span>
+                </p>
+                <a href=\"javascript:void(0)\" class=\"product__list-cart-button js__add-to-cart\" data-product-id=\"{$id}\" title=\"{$cartButtonTitle}\">
+                    <img src=\"{$base_url}assets/icon/Icon-cart.svg\" alt=\"button cart\">
                 </a>
-                <div class=\"product__list-text\">
-                    <p class=\"product__list-item-title\">
-                        {$ten_sp} <br>
-                        <span class=\"product__list-price\">
-                            {$gia}
-                            {$gia_cu_html}
-                        </span>
-                    </p>
-                    {$btn_html}
-                </div>
-            </div>";
+            </div>
+        </div>";
         }
 
         echo json_encode(['status' => 'success', 'html' => $html]);
