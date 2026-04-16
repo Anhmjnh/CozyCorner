@@ -334,7 +334,7 @@ require_once __DIR__ . '/includes/admin_header.php';
 </div>
 
 <script>
-    const BASE_URL = '<?= BASE_URL ?>';
+   
     let currentPage = 1;
 
     // Hiển thị Toast thông báo

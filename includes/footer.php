@@ -434,9 +434,6 @@ require_once __DIR__ . '/../config.php';  // Include config để lấy BASE_URL
 <!-- Đóng thẻ body và html (để hoàn thiện cấu trúc trang) -->
 <?php // Nạp modal giỏ hàng và script xử lý
 require_once __DIR__ . '/../view/cart_modal.php'; ?>
-<script>
-    const BASE_URL = '<?= BASE_URL ?>';
-</script>
 <script src="<?= BASE_URL ?>assets/js/cart.js"></script>
 
 <script>

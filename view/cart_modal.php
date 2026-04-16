@@ -7,7 +7,8 @@
             </button>
         </div>
 
-        <ul class="cart__items js__cart-items-list" style="list-style: none; padding: 0 40px; margin: 0; max-height: 50vh; overflow-y: auto; margin-bottom: 20px;">
+        <ul class="cart__items js__cart-items-list"
+            style="list-style: none; padding: 0 40px; margin: 0; max-height: 50vh; overflow-y: auto; margin-bottom: 20px;">
         </ul>
 
         <div class="cart__footer"
@@ -21,18 +22,14 @@
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box;">
-                <?php if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])): ?>
-                    <a href="<?= BASE_URL ?>index.php?url=cart" class="cart__checkout-button"
-                        style="width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; min-height: 45px; padding: 10px 0;">XEM GIỎ HÀNG</a>
-                <?php else: ?>
-                    <a href="javascript:void(0)"
-                        onclick="alert('Bạn cần đăng nhập để xem chi tiết và thanh toán giỏ hàng!'); window.location.href='<?= BASE_URL ?>index.php?url=auth/showLogin';"
-                        class="cart__checkout-button"
-                        style="width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; min-height: 45px; padding: 10px 0;">XEM GIỎ HÀNG</a>
-                <?php endif; ?>
+                <a href="<?= BASE_URL ?>index.php?url=cart" class="cart__checkout-button"
+                    style="width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; min-height: 45px; padding: 10px 0;">
+                    XEM GIỎ HÀNG
+                </a>
 
                 <a href="<?= BASE_URL ?>index.php?url=product" class="cart__continue-shopping-button"
-                    style="width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; min-height: 45px; padding: 10px 0;">TIẾP TỤC MUA HÀNG</a>
+                    style="width: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box; min-height: 45px; padding: 10px 0;">TIẾP
+                    TỤC MUA HÀNG</a>
             </div>
         </div>
     </div>
