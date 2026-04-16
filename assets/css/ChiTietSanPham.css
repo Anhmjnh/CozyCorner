@@ -165,6 +165,9 @@
     padding: 12px 24px;
     cursor: pointer;
     border-radius: 4px;
+    display: inline-block; 
+    text-align: center; 
+    box-sizing: border-box;
 }
 
 .review__button:hover {

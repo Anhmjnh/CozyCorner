@@ -28,7 +28,7 @@ require_once __DIR__ . '/../../includes/header.php';
 
     @media (min-width: 481px) {
         .review {
-            margin-top: 300px !important;
+            margin-top: 48px;
         }
     }
 
@@ -256,7 +256,8 @@ require_once __DIR__ . '/../../includes/header.php';
         vertical-align: middle;
     }
 
-    .product__cart:hover i, .product__mobile-cart:hover i {
+    .product__cart:hover i,
+    .product__mobile-cart:hover i {
         color: #fff !important;
         transition: color 0.3s ease;
     }
@@ -335,7 +336,9 @@ require_once __DIR__ . '/../../includes/header.php';
                         <button type="submit" name="action" value="add_to_cart" class="product__mobile-cart">
                             <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
                         </button>
-                        <button type="button" class="product__mobile-cart js__add-to-compare" data-id="<?= $product['id'] ?>" data-cat="<?= $product['category_id'] ?>" title="So sánh sản phẩm này">
+                        <button type="button" class="product__mobile-cart js__add-to-compare"
+                            data-id="<?= $product['id'] ?>" data-cat="<?= $product['category_id'] ?>"
+                            title="So sánh sản phẩm này">
                             <i class="fas fa-balance-scale" style="font-size: 24px; color: #355F2E;"></i>
                         </button>
                     <?php else: ?>
@@ -412,7 +415,8 @@ require_once __DIR__ . '/../../includes/header.php';
                     <button type="submit" name="action" value="add_to_cart" class="product__cart">
                         <img src="<?= BASE_URL ?>assets/icon/Icon-cart.svg" alt="button cart">
                     </button>
-                    <button type="button" class="product__cart js__add-to-compare" data-id="<?= $product['id'] ?>" data-cat="<?= $product['category_id'] ?>" title="So sánh sản phẩm này">
+                    <button type="button" class="product__cart js__add-to-compare" data-id="<?= $product['id'] ?>"
+                        data-cat="<?= $product['category_id'] ?>" title="So sánh sản phẩm này">
                         <i class="fas fa-balance-scale" style="font-size: 24px; color: #355F2E;"></i>
                     </button>
                 <?php else: ?>
@@ -687,6 +691,43 @@ require_once __DIR__ . '/../../includes/header.php';
                 if (e.target === lightbox) closeLightbox();
             });
         }
+        // --- TỰ ĐỘNG CĂN BẰNG MÔ TẢ VÀ ĐÁNH GIÁ TRÊN MỌI MÀN HÌNH ---
+        function alignReviewAndDescription() {
+
+            if (window.innerWidth <= 480) {
+                document.querySelector('.review').style.marginTop = '48px';
+                document.querySelector('.product__description').style.marginTop = '48px';
+                return;
+            }
+
+            const review = document.querySelector('.review');
+            const description = document.querySelector('.product__description');
+
+            if (review && description) {
+
+                review.style.marginTop = '48px';
+                description.style.marginTop = '48px';
+
+
+                const descTop = description.getBoundingClientRect().top;
+                const reviewTop = review.getBoundingClientRect().top;
+
+
+                if (descTop > reviewTop) {
+                    const diff = descTop - reviewTop;
+                    review.style.marginTop = (48 + diff) + 'px';
+                } else if (reviewTop > descTop) {
+                    const diff = reviewTop - descTop;
+                    description.style.marginTop = (48 + diff) + 'px';
+                }
+            }
+        }
+
+        // Chạy thước đo ngay khi web vừa load xong ảnh
+        window.addEventListener('load', alignReviewAndDescription);
+
+        // Tự động đo lại mỗi khi người dùng kéo, thu phóng kích thước cửa sổ trình duyệt
+        window.addEventListener('resize', alignReviewAndDescription);
 
         // LOGIC TĂNG GIẢM SỐ LƯỢNG 
         window.changeQty = function (inputId, amount) {
@@ -962,29 +1003,29 @@ require_once __DIR__ . '/../../includes/header.php';
 
         // --- LOGIC THÊM VÀO SO SÁNH ---
         document.querySelectorAll('.js__add-to-compare').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 const pid = this.dataset.id;
                 const catid = this.dataset.cat;
                 fetch('<?= BASE_URL ?>index.php?url=product/api_compare_add', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({product_id: pid, category_id: catid})
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: pid, category_id: catid })
                 })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'conflict') {
-                        // Xử lý xung đột danh mục cực thông minh
-                        if (confirm(data.msg)) {
-                            fetch('<?= BASE_URL ?>index.php?url=product/api_compare_add', {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({product_id: pid, category_id: catid, force_clear: true})
-                            }).then(() => window.location.href = '<?= BASE_URL ?>index.php?url=product/compare');
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'conflict') {
+                            // Xử lý xung đột danh mục cực thông minh
+                            if (confirm(data.msg)) {
+                                fetch('<?= BASE_URL ?>index.php?url=product/api_compare_add', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ product_id: pid, category_id: catid, force_clear: true })
+                                }).then(() => window.location.href = '<?= BASE_URL ?>index.php?url=product/compare');
+                            }
+                        } else if (data.status === 'success') {
+                            window.location.href = '<?= BASE_URL ?>index.php?url=product/compare';
                         }
-                    } else if (data.status === 'success') {
-                        window.location.href = '<?= BASE_URL ?>index.php?url=product/compare';
-                    }
-                });
+                    });
             });
         });
     });
