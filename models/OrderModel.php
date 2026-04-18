@@ -5,14 +5,14 @@ require_once __DIR__ . '/../core/Model.php';
 class OrderModel extends Model
 {
 
-    public function createOrder($user_id, $cart_id, $tong_tien_cuoi, $ten_nguoi_nhan, $sdt_nguoi_nhan, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen, $giam_gia_thanh_vien = 0, $ma_voucher = null, $giam_gia_voucher = 0)
+    public function createOrder($user_id, $cart_id, $tong_tien_cuoi, $ten_nguoi_nhan, $sdt_nguoi_nhan, $dia_chi_giao, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen, $giam_gia_thanh_vien = 0, $ma_voucher = null, $giam_gia_voucher = 0, $email_nguoi_nhan = null)
     {
 
         $this->conn->begin_transaction();
         try {
             // 1. Lưu thông tin Đơn hàng chung
-            $stmt = $this->conn->prepare("INSERT INTO orders (user_id, ghn_order_code, tong_tien, phi_van_chuyen, ten_nguoi_nhan, sdt_nguoi_nhan, dia_chi_giao, phuong_thuc_thanh_toan, ghi_chu, giam_gia_thanh_vien, ma_voucher, giam_gia_voucher) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("isddsssssisi", $user_id, $ghn_order_code, $tong_tien_cuoi, $phi_van_chuyen, $ten_nguoi_nhan, $sdt_nguoi_nhan, $dia_chi_giao, $phuong_thuc, $ghi_chu, $giam_gia_thanh_vien, $ma_voucher, $giam_gia_voucher);
+            $stmt = $this->conn->prepare("INSERT INTO orders (user_id, ghn_order_code, tong_tien, phi_van_chuyen, ten_nguoi_nhan, sdt_nguoi_nhan, dia_chi_giao, phuong_thuc_thanh_toan, ghi_chu, giam_gia_thanh_vien, ma_voucher, giam_gia_voucher, email_nguoi_nhan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("isddsssssisis", $user_id, $ghn_order_code, $tong_tien_cuoi, $phi_van_chuyen, $ten_nguoi_nhan, $sdt_nguoi_nhan, $dia_chi_giao, $phuong_thuc, $ghi_chu, $giam_gia_thanh_vien, $ma_voucher, $giam_gia_voucher, $email_nguoi_nhan);
             $stmt->execute();
             $order_id = $this->conn->insert_id;
             $stmt->close();
@@ -87,11 +87,11 @@ class OrderModel extends Model
     public function getOrderByIdAndUser($order_id, $user_id)
     {
         if ($user_id) {
-            $stmt = $this->conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
+            $stmt = $this->conn->prepare("SELECT o.*, IFNULL(u.email, o.email_nguoi_nhan) as user_email FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.id = ? AND o.user_id = ?");
             $stmt->bind_param("ii", $order_id, $user_id);
         } else {
             // Dành cho khách, chỉ kiểm tra id đơn hàng và user_id phải là NULL
-            $stmt = $this->conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id IS NULL");
+            $stmt = $this->conn->prepare("SELECT o.*, o.email_nguoi_nhan as user_email FROM orders o WHERE o.id = ? AND o.user_id IS NULL");
             $stmt->bind_param("i", $order_id);
         }
         $stmt->execute();
@@ -102,8 +102,9 @@ class OrderModel extends Model
 
     public function getOrderById($order_id)
     {
-        $stmt = $this->conn->prepare("SELECT * FROM orders WHERE id = ?");
+        $stmt = $this->conn->prepare("SELECT o.*, IFNULL(u.email, o.email_nguoi_nhan) as user_email FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.id = ?");
         $stmt->bind_param("i", $order_id);
+        $stmt->execute();
         $order = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         return $order;
@@ -139,6 +140,16 @@ class OrderModel extends Model
         return $result;
     }
 
+    public function getOrderIdByGhnCode($ghn_order_code)
+    {
+        $stmt = $this->conn->prepare("SELECT id FROM orders WHERE ghn_order_code = ?");
+        $stmt->bind_param("s", $ghn_order_code);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $result ? $result['id'] : null;
+    }
+
     public function getUserIdByOrderId($order_id)
     {
         $stmt = $this->conn->prepare("SELECT user_id FROM orders WHERE id = ?");
@@ -151,7 +162,7 @@ class OrderModel extends Model
 
     public function getOrdersByUserId($user_id)
     {
-        $stmt = $this->conn->prepare("SELECT id, tong_tien, trang_thai, phuong_thuc_thanh_toan, created_at FROM orders WHERE user_id = ? ORDER BY created_at DESC");
+        $stmt = $this->conn->prepare("SELECT o.*, IFNULL(u.email, o.email_nguoi_nhan) as user_email FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.user_id = ? ORDER BY o.created_at DESC");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

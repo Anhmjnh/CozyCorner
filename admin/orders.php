@@ -187,6 +187,8 @@ require_once __DIR__ . '/includes/admin_header.php';
                     <h4 style="margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Thông tin khách hàng
                     </h4>
                     <p><strong>Khách hàng:</strong> <span id="detail_customer"></span></p>
+                    <p><strong>Số điện thoại:</strong> <span id="detail_phone"></span></p>
+                    <p><strong>Email:</strong> <span id="detail_email"></span></p>
                     <p><strong>Ngày đặt:</strong> <span id="detail_date"></span></p>
                     <p><strong>Trạng thái:</strong> <span id="detail_status"></span></p>
                 </div>
@@ -254,6 +256,8 @@ require_once __DIR__ . '/includes/admin_header.php';
                     const order = res.data;
                     document.getElementById('detail_order_id').innerText = order.id;
                     document.getElementById('detail_customer').innerText = order.user_name || 'Khách vãng lai';
+                    document.getElementById('detail_phone').innerText = order.sdt_nguoi_nhan || 'Không có';
+                    document.getElementById('detail_email').innerText = order.user_email || 'Không có';
                     document.getElementById('detail_date').innerText = order.created_at;
 
                     let badgeClass = 'badge-orange';

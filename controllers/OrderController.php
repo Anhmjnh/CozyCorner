@@ -185,13 +185,18 @@ class OrderController extends Controller
                 throw new Exception('Mã OTP đã hết hạn!');
             }
 
-            // --- Bắt đầu xử lý tạo đơn hàng cho khách ---
-            $user_id = null; // Khách
             $cart_id = $checkout_data['cart_id'];
             $cartItems = $checkout_data['cart_items'];
             $_POST = $checkout_data['post_data']; // Nạp lại dữ liệu POST để tái sử dụng logic
 
             $ho_ten = trim($_POST['ho_ten'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            
+            // KIỂM TRA TRÙNG EMAIL VỚI USER CÓ SẴN ĐỂ ĐƯA VÀO LỊCH SỬ ĐƠN HÀNG
+            $userModel = $this->model('UserModel');
+            $existingUser = $userModel->getUserByEmail($email);
+            $user_id = $existingUser ? $existingUser['id'] : null;
+
             $so_dien_thoai = trim($_POST['so_dien_thoai'] ?? '');
             $dia_chi = trim($_POST['dia_chi'] ?? '');
             $dia_chi_chi_tiet = trim($_POST['dia_chi_chi_tiet'] ?? '');
@@ -238,7 +243,7 @@ class OrderController extends Controller
             }
             $ghn_order_code = $ghnResponse['data']['order_code'];
 
-            $order_id = $orderModel->createOrder($user_id, $cart_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db);
+            $order_id = $orderModel->createOrder($user_id, $cart_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db, $email);
 
             if (!$order_id) {
                 throw new Exception("Không thể lưu đơn hàng vào cơ sở dữ liệu.");
@@ -251,6 +256,7 @@ class OrderController extends Controller
             $this->sendOrderConfirmationEmail($guest_user_info, $order_id, $tong_tien_cuoi, $cartItems);
 
             unset($_SESSION['guest_checkout_data']);
+            $_SESSION['guest_just_completed_order'] = $order_id; // Cấp quyền xem cho phiên khách vừa đặt
             header('Location: ' . BASE_URL . 'index.php?url=order/success&id=' . $order_id);
             exit;
 
@@ -349,7 +355,8 @@ class OrderController extends Controller
             }
             $ghn_order_code = $ghnResponse['data']['order_code'];
 
-            $order_id = $orderModel->createOrder($user_id, $cart_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db);
+            $email_nguoi_nhan = $user['email'] ?? null;
+            $order_id = $orderModel->createOrder($user_id, $cart_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db, $email_nguoi_nhan);
 
             if (!$order_id) {
                 throw new Exception("Không thể lưu đơn hàng vào cơ sở dữ liệu.");
@@ -433,12 +440,17 @@ class OrderController extends Controller
         $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $orderModel = $this->model('OrderModel');
 
-        // Cho phép cả khách và người dùng đã đăng nhập xem đơn hàng
-        $order = $orderModel->getOrderByIdAndUser($order_id, $user_id);
-
-        // Nếu không tìm thấy với user_id hiện tại (có thể là khách), thử tìm với user_id là NULL
-        if (!$order && $user_id === null) {
-            $order = $orderModel->getOrderByIdAndUser($order_id, null);
+        $order = null;
+        // Nếu khách (chưa đăng nhập) vừa thanh toán thành công đơn này trong phiên hiện tại
+        if (isset($_SESSION['guest_just_completed_order']) && $_SESSION['guest_just_completed_order'] == $order_id) {
+            $order = $orderModel->getOrderById($order_id);
+        } else {
+            // Cho phép cả khách và người dùng đã đăng nhập xem đơn hàng
+            $order = $orderModel->getOrderByIdAndUser($order_id, $user_id);
+            // Nếu không tìm thấy với user_id hiện tại (có thể là khách), thử tìm với user_id là NULL
+            if (!$order && $user_id === null) {
+                $order = $orderModel->getOrderByIdAndUser($order_id, null);
+            }
         }
 
         if (!$order) {
@@ -458,14 +470,18 @@ class OrderController extends Controller
         if (session_status() === PHP_SESSION_NONE)
         session_start();
 
-        if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
-            echo json_encode(['status' => 'error']);
-            exit;
-        }
-
         $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $user_id = $_SESSION['user_id'] ?? null;
         $orderModel = $this->model('OrderModel');
-        $order = $orderModel->getOrderById($order_id, $_SESSION['user_id']);
+        
+        $order = null;
+        if (isset($_SESSION['guest_just_completed_order']) && $_SESSION['guest_just_completed_order'] == $order_id) {
+            $order = $orderModel->getOrderById($order_id);
+        } else if ($user_id) {
+            $order = $orderModel->getOrderByIdAndUser($order_id, $user_id);
+        } else {
+            $order = $orderModel->getOrderByIdAndUser($order_id, null);
+        }
 
         if ($order) {
             echo json_encode(['status' => 'success', 'trang_thai' => $order['trang_thai']]);

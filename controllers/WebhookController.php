@@ -12,6 +12,47 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 class WebhookController {
+    // --- WEBHOOK GHN  ---
+    public function ghn() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') exit;
+
+        // Nhận dữ liệu từ GHN qua Webhook
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        if (!$data || !isset($data['OrderCode']) || !isset($data['Status'])) {
+            header('HTTP/1.0 400 Bad Request');
+            echo json_encode(['success' => false, 'message' => 'No data received']);
+            exit;
+        }
+
+        $ghn_order_code = $data['OrderCode'];
+        $status = $data['Status']; // Trạng thái của GHN: cancel, delivered, ...
+
+        $orderModel = new OrderModel();
+        $order_id = $orderModel->getOrderIdByGhnCode($ghn_order_code);
+
+        if ($order_id) {
+            // Cập nhật trạng thái Hủy từ GHN
+            if ($status === 'cancel') {
+                $orderModel->updateOrderStatus($order_id, 'Huy');
+            } 
+            // Cập nhật trạng thái Hoàn thành khi giao hàng thành công 
+            elseif ($status === 'delivered') {
+                $orderModel->updateOrderStatus($order_id, 'HoanThanh');
+                
+                $user_id = $orderModel->getUserIdByOrderId($order_id);
+                if ($user_id) {
+                    $userModel = new UserModel();
+                    $userModel->updateUserRank($user_id);
+                }
+            }
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true]);
+        exit;
+    }
+
     public function sepay() {
         //  Chỉ nhận phương thức POST 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') exit;

@@ -663,6 +663,8 @@ require_once __DIR__ . '/../../includes/header.php';
                     <h4 style="margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px; color: #333;">Thông
                         tin đơn hàng</h4>
                     <p style="margin: 8px 0; color: #555;"><strong>Ngày đặt:</strong> <span id="detail_date"></span></p>
+                    <p style="margin: 8px 0; color: #555;"><strong>Số điện thoại:</strong> <span id="detail_phone"></span></p>
+                    <p style="margin: 8px 0; color: #555;"><strong>Email:</strong> <span id="detail_email"></span></p>
                     <p style="margin: 8px 0; color: #555;"><strong>Trạng thái:</strong> <span id="detail_status"></span>
                     </p>
                 </div>
@@ -733,6 +735,8 @@ require_once __DIR__ . '/../../includes/header.php';
                         dateStr = `${parts[2]}/${parts[1]}/${parts[0]} ${parts[3]}:${parts[4]}`;
                     }
                     document.getElementById('detail_date').innerText = dateStr;
+                    document.getElementById('detail_phone').innerText = order.sdt_nguoi_nhan || 'Không có';
+                    document.getElementById('detail_email').innerText = order.user_email || 'Không có';
 
                     let badgeClass = 'status-pending';
                     if (order.trang_thai === 'HoanThanh') badgeClass = 'status-success';

@@ -428,7 +428,7 @@ class AdminModel extends Model
 
     public function getOrdersList($limit = 15, $offset = 0, $search = '', $trang_thai = '', $from_date = '', $to_date = '')
     {
-        $sql = "SELECT o.*, IFNULL(u.ho_ten, o.ten_nguoi_nhan) as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
+        $sql = "SELECT o.*, IFNULL(u.ho_ten, o.ten_nguoi_nhan) as user_name, IFNULL(u.email, o.email_nguoi_nhan) as user_email FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("ii", $limit, $offset);
         $stmt->execute();
@@ -473,7 +473,7 @@ class AdminModel extends Model
 
     public function getOrderById($id)
     {
-        $stmt = $this->conn->prepare("SELECT o.*, IFNULL(u.ho_ten, o.ten_nguoi_nhan) as user_name FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.id = ?");
+        $stmt = $this->conn->prepare("SELECT o.*, IFNULL(u.ho_ten, o.ten_nguoi_nhan) as user_name, IFNULL(u.email, o.email_nguoi_nhan) as user_email FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE o.id = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc();

@@ -294,6 +294,8 @@ if ($isPendingPayment) {
                         style="color:#2e5932; font-weight:bold;">#ORD<?= str_pad($order['id'], 5, '0', STR_PAD_LEFT) ?></span>
                 </p>
                 <p><strong>Ngày đặt:</strong> <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></p>
+                    <p><strong>Số điện thoại:</strong> <?= htmlspecialchars($order['sdt_nguoi_nhan'] ?? 'Không có') ?></p>
+                    <p><strong>Email:</strong> <?= htmlspecialchars($order['user_email'] ?? 'Không có') ?></p>
                 <p><strong>Phương thức:</strong> <?= $phuong_thuc_text ?></p>
                 <p><strong>Trạng thái:</strong> <span
                         style="color: #d35400; font-weight: bold;"><?= htmlspecialchars($order['trang_thai']) ?></span>
