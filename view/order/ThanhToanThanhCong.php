@@ -378,6 +378,7 @@ if ($isPendingPayment) {
             <?php if ($giam_gia_voucher > 0): ?>
                 <p>Mã giảm giá (<?= htmlspecialchars($order['ma_voucher'] ?? '') ?>): &nbsp;&nbsp;&nbsp;<strong>-<?= number_format($giam_gia_voucher) ?>đ</strong></p>
             <?php endif; ?>
+            <hr style="border: none; border-top: 1px dashed #ccc; margin: 10px 0;">
             <p>Tiền trước thuế: &nbsp;&nbsp;&nbsp;<strong><?= number_format($tien_truoc_thue) ?>đ</strong></p>
             <p>Thuế GTGT (8%): &nbsp;&nbsp;&nbsp;<strong><?= number_format($tien_thue) ?>đ</strong></p>
             <p class="totals-final">Tổng thanh toán: <?= number_format($order['tong_tien']) ?>đ</p>

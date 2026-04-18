@@ -152,11 +152,13 @@ class WebhookController {
             $mail->Subject = "Thanh toán thành công đơn hàng #ORD" . str_pad($order_id, 5, '0', STR_PAD_LEFT);
             
             $itemsHtml = '';
+            $tong_san_pham = 0;
             foreach ($cartItems as $item) {
                 // Lấy tên sản phẩm từ 'ten_sp' nếu có, nếu không thì từ 'name'
                 $itemName = $item['ten_sp'] ?? ($item['name'] ?? 'Sản phẩm');
                 $subtotal = number_format($item['gia'] * $item['so_luong'], 0, ',', '.');
                 $price = number_format($item['gia'], 0, ',', '.');
+                $tong_san_pham += $item['gia'] * $item['so_luong'];
                 $itemsHtml .= "
                     <tr>
                         <td style='padding: 10px; border-bottom: 1px solid #eee;'>{$itemName}</td>
@@ -184,9 +186,52 @@ class WebhookController {
             }
             
             $vatBreakdownHtml = '';
-            $tien_truoc_thue = round($tong_tien_cuoi / 1.08);
-            $tien_thue = $tong_tien_cuoi - $tien_truoc_thue;
+            $phi_ship = $orderInfo['phi_van_chuyen'] ?? 0;
+            $giam_gia_thanh_vien = $orderInfo['giam_gia_thanh_vien'] ?? 0;
+            $giam_gia_voucher = $orderInfo['giam_gia_voucher'] ?? 0;
+            $ma_voucher = $orderInfo['ma_voucher'] ?? '';
+
+            $tien_truoc_thue = $tong_san_pham - $giam_gia_thanh_vien + $phi_ship - $giam_gia_voucher;
+            $tien_truoc_thue = max(0, $tien_truoc_thue);
+            $tien_thue = round($tien_truoc_thue * 0.08);
+
             $vatBreakdownHtml = "
+                <tr>
+                    <td colspan='3' style='padding: 15px 10px 5px; text-align: right;'>Tổng tiền hàng:</td>
+                    <td style='padding: 15px 10px 5px; text-align: right;'>" . number_format($tong_san_pham, 0, ',', '.') . "đ</td>
+                </tr>
+            ";
+            
+            if ($giam_gia_thanh_vien > 0) {
+                $vatBreakdownHtml .= "
+                <tr>
+                    <td colspan='3' style='padding: 5px 10px; text-align: right;'>Giảm giá hạng thành viên:</td>
+                    <td style='padding: 5px 10px; text-align: right;'>-" . number_format($giam_gia_thanh_vien, 0, ',', '.') . "đ</td>
+                </tr>
+                ";
+            }
+            
+            $phi_ship_text = $phi_ship == 0 ? 'Miễn phí' : number_format($phi_ship, 0, ',', '.') . "đ";
+            $vatBreakdownHtml .= "
+                <tr>
+                    <td colspan='3' style='padding: 5px 10px; text-align: right;'>Phí vận chuyển:</td>
+                    <td style='padding: 5px 10px; text-align: right;'>" . $phi_ship_text . "</td>
+                </tr>
+            ";
+            
+            if ($giam_gia_voucher > 0) {
+                $vatBreakdownHtml .= "
+                <tr>
+                    <td colspan='3' style='padding: 5px 10px; text-align: right;'>Mã giảm giá" . ($ma_voucher ? " ($ma_voucher)" : "") . ":</td>
+                    <td style='padding: 5px 10px; text-align: right;'>-" . number_format($giam_gia_voucher, 0, ',', '.') . "đ</td>
+                </tr>
+                ";
+            }
+
+            $vatBreakdownHtml .= "
+                <tr>
+                    <td colspan='4' style='border-top: 1px dashed #ccc; padding: 0;'></td>
+                </tr>
                 <tr>
                     <td colspan='3' style='padding: 15px 10px 5px; text-align: right;'>Tiền trước thuế:</td>
                     <td style='padding: 15px 10px 5px; text-align: right;'>" . number_format($tien_truoc_thue, 0, ',', '.') . "đ</td>
@@ -194,6 +239,9 @@ class WebhookController {
                 <tr>
                     <td colspan='3' style='padding: 5px 10px 15px; text-align: right;'>Thuế GTGT (8%):</td>
                     <td style='padding: 5px 10px 15px; text-align: right;'>" . number_format($tien_thue, 0, ',', '.') . "đ</td>
+                </tr>
+                <tr>
+                    <td colspan='4' style='border-top: 1px dashed #ccc; padding: 0;'></td>
                 </tr>
             ";
 

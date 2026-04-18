@@ -1018,6 +1018,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         </div>`;
                     }
                     totalsHtml += `
+                        <div style="border-top: 1px dashed #ccc; margin: 10px 0;"></div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                             <span style="color: #555;">Tiền trước thuế:</span>
                             <span style="font-weight: bold; color: #333;">${tien_truoc_thue.toLocaleString('vi-VN')}đ</span>
