@@ -581,33 +581,60 @@ require_once __DIR__ . '/../../includes/header.php';
     <h1 class="checkout__title">Thanh Toán Đơn Hàng</h1>
 
     <div class="checkout__container">
-     
+
         <div class="checkout__left">
             <h2 class="checkout__subtitle">Thông Tin Giao Hàng</h2>
 
-           
+            <!-- KHỐI CHỌN ĐỊA CHỈ  -->
+            <?php if (!$is_guest && !empty($userAddresses)): ?>
+                <div class="saved-address-container checkout__group">
+                    <label class="checkout__label" style="color: #2e5932;">Địa chỉ</label>
+                    <select id="saved_address_select" class="form-select"
+                        style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                        <option value="">-- + Thêm địa chỉ mới --</option>
+                        <?php foreach ($userAddresses as $addr): ?>
+                            <option value="<?= $addr['id'] ?>" data-name="<?= htmlspecialchars($addr['ho_ten']) ?>"
+                                data-phone="<?= htmlspecialchars($addr['so_dien_thoai']) ?>"
+                                data-province="<?= $addr['province_id'] ?>" data-district="<?= $addr['district_id'] ?>"
+                                data-ward="<?= $addr['ward_code'] ?>"
+                                data-detail="<?= htmlspecialchars($addr['dia_chi_chi_tiet']) ?>" <?= $addr['is_default'] ? 'selected' : '' ?>>
+                                <?= $addr['loai_dia_chi'] == 'VanPhong' ? '' : '' ?>
+                                <?= htmlspecialchars($addr['ho_ten']) ?> - <?= htmlspecialchars($addr['so_dien_thoai']) ?>
+                                (<?= htmlspecialchars($addr['dia_chi_chi_tiet'] . ', ' . $addr['ward_name'] . ', ' . $addr['district_name']) ?>)
+                                <?= $addr['is_default'] ? '[Mặc định]' : '' ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php endif; ?>
+
+
             <form action="<?= BASE_URL ?>index.php?url=order/process" method="POST" id="checkout-form"
                 class="checkout__form">
                 <div class="checkout__group">
                     <label for="ho_ten" class="checkout__label">Họ và tên *</label>
-                    <input type="text" id="ho_ten" name="ho_ten" class="checkout__input" value="<?= htmlspecialchars($data['user']['ho_ten'] ?? '') ?>" required>
+                    <input type="text" id="ho_ten" name="ho_ten" class="checkout__input"
+                        value="<?= htmlspecialchars($data['user']['ho_ten'] ?? '') ?>" required>
                 </div>
 
                 <?php if ($data['is_guest']): ?>
                     <div class="checkout__group">
-                        <label for="email" class="checkout__label">Email  </label>
-                        <input type="email" id="email" name="email" class="checkout__input" value="" required placeholder="Nhập email của bạn...">
+                        <label for="email" class="checkout__label">Email </label>
+                        <input type="email" id="email" name="email" class="checkout__input" value="" required
+                            placeholder="Nhập email của bạn...">
                     </div>
                 <?php else: ?>
                     <div class="checkout__group">
                         <label for="email" class="checkout__label">Email *</label>
-                        <input type="email" id="email" name="email" class="checkout__input" value="<?= htmlspecialchars($data['user']['email'] ?? '') ?>" required readonly>
+                        <input type="email" id="email" name="email" class="checkout__input"
+                            value="<?= htmlspecialchars($data['user']['email'] ?? '') ?>" required readonly>
                     </div>
                 <?php endif; ?>
 
                 <div class="checkout__group">
                     <label for="so_dien_thoai" class="checkout__label">Số điện thoại *</label>
-                    <input type="tel" id="so_dien_thoai" name="so_dien_thoai" class="checkout__input" value="<?= htmlspecialchars($data['user']['so_dien_thoai'] ?? '') ?>" required>
+                    <input type="tel" id="so_dien_thoai" name="so_dien_thoai" class="checkout__input"
+                        value="<?= htmlspecialchars($data['user']['so_dien_thoai'] ?? '') ?>" required>
                 </div>
 
                 <div class="checkout__group">
@@ -634,6 +661,17 @@ require_once __DIR__ . '/../../includes/header.php';
                         placeholder="Nhập số nhà, tên đường..." required>
                 </div>
 
+                <?php if (!$data['is_guest']): ?>
+                    <div class="checkout__group" id="save_address_wrapper" style="margin-top: -10px;">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #555; font-size: 14px;">
+                            <input type="checkbox" name="save_address" id="save_address" value="1" checked
+                                style="width: 16px; height: 16px; accent-color: #2e5932;">
+                            Lưu thông tin giao hàng này vào địa chỉ
+                        </label>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Input ẩn dùng để tự động nối địa chỉ dài và gửi phí ship -->
                 <input type="hidden" name="dia_chi" id="dia_chi_day_du" value="">
                 <input type="hidden" name="phi_ship" id="phi_ship_input" value="0">
@@ -657,6 +695,41 @@ require_once __DIR__ . '/../../includes/header.php';
                         <input type="radio" name="phuong_thuc_thanh_toan" value="ChuyenKhoan">
                         <span>Chuyển khoản qua Ngân hàng </span>
                     </label>
+                </div>
+
+                <!-- KHỐI XUẤT HÓA ĐƠN CÔNG TY -->
+                <h2 class="checkout__subtitle" style="margin-top: 30px;">Thông Tin Hóa Đơn (Tùy chọn)</h2>
+                <div class="company-invoice-section">
+                    <div class="checkout__group">
+                        <label
+                            style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #2e5932; font-weight: bold;">
+                            <input type="checkbox" id="xuat_hoa_don_cong_ty" name="xuat_hoa_don_cong_ty" value="1"
+                                style="width: 18px; height: 18px; accent-color: #2e5932;">
+                             Xuất hóa đơn GTGT  (VAT)
+                        </label>
+                    </div>
+
+                    <div id="company_invoice_form"
+                        style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; margin-bottom: 20px;">
+                        <div class="checkout__group">
+                            <label class="checkout__label">Tên công ty *</label>
+                            <input type="text" name="ten_cong_ty" id="ten_cong_ty" class="checkout__input">
+                        </div>
+                        <div class="checkout__group">
+                            <label class="checkout__label">Mã số thuế *</label>
+                            <input type="text" name="ma_so_thue" id="ma_so_thue" class="checkout__input"
+                                pattern="[0-9\-]{10,14}">
+                        </div>
+                        <div class="checkout__group">
+                            <label class="checkout__label">Địa chỉ công ty *</label>
+                            <input type="text" name="dia_chi_cong_ty" id="dia_chi_cong_ty" class="checkout__input">
+                        </div>
+                        <div class="checkout__group" style="margin-bottom: 0;">
+                            <label class="checkout__label">Email nhận hóa đơn *</label>
+                            <input type="email" name="email_nhan_hoa_don" id="email_nhan_hoa_don"
+                                class="checkout__input">
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -709,7 +782,8 @@ require_once __DIR__ . '/../../includes/header.php';
 
                     <?php if (!$data['is_guest'] && isset($data['giamGiaThanhVien']) && $data['giamGiaThanhVien'] > 0): ?>
                         <div class="checkout__total-line highlight-green">
-                            <span>Hạng <?= htmlspecialchars($data['user']['hang'] ?? 'Đồng') ?> (-<?= $data['phanTramGiam'] ?>%):</span>
+                            <span>Hạng <?= htmlspecialchars($data['user']['hang'] ?? 'Đồng') ?>
+                                (-<?= $data['phanTramGiam'] ?>%):</span>
                             <span>-<?= number_format($data['giamGiaThanhVien']) ?>đ</span>
                         </div>
                     <?php endif; ?>
@@ -724,10 +798,20 @@ require_once __DIR__ . '/../../includes/header.php';
                             <span id="summary-voucher-discount">-0đ</span>
                         </div>
                     <?php endif; ?>
+                    <div id="vat-breakdown" style="border-top: 1px dashed #eaeaea; padding-top: 15px; margin-top: 15px;">
+                        <div class="checkout__total-line" style="margin-bottom: 8px;">
+                            <span>Tiền hàng trước thuế:</span>
+                            <span id="summary-before-vat" style="font-weight: 600;"><?= number_format($data['totalPrice'] - ($data['giamGiaThanhVien'] ?? 0)) ?>đ</span>
+                        </div>
+                        <div class="checkout__total-line" style="margin-bottom: 0;">
+                            <span>Thuế GTGT (8%):</span>
+                            <span id="summary-vat-amount" style="font-weight: 600;"><?= number_format(round(($data['totalPrice'] - ($data['giamGiaThanhVien'] ?? 0)) * 0.08)) ?>đ</span>
+                        </div>
+                    </div>
                     <div class="checkout__total-line checkout__total-line--final">
                         <span>Tổng thanh toán:</span>
                         <span id="summary-final-total" class="checkout__final-price">
-                            <?= number_format($data['totalPrice'] - ($data['giamGiaThanhVien'] ?? 0)) ?>đ
+                            <?= number_format(round(($data['totalPrice'] - ($data['giamGiaThanhVien'] ?? 0)) * 1.08)) ?>đ
                         </span>
                     </div>
                 </div>
@@ -900,6 +984,138 @@ require_once __DIR__ . '/../../includes/header.php';
 
         if (addressDetail) addressDetail.addEventListener('input', updateFullAddress);
 
+        // --- 5. LOGIC CHỌN ĐỊA CHỈ TỪ SỔ (AUTO-FILL) ---
+        const addressSelect = document.getElementById('saved_address_select');
+        const saveAddressWrapper = document.getElementById('save_address_wrapper');
+        const inputName = document.getElementById('ho_ten');
+        const inputPhone = document.getElementById('so_dien_thoai');
+        const inputDetail = document.getElementById('dia_chi_chi_tiet');
+
+        function autoFillGHN(provId, distId, wardCode) {
+            provinceEl.value = provId;
+            provinceEl.dispatchEvent(new Event('change'));
+
+            let attempts = 0;
+            let checkDistrict = setInterval(() => {
+                attempts++;
+                if (districtEl.options.length > 1) {
+                    clearInterval(checkDistrict);
+                    districtEl.value = distId;
+                    districtEl.dispatchEvent(new Event('change'));
+
+                    let attemptsWard = 0;
+                    let checkWard = setInterval(() => {
+                        attemptsWard++;
+                        if (wardEl.options.length > 1) {
+                            clearInterval(checkWard);
+                            wardEl.value = wardCode;
+                            wardEl.dispatchEvent(new Event('change')); // Trigger fee calc
+                        } else if (attemptsWard > 50) clearInterval(checkWard);
+                    }, 100);
+                } else if (attempts > 50) clearInterval(checkDistrict);
+            }, 100);
+        }
+
+        if (addressSelect) {
+            addressSelect.addEventListener('change', function () {
+                const selectedOption = this.options[this.selectedIndex];
+                const cbSaveAddress = document.getElementById('save_address');
+
+                if (this.value === "") {
+                    // Chọn "Thêm địa chỉ mới"
+                    if (inputName) inputName.value = '';
+                    if (inputPhone) inputPhone.value = '';
+                    if (inputDetail) inputDetail.value = '';
+                    if (saveAddressWrapper) saveAddressWrapper.style.display = 'block';
+                    if (cbSaveAddress) cbSaveAddress.checked = true;
+
+                    provinceEl.value = '';
+                    provinceEl.dispatchEvent(new Event('change'));
+                } else {
+                    // Chọn địa chỉ cũ
+                    if (inputName) inputName.value = selectedOption.dataset.name || '';
+                    if (inputPhone) inputPhone.value = selectedOption.dataset.phone || '';
+                    if (inputDetail) inputDetail.value = selectedOption.dataset.detail || '';
+                    if (saveAddressWrapper) saveAddressWrapper.style.display = 'none';
+                    if (cbSaveAddress) cbSaveAddress.checked = false;
+
+                    const provId = selectedOption.dataset.province;
+                    const distId = selectedOption.dataset.district;
+                    const wardCode = selectedOption.dataset.ward;
+
+                    autoFillGHN(provId, distId, wardCode);
+                }
+            });
+
+            // Chờ API GHN load xong Tỉnh/Thành rồi mới fill địa chỉ mặc định
+            let initialLoadAttempts = 0;
+            let checkInitialProvince = setInterval(() => {
+                initialLoadAttempts++;
+                if (provinceEl.options.length > 1) {
+                    clearInterval(checkInitialProvince);
+                    if (addressSelect.value !== "") {
+                        addressSelect.dispatchEvent(new Event('change'));
+                    }
+                } else if (initialLoadAttempts > 50) {
+                    clearInterval(checkInitialProvince);
+                }
+            }, 100);
+        }
+
+        // --- 6. LOGIC ẨN/HIỆN HÓA ĐƠN CÔNG TY ---
+        const invoiceCheckbox = document.getElementById('xuat_hoa_don_cong_ty');
+        const invoiceForm = document.getElementById('company_invoice_form');
+        const invoiceInputs = invoiceForm ? invoiceForm.querySelectorAll('input') : [];
+
+        if (invoiceCheckbox) {
+            invoiceCheckbox.addEventListener('change', function () {
+                if (this.checked) {
+                    invoiceForm.style.display = 'block';
+                    invoiceInputs.forEach(input => input.setAttribute('required', 'required'));
+                } else {
+                    invoiceForm.style.display = 'none';
+                    invoiceInputs.forEach(input => input.removeAttribute('required'));
+                }
+                if (typeof calculateFinalTotal === 'function') calculateFinalTotal(); // Cập nhật lại khung tóm tắt
+            });
+        }
+
+        // --- LOGIC TỰ ĐỘNG TRA CỨU MÃ SỐ THUẾ (API MIỄN PHÍ) ---
+        const maSoThueInput = document.getElementById('ma_so_thue');
+        const tenCongTyInput = document.getElementById('ten_cong_ty');
+        const diaChiCongTyInput = document.getElementById('dia_chi_cong_ty');
+
+        if (maSoThueInput) {
+            maSoThueInput.addEventListener('blur', function () {
+                const mst = this.value.trim();
+                // MST ở Việt Nam thường có 10 số hoặc 14 ký tự (chứa dấu gạch ngang)
+                if (mst.length >= 10) {
+                    tenCongTyInput.placeholder = "Đang tự động tra cứu dữ liệu...";
+                    diaChiCongTyInput.placeholder = "Đang tự động tra cứu dữ liệu...";
+                    
+                    // Gọi API miễn phí của VietQR (Tra cứu thông tin Doanh nghiệp theo MST)
+                    fetch(`https://api.vietqr.io/v2/business/${mst}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.code === "00" && data.data) {
+                                // Điền tự động và khóa ô không cho sửa linh tinh
+                                tenCongTyInput.value = data.data.name;
+                                diaChiCongTyInput.value = data.data.address;
+                                tenCongTyInput.style.backgroundColor = '#f8fbf9';
+                                diaChiCongTyInput.style.backgroundColor = '#f8fbf9';
+                            } else {
+                                tenCongTyInput.placeholder = "";
+                                diaChiCongTyInput.placeholder = "";
+                                alert("Không tìm thấy thông tin cho Mã số thuế này trên CSDL Quốc gia. Vui lòng nhập tay hoặc kiểm tra lại!");
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Lỗi tra cứu MST:', err);
+                        });
+                }
+            });
+        }
+
         // --- LOGIC XỬ LÝ VOUCHER ---
         const btnApplyVoucher = document.getElementById('btn-apply-voucher');
         const inputVoucher = document.getElementById('ma_voucher_input');
@@ -937,7 +1153,19 @@ require_once __DIR__ . '/../../includes/header.php';
 
             let tongThanhToan = tienHangSauGiam + phiShipSauGiam;
 
-            summaryFinalTotal.innerText = tongThanhToan.toLocaleString('vi-VN') + 'đ';
+            // --- BÓC TÁCH THUẾ VAT ---
+            let vatBreakdown = document.getElementById('vat-breakdown');
+            let summaryBeforeVat = document.getElementById('summary-before-vat');
+            let summaryVatAmount = document.getElementById('summary-vat-amount');
+
+            let truocThue = tongThanhToan;
+            let tienThue = Math.round(truocThue * 0.08);
+            let finalTotal = truocThue + tienThue;
+            
+            if(summaryBeforeVat) summaryBeforeVat.innerText = truocThue.toLocaleString('vi-VN') + 'đ';
+            if(summaryVatAmount) summaryVatAmount.innerText = tienThue.toLocaleString('vi-VN') + 'đ';
+            
+            summaryFinalTotal.innerText = finalTotal.toLocaleString('vi-VN') + 'đ';
 
             let tongTienGiamVoucher = giamVoucherDonHang + giamVoucherFreeShip;
             if (tongTienGiamVoucher > 0) {
@@ -1003,6 +1231,24 @@ require_once __DIR__ . '/../../includes/header.php';
                 btnApplyVoucher.click(); // Tự động bấm "Áp dụng"
             });
         });
+        
+        // --- VALIDATE ĐƠN HÀNG > 20 TRIỆU ---
+        const checkoutForm = document.getElementById('checkout-form');
+        if (checkoutForm) {
+            checkoutForm.addEventListener('submit', function(e) {
+                const isVat = document.getElementById('xuat_hoa_don_cong_ty')?.checked;
+                const phuongThuc = document.querySelector('input[name="phuong_thuc_thanh_toan"]:checked')?.value;
+                const tongThanhToanStr = document.getElementById('summary-final-total').innerText.replace(/\D/g, '');
+                const tongThanhToan = parseInt(tongThanhToanStr) || 0;
+
+                // Cảnh báo quy định Hóa đơn pháp luật
+                if (isVat && tongThanhToan >= 20000000 && phuongThuc === 'COD') {
+                    e.preventDefault();
+                    alert('QUY ĐỊNH KẾ TOÁN:\nHóa đơn VAT có tổng thanh toán từ 20.000.000đ trở lên bắt buộc phải chọn phương thức "Chuyển khoản qua Ngân hàng" (Từ tài khoản Công ty).\n\nVui lòng thay đổi phương thức thanh toán!');
+                    document.querySelector('.checkout__payment-methods').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
     });
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

@@ -252,15 +252,15 @@ require_once __DIR__ . '/../../includes/header.php';
         font-size: 15px;
     }
 
-    .btn-danger {
-        background-color: #e74c3c;
-        border-color: #e74c3c;
+    .btn-primary {
+        background-color: #355F2E;
+        border-color: #355F2E;
         color: #fff;
     }
 
-    .btn-danger:hover {
-        background-color: #c0392b;
-        border-color: #c0392b;
+    .btn-primary:hover {
+        background-color: #1f4023;
+        border-color: #1f4023;
     }
 
     .btn-secondary {
@@ -457,6 +457,9 @@ require_once __DIR__ . '/../../includes/header.php';
             <li><a href="<?= BASE_URL ?>index.php?url=user/account&tab=profile"
                     class="<?= $tab === 'profile' ? 'active' : '' ?>"><i class="fas fa-user"></i>
                     Thông tin tài khoản</a></li>
+            <li><a href="<?= BASE_URL ?>index.php?url=user/account&tab=addresses"
+                    class="<?= $tab === 'addresses' ? 'active' : '' ?>"><i class="fas fa-address-book"></i> 
+                    Địa chỉ</a></li>
             <li><a href="<?= BASE_URL ?>index.php?url=user/account&tab=orders"
                     class="<?= $tab === 'orders' ? 'active' : '' ?>"><i class="fas fa-box"></i> Lịch
                     sử mua hàng</a></li>
@@ -492,15 +495,59 @@ require_once __DIR__ . '/../../includes/header.php';
                     <span class="profile-item__label">Giới tính:</span>
                     <span class="profile-item__value"><?= htmlspecialchars($user['gioi_tinh'] ?? 'Chưa cập nhật') ?></span>
                 </div>
-                <div class="profile-item full-width">
-                    <span class="profile-item__label">Địa chỉ mặc định:</span>
-                    <span class="profile-item__value"><?= htmlspecialchars($user['dia_chi'] ?? 'Chưa cập nhật') ?></span>
-                </div>
+               
             </div>
 
             <div style="margin-top: 30px;">
                 <a href="<?= BASE_URL ?>index.php?url=user/update" class="account__button"><i class="fas fa-edit"></i>
                     Cập nhật tài khoản</a>
+            </div>
+
+        <?php elseif ($tab === 'addresses'): ?>
+            <div class="account-content__header">
+                <h2 class="account-content__title">Địa Chỉ Của Tôi </h2>
+                <button onclick="document.getElementById('addAddressModal').style.display='flex'" class="account__button"><i class="fas fa-plus"></i> Thêm địa chỉ mới</button>
+            </div>
+            
+            <?php if (isset($_SESSION['success_message'])): ?>
+                <div style="padding: 15px; margin-bottom: 20px; background-color: #d4edda; color: #155724; border-radius: 8px;">
+                    <?= htmlspecialchars($_SESSION['success_message']) ?>
+                </div>
+                <?php unset($_SESSION['success_message']); ?>
+            <?php endif; ?>
+
+            <div class="address-grid" style="display: flex; flex-direction: column; gap: 20px;">
+                <?php if (empty($userAddresses)): ?>
+                    <div style="text-align: center; padding: 40px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;">
+                        <p style="color: #777;">Bạn chưa có địa chỉ nào trong sổ.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($userAddresses as $addr): ?>
+                        <div class="address-card">
+                            <?php if ($addr['is_default']): ?>
+                                <span class="address-card__badge"><i class="fas fa-check-circle"></i> Mặc định</span>
+                            <?php endif; ?>
+                            <h4 style="margin: 0 0 10px 0; color: #333; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                                <?= htmlspecialchars($addr['ho_ten']) ?>
+                                <?php if ($addr['loai_dia_chi'] == 'VanPhong'): ?>
+                                    <span style="font-size: 12px; background: #eef6f0; color: #2e5932; padding: 2px 8px; border-radius: 12px;"><i class="fas fa-building"></i> Văn phòng</span>
+                                <?php else: ?>
+                                    <span style="font-size: 12px; background: #eef6f0; color: #2e5932; padding: 2px 8px; border-radius: 12px;"><i class="fas fa-home"></i> Nhà riêng</span>
+                                <?php endif; ?>
+                            </h4>
+                            <p style="margin: 5px 0; color: #555; font-size: 14px;"><i class="fas fa-phone-alt" style="width: 20px; color: #888;"></i> <?= htmlspecialchars($addr['so_dien_thoai']) ?></p>
+                            <p style="margin: 5px 0; color: #555; font-size: 14px;"><i class="fas fa-map-marker-alt" style="width: 20px; color: #888;"></i> <?= htmlspecialchars($addr['dia_chi_chi_tiet'] . ', ' . $addr['ward_name'] . ', ' . $addr['district_name'] . ', ' . $addr['province_name']) ?></p>
+                            
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: flex; gap: 15px;">
+                                <?php if (!$addr['is_default']): ?>
+                                    <a href="<?= BASE_URL ?>index.php?url=user/setDefaultAddress&id=<?= $addr['id'] ?>" style="color: #2e5932; font-weight: bold; font-size: 14px; text-decoration: none;">Thiết lập mặc định</a>
+                                <?php endif; ?>
+                                <a href="javascript:void(0)" onclick="openEditAddressModal(<?= htmlspecialchars(json_encode($addr), ENT_QUOTES, 'UTF-8') ?>)" style="color: #2e5932; font-weight: bold; font-size: 14px; text-decoration: none;">Sửa</a>
+                                <a href="javascript:void(0)" onclick="showDeleteAddressConfirm(<?= $addr['id'] ?>)" style="color: #e74c3c; font-weight: bold; font-size: 14px; text-decoration: none;">Xóa</a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
 
         <?php elseif ($tab === 'orders'): ?>
@@ -689,9 +736,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 </thead>
                 <tbody id="detail_items"></tbody>
             </table>
-            <div style="text-align: right; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
-                <span style="font-size: 16px; color: #555;">Tổng thanh toán: </span>
-                <span id="detail_total" style="font-size: 22px; color: #e74c3c; font-weight: bold;"></span>
+            <div id="detail_total_container" style="max-width: 400px; margin-left: auto; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
             </div>
         </div>
     </div>
@@ -714,8 +759,175 @@ require_once __DIR__ . '/../../includes/header.php';
         </div>
         <div class="custom-modal-footer">
             <button type="button" class="btn btn-secondary" onclick="closeCancelConfirmModal()">Không</button>
-            <button type="button" class="btn btn-danger" id="confirmCancelBtn">Đồng ý</button>
+            <button type="button" class="btn btn-primary" id="confirmCancelBtn">Đồng ý</button>
         </div>
+    </div>
+</div>
+
+<!-- Custom Modal Xác nhận Xóa Địa Chỉ -->
+<div id="deleteAddressConfirmModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h3 class="custom-modal-title">Xác Nhận Xóa Địa Chỉ</h3>
+            <span class="custom-modal-close" onclick="closeDeleteAddressConfirmModal()">&times;</span>
+        </div>
+        <div class="custom-modal-body">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>
+                Bạn có chắc chắn muốn xóa địa chỉ này không?
+                <br><small style="color: #777;">Hành động này không thể hoàn tác.</small>
+            </p>
+            <input type="hidden" id="delete_address_id_input">
+        </div>
+        <div class="custom-modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeDeleteAddressConfirmModal()">Không</button>
+            <button type="button" class="btn btn-primary" id="confirmDeleteAddressBtn">Đồng ý</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL THÊM ĐỊA CHỈ -->
+<div id="addAddressModal" class="custom-modal">
+    <div class="custom-modal-content" style="max-width: 600px;">
+        <div class="custom-modal-header">
+            <h3 class="custom-modal-title">Thêm Địa Chỉ Mới</h3>
+            <span class="custom-modal-close" onclick="document.getElementById('addAddressModal').style.display='none'">&times;</span>
+        </div>
+        <form action="<?= BASE_URL ?>index.php?url=user/addAddress" method="POST">
+            <div class="custom-modal-body" style="text-align: left; padding: 10px 0;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Họ và tên *</label>
+                        <input type="text" name="ho_ten" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;" placeholder="Nhập họ tên">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Số điện thoại *</label>
+                        <input type="text" name="so_dien_thoai" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;" placeholder="Nhập SĐT">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Tỉnh/Thành phố *</label>
+                        <select id="addr_province" name="province_id" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                            <option value="">Chọn Tỉnh/Thành</option>
+                        </select>
+                        <input type="hidden" name="province_name" id="addr_province_name">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Quận/Huyện *</label>
+                        <select id="addr_district" name="district_id" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                            <option value="">Chọn Quận/Huyện</option>
+                        </select>
+                        <input type="hidden" name="district_name" id="addr_district_name">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Phường/Xã *</label>
+                        <select id="addr_ward" name="ward_code" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                            <option value="">Chọn Phường/Xã</option>
+                        </select>
+                        <input type="hidden" name="ward_name" id="addr_ward_name">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Địa chỉ cụ thể *</label>
+                    <input type="text" name="dia_chi_chi_tiet" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;" placeholder="Số nhà, tên đường...">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Loại địa chỉ</label>
+                    <div style="display: flex; gap: 20px;">
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="radio" name="loai_dia_chi" value="NhaRieng" checked> Nhà riêng</label>
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="radio" name="loai_dia_chi" value="VanPhong"> Văn phòng</label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" name="is_default" value="1">
+                        Đặt làm địa chỉ mặc định
+                    </label>
+                </div>
+            </div>
+            <div class="custom-modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('addAddressModal').style.display='none'">Hủy</button>
+                <button type="submit" class="btn" style="background: #2e5932; color: #fff;">Lưu Địa Chỉ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL SỬA ĐỊA CHỈ -->
+<div id="editAddressModal" class="custom-modal">
+    <div class="custom-modal-content" style="max-width: 600px;">
+        <div class="custom-modal-header">
+            <h3 class="custom-modal-title">Cập Nhật Địa Chỉ</h3>
+            <span class="custom-modal-close" onclick="document.getElementById('editAddressModal').style.display='none'">&times;</span>
+        </div>
+        <form action="<?= BASE_URL ?>index.php?url=user/updateAddress" method="POST">
+            <input type="hidden" name="id" id="edit_addr_id">
+            <div class="custom-modal-body" style="text-align: left; padding: 10px 0;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Họ và tên *</label>
+                        <input type="text" name="ho_ten" id="edit_addr_name" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;" placeholder="Nhập họ tên">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Số điện thoại *</label>
+                        <input type="text" name="so_dien_thoai" id="edit_addr_phone" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;" placeholder="Nhập SĐT">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Tỉnh/Thành phố *</label>
+                        <select id="edit_addr_province" name="province_id" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                            <option value="">Chọn Tỉnh/Thành</option>
+                        </select>
+                        <input type="hidden" name="province_name" id="edit_addr_province_name">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Quận/Huyện *</label>
+                        <select id="edit_addr_district" name="district_id" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                            <option value="">Chọn Quận/Huyện</option>
+                        </select>
+                        <input type="hidden" name="district_name" id="edit_addr_district_name">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Phường/Xã *</label>
+                        <select id="edit_addr_ward" name="ward_code" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                            <option value="">Chọn Phường/Xã</option>
+                        </select>
+                        <input type="hidden" name="ward_name" id="edit_addr_ward_name">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Địa chỉ cụ thể *</label>
+                    <input type="text" name="dia_chi_chi_tiet" id="edit_addr_detail" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;" placeholder="Số nhà, tên đường...">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">Loại địa chỉ</label>
+                    <div style="display: flex; gap: 20px;">
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="radio" name="loai_dia_chi" id="edit_addr_type_home" value="NhaRieng"> Nhà riêng</label>
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="radio" name="loai_dia_chi" id="edit_addr_type_office" value="VanPhong"> Văn phòng</label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" name="is_default" id="edit_addr_default" value="1">
+                        Đặt làm địa chỉ mặc định
+                    </label>
+                </div>
+            </div>
+            <div class="custom-modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editAddressModal').style.display='none'">Hủy</button>
+                <button type="submit" class="btn" style="background: #2e5932; color: #fff;">Lưu Thay Đổi</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -745,13 +957,14 @@ require_once __DIR__ . '/../../includes/header.php';
 
                     document.getElementById('detail_address').innerHTML = (order.dia_chi_giao || '').replace(/ \| /g, '<br>');
                     document.getElementById('detail_note').innerText = order.ghi_chu || 'Không có';
-                    document.getElementById('detail_total').innerText = parseInt(order.tong_tien).toLocaleString('vi-VN') + 'đ';
 
                     let tbody = '';
+                    let tong_san_pham = 0;
                     if (order.items && order.items.length > 0) {
                         order.items.forEach(item => {
                             let price = parseInt(item.gia);
                             let subtotal = price * parseInt(item.so_luong);
+                            tong_san_pham += subtotal;
                             tbody += `<tr>
                             <td style="padding: 12px; border-bottom: 1px solid #eee;">
                                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -768,6 +981,56 @@ require_once __DIR__ . '/../../includes/header.php';
                         tbody = `<tr><td colspan="4" style="text-align:center; padding: 20px; color: #777;">Không có chi tiết sản phẩm</td></tr>`;
                     }
                     document.getElementById('detail_items').innerHTML = tbody;
+
+                    let giam_gia_thanh_vien = parseInt(order.giam_gia_thanh_vien) || 0;
+                    let phi_van_chuyen = parseInt(order.phi_van_chuyen) || 0;
+                    let giam_gia_voucher = parseInt(order.giam_gia_voucher) || 0;
+                    let ma_voucher = order.ma_voucher || '';
+                    let tong_tien = parseInt(order.tong_tien) || 0;
+                    let tien_truoc_thue = tong_san_pham - giam_gia_thanh_vien + phi_van_chuyen - giam_gia_voucher;
+                    tien_truoc_thue = Math.max(0, tien_truoc_thue);
+                    let thue_gtgt = Math.round(tien_truoc_thue * 0.08);
+                    tong_tien = tien_truoc_thue + thue_gtgt;
+
+                    let totalsHtml = `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #555;">Tổng tiền hàng:</span>
+                            <span style="font-weight: bold; color: #333;">${tong_san_pham.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                    `;
+                    if (giam_gia_thanh_vien > 0) {
+                        totalsHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #555;">Giảm giá hạng thành viên:</span>
+                            <span style="font-weight: bold; color: #333;">-${giam_gia_thanh_vien.toLocaleString('vi-VN')}đ</span>
+                        </div>`;
+                    }
+                    totalsHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #555;">Phí vận chuyển:</span>
+                            <span style="font-weight: bold; color: #333;">${phi_van_chuyen === 0 ? 'Miễn phí' : phi_van_chuyen.toLocaleString('vi-VN') + 'đ'}</span>
+                        </div>`;
+                    if (giam_gia_voucher > 0) {
+                        totalsHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #555;">Mã giảm giá (${ma_voucher}):</span>
+                            <span style="font-weight: bold; color: #333;">-${giam_gia_voucher.toLocaleString('vi-VN')}đ</span>
+                        </div>`;
+                    }
+                    totalsHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #555;">Tiền trước thuế:</span>
+                            <span style="font-weight: bold; color: #333;">${tien_truoc_thue.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px dashed #ccc; padding-bottom: 15px;">
+                            <span style="color: #555;">Thuế GTGT (8%):</span>
+                            <span style="font-weight: bold; color: #333;">${thue_gtgt.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 16px; color: #555; font-weight: bold;">Tổng thanh toán:</span>
+                            <span style="font-size: 22px; color: #e74c3c; font-weight: bold;">${tong_tien.toLocaleString('vi-VN')}đ</span>
+                        </div>`;
+                    document.getElementById('detail_total_container').innerHTML = totalsHtml;
 
                     document.getElementById('viewOrderModal').style.display = 'flex';
                 } else { alert(res.msg || 'Không thể lấy thông tin đơn hàng'); }
@@ -791,16 +1054,234 @@ require_once __DIR__ . '/../../includes/header.php';
         window.location.href = `<?= BASE_URL ?>index.php?url=order/cancel&id=${orderId}`;
     });
 
+    // JavaScript cho modal xóa địa chỉ
+    function showDeleteAddressConfirm(addressId) {
+        document.getElementById('delete_address_id_input').value = addressId;
+        document.getElementById('deleteAddressConfirmModal').style.display = 'flex';
+    }
+
+    function closeDeleteAddressConfirmModal() {
+        document.getElementById('deleteAddressConfirmModal').style.display = 'none';
+    }
+
+    document.getElementById('confirmDeleteAddressBtn').addEventListener('click', function () {
+        const addressId = document.getElementById('delete_address_id_input').value;
+        window.location.href = `<?= BASE_URL ?>index.php?url=user/deleteAddress&id=${addressId}`;
+    });
+
+    function openEditAddressModal(address) {
+        document.getElementById('edit_addr_id').value = address.id;
+        document.getElementById('edit_addr_name').value = address.ho_ten;
+        document.getElementById('edit_addr_phone').value = address.so_dien_thoai;
+        document.getElementById('edit_addr_detail').value = address.dia_chi_chi_tiet;
+        
+        if(address.loai_dia_chi === 'VanPhong') {
+            document.getElementById('edit_addr_type_office').checked = true;
+        } else {
+            document.getElementById('edit_addr_type_home').checked = true;
+        }
+        
+        document.getElementById('edit_addr_default').checked = (address.is_default == 1);
+        
+        document.getElementById('edit_addr_province_name').value = address.province_name;
+        document.getElementById('edit_addr_district_name').value = address.district_name;
+        document.getElementById('edit_addr_ward_name').value = address.ward_name;
+
+        const provEl = document.getElementById('edit_addr_province');
+        
+        if (provEl.options.length <= 1) {
+            const ghnApiUrl = '<?= BASE_URL ?>index.php?url=ghn/';
+            fetch(ghnApiUrl + 'get_provinces')
+                .then(res => res.json())
+                .then(res => {
+                    if (res.code === 200) {
+                        res.data.forEach(p => {
+                            let option = document.createElement('option');
+                            option.value = p.ProvinceID;
+                            option.text = p.ProvinceName;
+                            option.dataset.name = p.ProvinceName;
+                            provEl.appendChild(option);
+                        });
+                        provEl.value = address.province_id;
+                        loadDistrictsForEdit(address.province_id, address.district_id, address.ward_code);
+                    }
+                });
+        } else {
+            provEl.value = address.province_id;
+            loadDistrictsForEdit(address.province_id, address.district_id, address.ward_code);
+        }
+        
+        document.getElementById('editAddressModal').style.display = 'flex';
+    }
+
     // Đóng modal khi click ra ngoài khung
     window.onclick = function (event) {
         let modal = document.getElementById('viewOrderModal');
         let cancelModal = document.getElementById('cancelConfirmModal');
+        let addAddressModal = document.getElementById('addAddressModal');
+        let deleteAddressModal = document.getElementById('deleteAddressConfirmModal');
+        let editAddressModal = document.getElementById('editAddressModal');
         if (event.target === modal) {
             modal.style.display = "none";
         }
         if (event.target === cancelModal) {
             cancelModal.style.display = "none";
         }
+        if (event.target === addAddressModal) {
+            addAddressModal.style.display = "none";
+        }
+        if (event.target === deleteAddressModal) {
+            deleteAddressModal.style.display = "none";
+        }
+        if (event.target === editAddressModal) {
+            editAddressModal.style.display = "none";
+        }
+    }
+
+    // JS CHO MODAL THÊM ĐỊA CHỈ (GỌI API GHN)
+    document.addEventListener("DOMContentLoaded", function () {
+        const provEl = document.getElementById('addr_province');
+        const distEl = document.getElementById('addr_district');
+        const wardEl = document.getElementById('addr_ward');
+        
+        if (provEl && distEl && wardEl) {
+            const ghnApiUrl = '<?= BASE_URL ?>index.php?url=ghn/';
+            
+            // Load Provinces
+            fetch(ghnApiUrl + 'get_provinces')
+                .then(res => res.json())
+                .then(res => {
+                    if (res.code === 200) {
+                        res.data.forEach(p => {
+                            let option = document.createElement('option');
+                            option.value = p.ProvinceID;
+                            option.text = p.ProvinceName;
+                            option.dataset.name = p.ProvinceName;
+                            provEl.appendChild(option);
+                        });
+                    }
+                });
+
+            provEl.addEventListener('change', function () {
+                document.getElementById('addr_province_name').value = this.options[this.selectedIndex]?.dataset?.name || '';
+                distEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                wardEl.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+                if (!this.value) return;
+
+                fetch(ghnApiUrl + 'get_districts&province_id=' + this.value)
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.code === 200) {
+                            res.data.forEach(d => {
+                                let option = document.createElement('option');
+                                option.value = d.DistrictID;
+                                option.text = d.DistrictName;
+                                option.dataset.name = d.DistrictName;
+                                distEl.appendChild(option);
+                            });
+                        }
+                    });
+            });
+
+            distEl.addEventListener('change', function () {
+                document.getElementById('addr_district_name').value = this.options[this.selectedIndex]?.dataset?.name || '';
+                wardEl.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+                if (!this.value) return;
+
+                fetch(ghnApiUrl + 'get_wards&district_id=' + this.value)
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.code === 200) {
+                            res.data.forEach(w => {
+                                let option = document.createElement('option');
+                                option.value = w.WardCode;
+                                option.text = w.WardName;
+                                option.dataset.name = w.WardName;
+                                wardEl.appendChild(option);
+                            });
+                        }
+                    });
+            });
+
+            wardEl.addEventListener('change', function () {
+                document.getElementById('addr_ward_name').value = this.options[this.selectedIndex]?.dataset?.name || '';
+            });
+        }
+
+        // Gắn sự kiện cho form sửa địa chỉ
+        const editProvEl = document.getElementById('edit_addr_province');
+        const editDistEl = document.getElementById('edit_addr_district');
+        const editWardEl = document.getElementById('edit_addr_ward');
+        
+        if (editProvEl && editDistEl && editWardEl) {
+            const ghnApiUrl = '<?= BASE_URL ?>index.php?url=ghn/';
+            
+            editProvEl.addEventListener('change', function () {
+                document.getElementById('edit_addr_province_name').value = this.options[this.selectedIndex]?.dataset?.name || '';
+                editDistEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                editWardEl.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+                if (!this.value) return;
+
+                loadDistrictsForEdit(this.value, null, null);
+            });
+
+            editDistEl.addEventListener('change', function () {
+                document.getElementById('edit_addr_district_name').value = this.options[this.selectedIndex]?.dataset?.name || '';
+                editWardEl.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+                if (!this.value) return;
+
+                loadWardsForEdit(this.value, null);
+            });
+
+            editWardEl.addEventListener('change', function () {
+                document.getElementById('edit_addr_ward_name').value = this.options[this.selectedIndex]?.dataset?.name || '';
+            });
+        }
+    });
+
+    function loadDistrictsForEdit(provinceId, districtIdToSelect, wardCodeToSelect) {
+        const ghnApiUrl = '<?= BASE_URL ?>index.php?url=ghn/';
+        const distEl = document.getElementById('edit_addr_district');
+        distEl.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+        fetch(ghnApiUrl + 'get_districts&province_id=' + provinceId)
+            .then(res => res.json())
+            .then(res => {
+                if (res.code === 200) {
+                    res.data.forEach(d => {
+                        let option = document.createElement('option');
+                        option.value = d.DistrictID;
+                        option.text = d.DistrictName;
+                        option.dataset.name = d.DistrictName;
+                        distEl.appendChild(option);
+                    });
+                    if (districtIdToSelect) {
+                        distEl.value = districtIdToSelect;
+                        loadWardsForEdit(districtIdToSelect, wardCodeToSelect);
+                    }
+                }
+            });
+    }
+
+    function loadWardsForEdit(districtId, wardCodeToSelect) {
+        const ghnApiUrl = '<?= BASE_URL ?>index.php?url=ghn/';
+        const wardEl = document.getElementById('edit_addr_ward');
+        wardEl.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+        fetch(ghnApiUrl + 'get_wards&district_id=' + districtId)
+            .then(res => res.json())
+            .then(res => {
+                if (res.code === 200) {
+                    res.data.forEach(w => {
+                        let option = document.createElement('option');
+                        option.value = w.WardCode;
+                        option.text = w.WardName;
+                        option.dataset.name = w.WardName;
+                        wardEl.appendChild(option);
+                    });
+                    if (wardCodeToSelect) {
+                        wardEl.value = wardCodeToSelect;
+                    }
+                }
+            });
     }
 </script>
 

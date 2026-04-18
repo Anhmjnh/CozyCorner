@@ -5,11 +5,14 @@ require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/OrderModel.php';
 require_once __DIR__ . '/../models/VoucherModel.php';
 
-class UserController {
-    
-    public function __construct() {
-        if (session_status() === PHP_SESSION_NONE) session_start();
-        
+class UserController
+{
+
+    public function __construct()
+    {
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
+
         // Chặn truy cập nếu chưa đăng nhập
         if (!isset($_SESSION['user_id'])) {
             header('Location: ' . BASE_URL . 'index.php?url=auth/showLogin&redirect=' . urlencode($_SERVER['REQUEST_URI']));
@@ -17,41 +20,55 @@ class UserController {
         }
     }
 
-    public function account() {
+    public function account()
+    {
         $userId = $_SESSION['user_id'];
         $userModel = new UserModel();
         $userModel->updateUserRank($userId);
-        
+
         $tab = $_GET['tab'] ?? 'profile';
-        
+
         $user = $userModel->getUserById($userId);
-        
+
         $orders = [];
         $totalCompletedSpent = 0;
         $activeVouchers = [];
-        
+        $userAddresses = [];
+
         if ($tab === 'orders') {
             $orderModel = new OrderModel();
             $orders = $orderModel->getOrdersByUserId($userId);
-            foreach ($orders as $o) {
+            foreach ($orders as &$o) {
+                $tong_san_pham = $o['tong_san_pham'] ?? 0;
+                $tien_truoc_thue = $tong_san_pham - ($o['giam_gia_thanh_vien'] ?? 0) + ($o['phi_van_chuyen'] ?? 0) - ($o['giam_gia_voucher'] ?? 0);
+                $tien_truoc_thue = max(0, $tien_truoc_thue);
+                $tien_thue = round($tien_truoc_thue * 0.08);
+                $o['tong_tien'] = $tien_truoc_thue + $tien_thue;
+
                 if ($o['trang_thai'] === 'HoanThanh' || ($o['trang_thai'] === 'DangGiao' && ($o['phuong_thuc_thanh_toan'] ?? '') === 'ChuyenKhoan')) {
                     $totalCompletedSpent += $o['tong_tien'];
                 }
             }
+            unset($o);
         } elseif ($tab === 'vouchers') {
             $voucherModel = new VoucherModel();
             $activeVouchers = $voucherModel->getActiveVouchers();
+        } elseif ($tab === 'addresses') {
+            require_once __DIR__ . '/../models/AddressModel.php';
+            $addressModel = new AddressModel();
+            $userAddresses = $addressModel->getUserAddresses($userId);
         }
 
         $page_css = ['assets/css/CapNhatTaiKhoan.css'];
         require_once __DIR__ . '/../view/user/TaiKhoan.php';
     }
 
-    public function update() {
+    public function update()
+    {
         $userId = $_SESSION['user_id'];
         $userModel = new UserModel();
         $user = $userModel->getUserById($userId);
-        
+
         $formData = [
             'ho_ten' => $user['ho_ten'] ?? '',
             'email' => $user['email'] ?? '',
@@ -74,26 +91,35 @@ class UserController {
             $newPassword = trim($_POST['new_password'] ?? '');
             $confirmPassword = trim($_POST['confirm_password'] ?? '');
 
-            if ($formData['ho_ten'] === '') $errors[] = 'Vui lòng nhập họ tên.';
-            if ($formData['so_dien_thoai'] !== '' && !preg_match('/^[0-9+\- ]{7,20}$/', $formData['so_dien_thoai'])) $errors[] = 'Số điện thoại không hợp lệ.';
+            if ($formData['ho_ten'] === '')
+                $errors[] = 'Vui lòng nhập họ tên.';
+            if ($formData['so_dien_thoai'] !== '' && !preg_match('/^[0-9+\- ]{7,20}$/', $formData['so_dien_thoai']))
+                $errors[] = 'Số điện thoại không hợp lệ.';
 
             $hashedPassword = null;
             $changePassword = $currentPassword !== '' || $newPassword !== '' || $confirmPassword !== '';
             if ($changePassword) {
-                if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '') $errors[] = 'Để thay đổi mật khẩu, vui lòng điền đầy đủ các trường liên quan.';
-                elseif ($newPassword !== $confirmPassword) $errors[] = 'Mật khẩu mới và xác nhận không khớp.';
-                elseif (strlen($newPassword) < 6) $errors[] = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+                if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '')
+                    $errors[] = 'Để thay đổi mật khẩu, vui lòng điền đầy đủ các trường liên quan.';
+                elseif ($newPassword !== $confirmPassword)
+                    $errors[] = 'Mật khẩu mới và xác nhận không khớp.';
+                elseif (strlen($newPassword) < 6)
+                    $errors[] = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
                 else {
-                    if (!password_verify($currentPassword, $user['mat_khau'])) $errors[] = 'Mật khẩu hiện tại không chính xác.';
-                    else $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+                    if (!password_verify($currentPassword, $user['mat_khau']))
+                        $errors[] = 'Mật khẩu hiện tại không chính xác.';
+                    else
+                        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
                 }
             }
 
             $avatarPath = null;
             if (empty($errors) && isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
                 $targetFile = __DIR__ . '/../uploads/' . time() . '_' . basename($_FILES['avatar']['name']);
-                if (move_uploaded_file($_FILES['avatar']['tmp_name'], $targetFile)) $avatarPath = 'uploads/' . basename($targetFile);
-                else $errors[] = 'Upload avatar thất bại.';
+                if (move_uploaded_file($_FILES['avatar']['tmp_name'], $targetFile))
+                    $avatarPath = 'uploads/' . basename($targetFile);
+                else
+                    $errors[] = 'Upload avatar thất bại.';
             }
 
             if (empty($errors)) {
@@ -101,11 +127,68 @@ class UserController {
                     $_SESSION['user_name'] = $formData['ho_ten'];
                     header('Location: ' . BASE_URL . 'index.php?url=user/account');
                     exit;
-                } else $errors[] = 'Cập nhật thất bại, vui lòng thử lại.';
+                } else
+                    $errors[] = 'Cập nhật thất bại, vui lòng thử lại.';
             }
         }
 
         $page_css = ['assets/css/CapNhatTaiKhoan.css'];
         require_once __DIR__ . '/../view/user/CapNhatTaiKhoan.php';
+    }
+
+    public function addAddress()
+    {
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/../models/AddressModel.php';
+            $addressModel = new AddressModel();
+            $data = [
+                'user_id' => $_SESSION['user_id'],
+                'ho_ten' => trim($_POST['ho_ten'] ?? ''),
+                'so_dien_thoai' => trim($_POST['so_dien_thoai'] ?? ''),
+                'province_id' => intval($_POST['province_id'] ?? 0),
+                'district_id' => intval($_POST['district_id'] ?? 0),
+                'ward_code' => trim($_POST['ward_code'] ?? ''),
+                'province_name' => trim($_POST['province_name'] ?? ''),
+                'district_name' => trim($_POST['district_name'] ?? ''),
+                'ward_name' => trim($_POST['ward_name'] ?? ''),
+                'dia_chi_chi_tiet' => trim($_POST['dia_chi_chi_tiet'] ?? ''),
+                'loai_dia_chi' => $_POST['loai_dia_chi'] ?? 'NhaRieng',
+                'is_default' => isset($_POST['is_default']) ? 1 : 0
+            ];
+            $addressModel->addAddress($data);
+            $_SESSION['success_message'] = 'Đã thêm địa chỉ mới thành công!';
+        }
+        header('Location: ' . BASE_URL . 'index.php?url=user/account&tab=addresses');
+        exit;
+    }
+
+    public function deleteAddress()
+    {
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
+        if (isset($_GET['id']) && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/../models/AddressModel.php';
+            $addressModel = new AddressModel();
+            $addressModel->deleteAddress(intval($_GET['id']), $_SESSION['user_id']);
+            $_SESSION['success_message'] = 'Đã xóa địa chỉ thành công!';
+        }
+        header('Location: ' . BASE_URL . 'index.php?url=user/account&tab=addresses');
+        exit;
+    }
+
+    public function setDefaultAddress()
+    {
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
+        if (isset($_GET['id']) && isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/../models/AddressModel.php';
+            $addressModel = new AddressModel();
+            $addressModel->setDefaultAddress(intval($_GET['id']), $_SESSION['user_id']);
+            $_SESSION['success_message'] = 'Đã thiết lập địa chỉ mặc định thành công!';
+        }
+        header('Location: ' . BASE_URL . 'index.php?url=user/account&tab=addresses');
+        exit;
     }
 }

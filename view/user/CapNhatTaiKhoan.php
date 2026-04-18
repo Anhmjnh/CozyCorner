@@ -49,10 +49,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <input type="tel" id="so_dien_thoai" name="so_dien_thoai" class="update__input" value="<?= htmlspecialchars($formData['so_dien_thoai']) ?>">
         </div>
 
-        <div class="update__group">
-            <label for="dia_chi" class="update__label">Địa chỉ</label>
-            <input type="text" id="dia_chi" name="dia_chi" class="update__input" value="<?= htmlspecialchars($formData['dia_chi']) ?>">
-        </div>
+     
 
         <div class="update__group">
             <label for="gioi_tinh" class="update__label">Giới tính</label>

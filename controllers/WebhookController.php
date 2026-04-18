@@ -106,10 +106,16 @@ class WebhookController {
                     // GỬI EMAIL XÁC NHẬN KHI THANH TOÁN QR THÀNH CÔNG
                     $userModel = new UserModel();
                     $user = $userModel->getUserById($user_id);
+                    if (!$user) {
+                        $user = [
+                            'email' => $orderInfo['user_email'] ?? '',
+                            'ho_ten' => $orderInfo['user_name'] ?? 'Khách hàng'
+                        ];
+                    }
                     $orderDetails = $orderModel->getOrderDetails($order_id); // Lấy chi tiết sản phẩm
 
-                    if ($user && !empty($orderDetails)) {
-                        $this->sendOrderConfirmationEmail($user, $order_id, $orderInfo['tong_tien'], $orderDetails);
+                    if (!empty($user['email']) && !empty($orderDetails)) {
+                        $this->sendOrderConfirmationEmail($user, $order_id, $orderInfo['tong_tien'], $orderDetails, $orderInfo);
                     }
                 }
             }
@@ -122,7 +128,7 @@ class WebhookController {
     }
 
     // --- HÀM GỬI EMAIL  ---
-    private function sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems) {
+    private function sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems, $orderInfo = null) {
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
@@ -136,6 +142,11 @@ class WebhookController {
 
             $mail->setFrom(SMTP_USERNAME, 'COZY CORNER');
             $mail->addAddress($user['email'], $user['ho_ten']);
+
+            // Gửi bản sao tới email nhận hóa đơn nếu có
+            if ($orderInfo && !empty($orderInfo['xuat_hoa_don_cong_ty']) && !empty($orderInfo['email_nhan_hoa_don'])) {
+                $mail->addAddress($orderInfo['email_nhan_hoa_don'], $orderInfo['ten_cong_ty'] ?? 'Công ty');
+            }
 
             $mail->isHTML(true);
             $mail->Subject = "Thanh toán thành công đơn hàng #ORD" . str_pad($order_id, 5, '0', STR_PAD_LEFT);
@@ -158,6 +169,34 @@ class WebhookController {
 
             $totalFormatted = number_format($tong_tien_cuoi, 0, ',', '.');
 
+            $companyInvoiceHtml = '';
+            if ($orderInfo && !empty($orderInfo['xuat_hoa_don_cong_ty'])) {
+                $companyInvoiceHtml = "
+                    <h3 style='border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2e5932; margin-top: 30px;'>Yêu cầu xuất hóa đơn GTGT (VAT)</h3>
+                    <div style='background: #f8fbf9; padding: 15px; border-radius: 8px; border: 1px solid #eef6f0; font-size: 14px;'>
+                        <p style='margin: 0 0 8px 0;'><strong>Tên công ty:</strong> {$orderInfo['ten_cong_ty']}</p>
+                        <p style='margin: 0 0 8px 0;'><strong>Mã số thuế:</strong> {$orderInfo['ma_so_thue']}</p>
+                        <p style='margin: 0 0 8px 0;'><strong>Địa chỉ công ty:</strong> {$orderInfo['dia_chi_cong_ty']}</p>
+                        <p style='margin: 0 0 0 0;'><strong>Email nhận hóa đơn:</strong> {$orderInfo['email_nhan_hoa_don']}</p>
+                    </div>
+                    <p style='color: #d9534f; font-size: 13px; font-style: italic; margin-top: 10px;'>* Hóa đơn điện tử GTGT chính thức có mã của Cơ quan Thuế sẽ được hệ thống tự động phát hành và gửi đến email của quý khách sau khi đơn hàng được giao và thanh toán thành công.</p>
+                ";
+            }
+            
+            $vatBreakdownHtml = '';
+            $tien_truoc_thue = round($tong_tien_cuoi / 1.08);
+            $tien_thue = $tong_tien_cuoi - $tien_truoc_thue;
+            $vatBreakdownHtml = "
+                <tr>
+                    <td colspan='3' style='padding: 15px 10px 5px; text-align: right;'>Tiền trước thuế:</td>
+                    <td style='padding: 15px 10px 5px; text-align: right;'>" . number_format($tien_truoc_thue, 0, ',', '.') . "đ</td>
+                </tr>
+                <tr>
+                    <td colspan='3' style='padding: 5px 10px 15px; text-align: right;'>Thuế GTGT (8%):</td>
+                    <td style='padding: 5px 10px 15px; text-align: right;'>" . number_format($tien_thue, 0, ',', '.') . "đ</td>
+                </tr>
+            ";
+
             $mail->Body = "
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);'>
                     <div style='background-color: #2e5932; color: #fff; padding: 25px; text-align: center;'>
@@ -167,11 +206,13 @@ class WebhookController {
                         <p style='font-size: 16px;'>Xin chào <strong>{$user['ho_ten']}</strong>,</p>
                         <p style='font-size: 15px;'>COZY CORNER xác nhận đã nhận được thanh toán cho đơn hàng <strong>#ORD" . str_pad($order_id, 5, '0', STR_PAD_LEFT) . "</strong>. Chúng tôi sẽ sớm giao hàng cho bạn.</p>
                         
+                        {$companyInvoiceHtml}
+                        
                         <h3 style='border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2e5932; margin-top: 30px;'>Chi tiết đơn hàng</h3>
                         <table style='width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;'>
                             <thead><tr style='background-color: #f8fbf9;'><th style='padding: 12px 10px; text-align: left; border-bottom: 2px solid #ddd; color: #2e5932;'>Sản phẩm</th><th style='padding: 12px 10px; text-align: center; border-bottom: 2px solid #ddd; color: #2e5932;'>SL</th><th style='padding: 12px 10px; text-align: right; border-bottom: 2px solid #ddd; color: #2e5932;'>Đơn giá</th><th style='padding: 12px 10px; text-align: right; border-bottom: 2px solid #ddd; color: #2e5932;'>Thành tiền</th></tr></thead>
                             <tbody>{$itemsHtml}</tbody>
-                            <tfoot><tr><td colspan='3' style='padding: 20px 10px; text-align: right;'>Tổng thanh toán:</td><td style='padding: 20px 10px; text-align: right;'>{$totalFormatted}đ</td></tr></tfoot>
+                            <tfoot>{$vatBreakdownHtml}<tr><td colspan='3' style='padding: 20px 10px; text-align: right;'>Tổng thanh toán:</td><td style='padding: 20px 10px; text-align: right;'>{$totalFormatted}đ</td></tr></tfoot>
                         </table>
                         <p style='text-align: center; margin-top: 35px;'><a href='" . BASE_URL . "index.php?url=user/account&tab=orders' style='background-color: #2e5932; color: #fff; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;'>Xem Lịch Sử Đơn Hàng</a></p>
                     </div>

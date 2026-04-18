@@ -24,6 +24,7 @@ class OrderController extends Controller
         $user = null;
         $giamGiaThanhVien = 0;
         $phanTramGiam = 0;
+        $userAddresses = [];
 
         $cartModel = $this->model('CartModel');
         $cart_id = $cartModel->getCartId($userId, session_id());
@@ -53,6 +54,11 @@ class OrderController extends Controller
             elseif ($hang === 'Bạc')
                 $phanTramGiam = 2;
             $giamGiaThanhVien = ($totalPrice * $phanTramGiam) / 100;
+
+            // Lấy sổ địa chỉ của User
+            require_once __DIR__ . '/../models/AddressModel.php';
+            $addressModel = new AddressModel();
+            $userAddresses = $addressModel->getUserAddresses($userId);
         }
 
         // Khách không được thấy voucher
@@ -60,6 +66,7 @@ class OrderController extends Controller
 
         $this->view('order/ThanhToan', [
             'user' => $user,
+            'userAddresses' => $userAddresses,
             'is_guest' => $is_guest,
             'cartItems' => $cartItems,
             'totalPrice' => $totalPrice,
@@ -204,6 +211,13 @@ class OrderController extends Controller
             $to_ward_code = trim($_POST['to_ward_code'] ?? '');
             $ghi_chu = trim($_POST['ghi_chu'] ?? '');
             $phuong_thuc = $_POST['phuong_thuc_thanh_toan'] ?? 'COD';
+            
+            // Lấy dữ liệu hóa đơn công ty
+            $xuat_hoa_don_cong_ty = isset($_POST['xuat_hoa_don_cong_ty']) ? 1 : 0;
+            $ten_cong_ty = $xuat_hoa_don_cong_ty ? trim($_POST['ten_cong_ty'] ?? '') : null;
+            $ma_so_thue = $xuat_hoa_don_cong_ty ? trim($_POST['ma_so_thue'] ?? '') : null;
+            $dia_chi_cong_ty = $xuat_hoa_don_cong_ty ? trim($_POST['dia_chi_cong_ty'] ?? '') : null;
+            $email_nhan_hoa_don = $xuat_hoa_don_cong_ty ? trim($_POST['email_nhan_hoa_don'] ?? '') : null;
 
             if (empty($cartItems)) {
                 throw new Exception('Giỏ hàng của bạn đang trống!');
@@ -231,7 +245,9 @@ class OrderController extends Controller
 
             $tien_hang_sau_giam = max(0, $tong_tien - $giam_gia_thanh_vien - $giam_gia_voucher);
             $phi_ship_sau_giam = max(0, $phi_van_chuyen_thuc_te - $giam_gia_freeship);
-            $tong_tien_cuoi = $tien_hang_sau_giam + $phi_ship_sau_giam;
+            $tien_truoc_thue = $tien_hang_sau_giam + $phi_ship_sau_giam;
+            $thue_gtgt = round($tien_truoc_thue * 0.08);
+            $tong_tien_cuoi = $tien_truoc_thue + $thue_gtgt;
             $cod_amount = ($phuong_thuc === 'COD') ? intval($tong_tien_cuoi) : 0;
 
             $ghnOrderData = ["payment_type_id" => 2, "note" => $ghi_chu, "required_note" => "KHONGCHOXEMHANG", "to_name" => $ho_ten, "to_phone" => $so_dien_thoai, "to_address" => $dia_chi_chi_tiet, "to_ward_code" => $to_ward_code, "to_district_id" => $to_district_id, "cod_amount" => $cod_amount, "weight" => $tong_can_nang, "service_type_id" => 2, "items" => $ghn_items];
@@ -243,7 +259,7 @@ class OrderController extends Controller
             }
             $ghn_order_code = $ghnResponse['data']['order_code'];
 
-            $order_id = $orderModel->createOrder($user_id, $cart_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db, $email);
+            $order_id = $orderModel->createOrder($user_id, $cart_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db, $email, $xuat_hoa_don_cong_ty, $ten_cong_ty, $ma_so_thue, $dia_chi_cong_ty, $email_nhan_hoa_don);
 
             if (!$order_id) {
                 throw new Exception("Không thể lưu đơn hàng vào cơ sở dữ liệu.");
@@ -251,9 +267,18 @@ class OrderController extends Controller
 
             $db->commit();
 
-            // Gửi email xác nhận cho khách
-            $guest_user_info = ['email' => $_POST['email'], 'ho_ten' => $ho_ten];
-            $this->sendOrderConfirmationEmail($guest_user_info, $order_id, $tong_tien_cuoi, $cartItems);
+            if ($phuong_thuc !== 'ChuyenKhoan') {
+                // Gửi email xác nhận cho khách
+                $guest_user_info = ['email' => $_POST['email'], 'ho_ten' => $ho_ten];
+                $orderInfoMail = [
+                    'xuat_hoa_don_cong_ty' => $xuat_hoa_don_cong_ty,
+                    'ten_cong_ty' => $ten_cong_ty,
+                    'ma_so_thue' => $ma_so_thue,
+                    'dia_chi_cong_ty' => $dia_chi_cong_ty,
+                    'email_nhan_hoa_don' => $email_nhan_hoa_don
+                ];
+                $this->sendOrderConfirmationEmail($guest_user_info, $order_id, $tong_tien_cuoi, $cartItems, $orderInfoMail);
+            }
 
             unset($_SESSION['guest_checkout_data']);
             $_SESSION['guest_just_completed_order'] = $order_id; // Cấp quyền xem cho phiên khách vừa đặt
@@ -292,6 +317,33 @@ class OrderController extends Controller
             $to_ward_code = trim($_POST['to_ward_code'] ?? '');
             $ghi_chu = trim($_POST['ghi_chu'] ?? '');
             $phuong_thuc = $_POST['phuong_thuc_thanh_toan'] ?? 'COD';
+            
+            // Lấy dữ liệu hóa đơn công ty
+            $xuat_hoa_don_cong_ty = isset($_POST['xuat_hoa_don_cong_ty']) ? 1 : 0;
+            $ten_cong_ty = $xuat_hoa_don_cong_ty ? trim($_POST['ten_cong_ty'] ?? '') : null;
+            $ma_so_thue = $xuat_hoa_don_cong_ty ? trim($_POST['ma_so_thue'] ?? '') : null;
+            $dia_chi_cong_ty = $xuat_hoa_don_cong_ty ? trim($_POST['dia_chi_cong_ty'] ?? '') : null;
+            $email_nhan_hoa_don = $xuat_hoa_don_cong_ty ? trim($_POST['email_nhan_hoa_don'] ?? '') : null;
+
+            // Tính năng Auto-save: Tự động lưu địa chỉ mới vào sổ nếu khách có tick chọn
+            if (isset($_POST['save_address']) && $_POST['save_address'] == 1) {
+                require_once __DIR__ . '/../models/AddressModel.php';
+                $addrModel = new AddressModel();
+                $addrModel->addAddress([
+                    'user_id' => $user_id,
+                    'ho_ten' => $ho_ten,
+                    'so_dien_thoai' => $so_dien_thoai,
+                    'province_id' => intval($_POST['province_id'] ?? 0), // Ta sẽ đón thêm từ JS ở View
+                    'district_id' => $to_district_id,
+                    'ward_code' => $to_ward_code,
+                    'province_name' => trim($_POST['province_name'] ?? ''),
+                    'district_name' => trim($_POST['district_name'] ?? ''),
+                    'ward_name' => trim($_POST['ward_name'] ?? ''),
+                    'dia_chi_chi_tiet' => str_replace(', ' . trim($_POST['ward_name'] ?? ''), '', $dia_chi), // Cắt lấy số nhà
+                    'loai_dia_chi' => 'NhaRieng',
+                    'is_default' => 0
+                ]);
+            }
 
             if (empty($ho_ten) || empty($so_dien_thoai) || empty($dia_chi) || empty($to_district_id) || empty($to_ward_code)) {
                 throw new Exception('Vui lòng điền đầy đủ thông tin giao hàng!');
@@ -343,7 +395,9 @@ class OrderController extends Controller
 
             $tien_hang_sau_giam = max(0, $tong_tien - $giam_gia_thanh_vien - $giam_gia_voucher);
             $phi_ship_sau_giam = max(0, $phi_van_chuyen_thuc_te - $giam_gia_freeship);
-            $tong_tien_cuoi = $tien_hang_sau_giam + $phi_ship_sau_giam;
+            $tien_truoc_thue = $tien_hang_sau_giam + $phi_ship_sau_giam;
+            $thue_gtgt = round($tien_truoc_thue * 0.08);
+            $tong_tien_cuoi = $tien_truoc_thue + $thue_gtgt;
             $cod_amount = ($phuong_thuc === 'COD') ? intval($tong_tien_cuoi) : 0;
 
             $ghnOrderData = ["payment_type_id" => 2, "note" => $ghi_chu, "required_note" => "KHONGCHOXEMHANG", "to_name" => $ho_ten, "to_phone" => $so_dien_thoai, "to_address" => $dia_chi_chi_tiet, "to_ward_code" => $to_ward_code, "to_district_id" => $to_district_id, "cod_amount" => $cod_amount, "weight" => $tong_can_nang, "service_type_id" => 2, "items" => $ghn_items];
@@ -356,7 +410,7 @@ class OrderController extends Controller
             $ghn_order_code = $ghnResponse['data']['order_code'];
 
             $email_nguoi_nhan = $user['email'] ?? null;
-            $order_id = $orderModel->createOrder($user_id, $cart_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db, $email_nguoi_nhan);
+            $order_id = $orderModel->createOrder($user_id, $cart_id, $tong_tien_cuoi, $ho_ten, $so_dien_thoai, $dia_chi, $ghi_chu, $cartItems, $ghn_order_code, $phuong_thuc, $phi_van_chuyen_thuc_te, $giam_gia_thanh_vien, $ma_voucher, $tien_giam_ghi_db, $email_nguoi_nhan, $xuat_hoa_don_cong_ty, $ten_cong_ty, $ma_so_thue, $dia_chi_cong_ty, $email_nhan_hoa_don);
 
             if (!$order_id) {
                 throw new Exception("Không thể lưu đơn hàng vào cơ sở dữ liệu.");
@@ -371,7 +425,16 @@ class OrderController extends Controller
 
             $db->commit();
 
-            $this->sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems);
+            if ($phuong_thuc !== 'ChuyenKhoan') {
+                $orderInfoMail = [
+                    'xuat_hoa_don_cong_ty' => $xuat_hoa_don_cong_ty,
+                    'ten_cong_ty' => $ten_cong_ty,
+                    'ma_so_thue' => $ma_so_thue,
+                    'dia_chi_cong_ty' => $dia_chi_cong_ty,
+                    'email_nhan_hoa_don' => $email_nhan_hoa_don
+                ];
+                $this->sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems, $orderInfoMail);
+            }
             header('Location: ' . BASE_URL . 'index.php?url=order/success&id=' . $order_id);
             exit;
 
@@ -604,7 +667,7 @@ class OrderController extends Controller
 
 
     // --- HÀM GỬI EMAIL XÁC NHẬN ĐƠN HÀNG ---
-    private function sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems) {
+    private function sendOrderConfirmationEmail($user, $order_id, $tong_tien_cuoi, $cartItems, $orderInfo = null) {
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
@@ -618,6 +681,11 @@ class OrderController extends Controller
 
             $mail->setFrom(SMTP_USERNAME, 'COZY CORNER');
             $mail->addAddress($user['email'], $user['ho_ten']);
+
+            // Gửi thêm bản sao email cho email nhận hóa đơn của công ty nếu có yêu cầu
+            if ($orderInfo && !empty($orderInfo['xuat_hoa_don_cong_ty']) && !empty($orderInfo['email_nhan_hoa_don'])) {
+                $mail->addAddress($orderInfo['email_nhan_hoa_don'], $orderInfo['ten_cong_ty'] ?? 'Công ty');
+            }
 
             $mail->isHTML(true);
             $mail->Subject = "Xác nhận đơn hàng #ORD" . str_pad($order_id, 5, '0', STR_PAD_LEFT) . " từ COZY CORNER";
@@ -647,6 +715,34 @@ class OrderController extends Controller
             }
 
             $totalFormatted = number_format($tong_tien_cuoi, 0, ',', '.');
+            
+            $companyInvoiceHtml = '';
+            if ($orderInfo && !empty($orderInfo['xuat_hoa_don_cong_ty'])) {
+                $companyInvoiceHtml = "
+                    <h3 style='border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2e5932; margin-top: 30px;'>Yêu cầu xuất hóa đơn GTGT (VAT)</h3>
+                    <div style='background: #f8fbf9; padding: 15px; border-radius: 8px; border: 1px solid #eef6f0; font-size: 14px;'>
+                        <p style='margin: 0 0 8px 0;'><strong>Tên công ty:</strong> {$orderInfo['ten_cong_ty']}</p>
+                        <p style='margin: 0 0 8px 0;'><strong>Mã số thuế:</strong> {$orderInfo['ma_so_thue']}</p>
+                        <p style='margin: 0 0 8px 0;'><strong>Địa chỉ công ty:</strong> {$orderInfo['dia_chi_cong_ty']}</p>
+                        <p style='margin: 0 0 0 0;'><strong>Email nhận hóa đơn:</strong> {$orderInfo['email_nhan_hoa_don']}</p>
+                    </div>
+                    <p style='color: #d9534f; font-size: 13px; font-style: italic; margin-top: 10px;'>* Hóa đơn điện tử GTGT chính thức có mã của Cơ quan Thuế sẽ được hệ thống tự động phát hành và gửi đến email của quý khách sau khi đơn hàng được giao và thanh toán thành công.</p>
+                ";
+            }
+            
+            $vatBreakdownHtml = '';
+            $tien_truoc_thue = round($tong_tien_cuoi / 1.08);
+            $tien_thue = $tong_tien_cuoi - $tien_truoc_thue;
+            $vatBreakdownHtml = "
+                <tr>
+                    <td colspan='3' style='padding: 15px 10px 5px; text-align: right;'>Tiền trước thuế:</td>
+                    <td style='padding: 15px 10px 5px; text-align: right;'>" . number_format($tien_truoc_thue, 0, ',', '.') . "đ</td>
+                </tr>
+                <tr>
+                    <td colspan='3' style='padding: 5px 10px 15px; text-align: right;'>Thuế GTGT (8%):</td>
+                    <td style='padding: 5px 10px 15px; text-align: right;'>" . number_format($tien_thue, 0, ',', '.') . "đ</td>
+                </tr>
+            ";
 
             // Nắp ráp toàn bộ khung Email
             $mail->Body = "
@@ -658,6 +754,8 @@ class OrderController extends Controller
                         <p style='font-size: 16px;'>Xin chào <strong>{$user['ho_ten']}</strong>,</p>
                         <p style='font-size: 15px;'>COZY CORNER đã nhận được đơn hàng <strong>#ORD" . str_pad($order_id, 5, '0', STR_PAD_LEFT) . "</strong> của bạn và đang tiến hành xử lý.</p>
                         
+                        {$companyInvoiceHtml}
+
                         <h3 style='border-bottom: 2px solid #eee; padding-bottom: 10px; color: #2e5932; margin-top: 30px;'>Chi tiết đơn hàng</h3>
                         <table style='width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;'>
                             <thead>
@@ -672,6 +770,7 @@ class OrderController extends Controller
                                 {$itemsHtml}
                             </tbody>
                             <tfoot>
+                                {$vatBreakdownHtml}
                                 <tr>
                                     <td colspan='3' style='padding: 20px 10px; text-align: right;'>Tổng thanh toán:</td>
                                     <td style='padding: 20px 10px; text-align: right;'>{$totalFormatted}đ</td>

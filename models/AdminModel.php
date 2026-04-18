@@ -168,8 +168,20 @@ class AdminModel extends Model
         $stats['total_orders'] = $res->fetch_assoc()['total'];
 
         // Tổng doanh thu (Các đơn đã hoàn thành hoặc đã chuyển khoản)
-        $res = $this->conn->query("SELECT SUM(tong_tien) as total FROM orders WHERE trang_thai = 'HoanThanh' OR (trang_thai = 'DangGiao' AND phuong_thuc_thanh_toan = 'ChuyenKhoan')");
-        $stats['total_revenue'] = $res->fetch_assoc()['total'] ?? 0;
+        $res = $this->conn->query("SELECT o.giam_gia_thanh_vien, o.phi_van_chuyen, o.giam_gia_voucher, 
+                                   (SELECT SUM(gia * so_luong) FROM order_details WHERE order_id = o.id) as tong_san_pham 
+                                   FROM orders o WHERE o.trang_thai = 'HoanThanh' OR (o.trang_thai = 'DangGiao' AND o.phuong_thuc_thanh_toan = 'ChuyenKhoan')");
+        $total = 0;
+        if ($res) {
+            while ($row = $res->fetch_assoc()) {
+                $tong_san_pham = $row['tong_san_pham'] ?? 0;
+                $tien_truoc_thue = $tong_san_pham - ($row['giam_gia_thanh_vien'] ?? 0) + ($row['phi_van_chuyen'] ?? 0) - ($row['giam_gia_voucher'] ?? 0);
+                $tien_truoc_thue = max(0, $tien_truoc_thue);
+                $tien_thue = round($tien_truoc_thue * 0.08);
+                $total += ($tien_truoc_thue + $tien_thue);
+            }
+        }
+        $stats['total_revenue'] = $total;
 
         // Tổng khách hàng
         $res = $this->conn->query("SELECT COUNT(id) as total FROM users");
@@ -193,18 +205,22 @@ class AdminModel extends Model
         }
 
         // Truy vấn dữ liệu thực tế từ CSDL
-        $sql = "SELECT DATE(created_at) as date, SUM(tong_tien) as revenue 
-                FROM orders 
-                WHERE (trang_thai = 'HoanThanh' OR (trang_thai = 'DangGiao' AND phuong_thuc_thanh_toan = 'ChuyenKhoan')) 
-                AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-                GROUP BY DATE(created_at) ORDER BY date ASC";
+        $sql = "SELECT DATE(o.created_at) as date, o.giam_gia_thanh_vien, o.phi_van_chuyen, o.giam_gia_voucher, 
+                (SELECT SUM(gia * so_luong) FROM order_details WHERE order_id = o.id) as tong_san_pham 
+                FROM orders o 
+                WHERE (o.trang_thai = 'HoanThanh' OR (o.trang_thai = 'DangGiao' AND o.phuong_thuc_thanh_toan = 'ChuyenKhoan')) 
+                AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)";
         $result = $this->conn->query($sql);
         
         if ($result) {
             while ($row = $result->fetch_assoc()) {
                 $label = date('d/m', strtotime($row['date']));
                 if (isset($tempData[$label])) {
-                    $tempData[$label] = (float)$row['revenue'];
+                    $tong_san_pham = $row['tong_san_pham'] ?? 0;
+                    $tien_truoc_thue = $tong_san_pham - ($row['giam_gia_thanh_vien'] ?? 0) + ($row['phi_van_chuyen'] ?? 0) - ($row['giam_gia_voucher'] ?? 0);
+                    $tien_truoc_thue = max(0, $tien_truoc_thue);
+                    $tien_thue = round($tien_truoc_thue * 0.08);
+                    $tempData[$label] += ($tien_truoc_thue + $tien_thue);
                 }
             }
         }
@@ -428,7 +444,7 @@ class AdminModel extends Model
 
     public function getOrdersList($limit = 15, $offset = 0, $search = '', $trang_thai = '', $from_date = '', $to_date = '')
     {
-        $sql = "SELECT o.*, IFNULL(u.ho_ten, o.ten_nguoi_nhan) as user_name, IFNULL(u.email, o.email_nguoi_nhan) as user_email FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
+        $sql = "SELECT o.*, IFNULL(u.ho_ten, o.ten_nguoi_nhan) as user_name, IFNULL(u.email, o.email_nguoi_nhan) as user_email, (SELECT SUM(gia * so_luong) FROM order_details WHERE order_id = o.id) as tong_san_pham FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " ORDER BY o.created_at DESC LIMIT ? OFFSET ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("ii", $limit, $offset);
         $stmt->execute();
@@ -443,8 +459,21 @@ class AdminModel extends Model
 
     public function getTotalRevenue($search = '', $trang_thai = '', $from_date = '', $to_date = '')
     {
-        $sql = "SELECT SUM(o.tong_tien) as total_revenue FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " AND (o.trang_thai = 'HoanThanh' OR (o.trang_thai = 'DangGiao' AND o.phuong_thuc_thanh_toan = 'ChuyenKhoan'))";
-        return $this->conn->query($sql)->fetch_assoc()['total_revenue'] ?? 0;
+        $sql = "SELECT o.giam_gia_thanh_vien, o.phi_van_chuyen, o.giam_gia_voucher, 
+                (SELECT SUM(gia * so_luong) FROM order_details WHERE order_id = o.id) as tong_san_pham 
+                FROM orders o LEFT JOIN users u ON o.user_id = u.id" . $this->buildOrderWhereClause($search, $trang_thai, $from_date, $to_date) . " AND (o.trang_thai = 'HoanThanh' OR (o.trang_thai = 'DangGiao' AND o.phuong_thuc_thanh_toan = 'ChuyenKhoan'))";
+        $result = $this->conn->query($sql);
+        $total_revenue = 0;
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $tong_san_pham = $row['tong_san_pham'] ?? 0;
+                $tien_truoc_thue = $tong_san_pham - ($row['giam_gia_thanh_vien'] ?? 0) + ($row['phi_van_chuyen'] ?? 0) - ($row['giam_gia_voucher'] ?? 0);
+                $tien_truoc_thue = max(0, $tien_truoc_thue);
+                $tien_thue = round($tien_truoc_thue * 0.08);
+                $total_revenue += ($tien_truoc_thue + $tien_thue);
+            }
+        }
+        return $total_revenue;
     }
 
     public function getOrdersForExport($search = '', $trang_thai = '', $from_date = '', $to_date = '')
@@ -458,6 +487,7 @@ class AdminModel extends Model
                     o.giam_gia_thanh_vien,
                     o.ma_voucher,
                     o.giam_gia_voucher,
+                    (SELECT SUM(gia * so_luong) FROM order_details WHERE order_id = o.id) as tong_san_pham,
                     o.dia_chi_giao,
                     o.trang_thai,
                     o.phuong_thuc_thanh_toan,

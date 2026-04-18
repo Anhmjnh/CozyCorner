@@ -212,9 +212,7 @@ require_once __DIR__ . '/includes/admin_header.php';
                 </thead>
                 <tbody id="detail_items"></tbody>
             </table>
-            <div style="text-align: right; margin-top: 15px;">
-                <span style="font-size: 16px;">Tổng thanh toán: </span>
-                <span id="detail_total" style="font-size: 22px; color: #e74c3c; font-weight: bold;"></span>
+            <div id="detail_total_container" style="max-width: 400px; margin-left: auto; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
             </div>
         </div>
     </div>
@@ -267,13 +265,14 @@ require_once __DIR__ . '/includes/admin_header.php';
 
                     document.getElementById('detail_address').innerHTML = (order.dia_chi_giao || '').replace(/ \| /g, '<br>');
                     document.getElementById('detail_note').innerText = order.ghi_chu || 'Không có';
-                    document.getElementById('detail_total').innerText = parseInt(order.tong_tien).toLocaleString('vi-VN') + 'đ';
 
                     let tbody = '';
+                    let tong_san_pham = 0;
                     if (order.items && order.items.length > 0) {
                         order.items.forEach(item => {
                             let price = parseInt(item.gia);
                             let subtotal = price * parseInt(item.so_luong);
+                            tong_san_pham += subtotal;
                             tbody += `<tr>
                             <td>
                                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -290,6 +289,56 @@ require_once __DIR__ . '/includes/admin_header.php';
                         tbody = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Không có chi tiết sản phẩm</td></tr>`;
                     }
                     document.getElementById('detail_items').innerHTML = tbody;
+
+                    let giam_gia_thanh_vien = parseInt(order.giam_gia_thanh_vien) || 0;
+                    let phi_van_chuyen = parseInt(order.phi_van_chuyen) || 0;
+                    let giam_gia_voucher = parseInt(order.giam_gia_voucher) || 0;
+                    let ma_voucher = order.ma_voucher || '';
+                    let tong_tien = parseInt(order.tong_tien) || 0;
+                    let tien_truoc_thue = tong_san_pham - giam_gia_thanh_vien + phi_van_chuyen - giam_gia_voucher;
+                    tien_truoc_thue = Math.max(0, tien_truoc_thue);
+                    let thue_gtgt = Math.round(tien_truoc_thue * 0.08);
+                    tong_tien = tien_truoc_thue + thue_gtgt;
+
+                    let totalsHtml = `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #555;">Tổng tiền hàng:</span>
+                            <span style="font-weight: bold; color: #333;">${tong_san_pham.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                    `;
+                    if (giam_gia_thanh_vien > 0) {
+                        totalsHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #555;">Giảm giá hạng thành viên:</span>
+                            <span style="font-weight: bold; color: #333;">-${giam_gia_thanh_vien.toLocaleString('vi-VN')}đ</span>
+                        </div>`;
+                    }
+                    totalsHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #555;">Phí vận chuyển:</span>
+                            <span style="font-weight: bold; color: #333;">${phi_van_chuyen === 0 ? 'Miễn phí' : phi_van_chuyen.toLocaleString('vi-VN') + 'đ'}</span>
+                        </div>`;
+                    if (giam_gia_voucher > 0) {
+                        totalsHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #555;">Mã giảm giá (${ma_voucher}):</span>
+                            <span style="font-weight: bold; color: #333;">-${giam_gia_voucher.toLocaleString('vi-VN')}đ</span>
+                        </div>`;
+                    }
+                    totalsHtml += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #555;">Tiền trước thuế:</span>
+                            <span style="font-weight: bold; color: #333;">${tien_truoc_thue.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px dashed #ccc; padding-bottom: 15px;">
+                            <span style="color: #555;">Thuế GTGT (8%):</span>
+                            <span style="font-weight: bold; color: #333;">${thue_gtgt.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 16px; color: #555; font-weight: bold;">Tổng thanh toán:</span>
+                            <span style="font-size: 22px; color: #e74c3c; font-weight: bold;">${tong_tien.toLocaleString('vi-VN')}đ</span>
+                        </div>`;
+                    document.getElementById('detail_total_container').innerHTML = totalsHtml;
 
                     document.getElementById('viewOrderModal').style.display = 'flex'; // Modal chi tiết đơn hàng vẫn dùng style cũ
                 } else {

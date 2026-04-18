@@ -16,13 +16,29 @@ $phuong_thuc_text = $isQR ? 'Chuyển khoản qua Ngân hàng (VietQR)' : 'Thanh
 // Trạng thái thanh toán
 $isPendingPayment = ($isQR && $order['trang_thai'] === 'ChoXacNhan');
 
-// Tính lại tiền ship hiển thị
+// Tính tổng tiền sản phẩm (Tạm tính)
 $tong_san_pham = 0;
 foreach ($order['items'] as $item) {
     $tong_san_pham += $item['gia'] * $item['so_luong'];
 }
-$phi_ship = $order['tong_tien'] - $tong_san_pham;
 
+// Lấy các khoản phụ phí và giảm giá
+$phi_ship = $order['phi_van_chuyen'] ?? 0;
+$giam_gia_thanh_vien = $order['giam_gia_thanh_vien'] ?? 0;
+$giam_gia_voucher = $order['giam_gia_voucher'] ?? 0;
+
+// 1. Tính Tiền hàng trước thuế
+$tien_truoc_thue = $tong_san_pham - $giam_gia_thanh_vien + $phi_ship - $giam_gia_voucher;
+
+$tien_truoc_thue = max(0, $tien_truoc_thue);
+
+$thue_suat = 0.08; // 8%
+$tien_thue = $tien_truoc_thue * $thue_suat;
+
+$tong_thanh_toan = $tien_truoc_thue + $tien_thue;
+$order['tien_truoc_thue'] = $tien_truoc_thue;
+$order['tien_thue'] = $tien_thue;
+$order['tong_tien'] = $tong_thanh_toan;
 // Tính thời gian đếm ngược 10 phút (600 giây)
 $remaining_seconds = 0;
 if ($isPendingPayment) {
@@ -310,6 +326,16 @@ if ($isPendingPayment) {
                 <?php endif; ?>
             </div>
         </div>
+        
+        <?php if (!empty($order['xuat_hoa_don_cong_ty'])): ?>
+        <div class="info-box" style="margin-bottom: 30px;">
+            <h4>Thông tin yêu cầu xuất hóa đơn GTGT (VAT)</h4>
+            <p><strong>Tên công ty:</strong> <?= htmlspecialchars($order['ten_cong_ty'] ?? '') ?></p>
+            <p><strong>Mã số thuế:</strong> <?= htmlspecialchars($order['ma_so_thue'] ?? '') ?></p>
+            <p><strong>Địa chỉ công ty:</strong> <?= htmlspecialchars($order['dia_chi_cong_ty'] ?? '') ?></p>
+            <p><strong>Email nhận hóa đơn:</strong> <?= htmlspecialchars($order['email_nhan_hoa_don'] ?? '') ?></p>
+        </div>
+        <?php endif; ?>
 
         <h3 style="color: #333; margin-bottom: 15px;">Sản Phẩm Đã Mua</h3>
         <table class="product-table">
@@ -343,9 +369,17 @@ if ($isPendingPayment) {
 
         <div class="totals-box">
             <p>Tổng tiền hàng: &nbsp;&nbsp;&nbsp;<strong><?= number_format($tong_san_pham) ?>đ</strong></p>
+            <?php if ($giam_gia_thanh_vien > 0): ?>
+                <p>Giảm giá hạng thành viên: &nbsp;&nbsp;&nbsp;<strong>-<?= number_format($giam_gia_thanh_vien) ?>đ</strong></p>
+            <?php endif; ?>
             <p>Phí vận chuyển:
                 &nbsp;&nbsp;&nbsp;<strong><?= $phi_ship == 0 ? 'Miễn phí' : number_format($phi_ship) . 'đ' ?></strong>
             </p>
+            <?php if ($giam_gia_voucher > 0): ?>
+                <p>Mã giảm giá (<?= htmlspecialchars($order['ma_voucher'] ?? '') ?>): &nbsp;&nbsp;&nbsp;<strong>-<?= number_format($giam_gia_voucher) ?>đ</strong></p>
+            <?php endif; ?>
+            <p>Tiền trước thuế: &nbsp;&nbsp;&nbsp;<strong><?= number_format($tien_truoc_thue) ?>đ</strong></p>
+            <p>Thuế GTGT (8%): &nbsp;&nbsp;&nbsp;<strong><?= number_format($tien_thue) ?>đ</strong></p>
             <p class="totals-final">Tổng thanh toán: <?= number_format($order['tong_tien']) ?>đ</p>
         </div>
 

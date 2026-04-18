@@ -150,6 +150,16 @@ class AdminController extends Controller
         $to_date = trim($_GET['to_date'] ?? '');
 
         $orders = $this->model->getOrdersList($limit, $offset, $search, $trang_thai, $from_date, $to_date);
+
+        foreach ($orders as &$o) {
+            $tong_san_pham = $o['tong_san_pham'] ?? 0;
+            $tien_truoc_thue = $tong_san_pham - ($o['giam_gia_thanh_vien'] ?? 0) + ($o['phi_van_chuyen'] ?? 0) - ($o['giam_gia_voucher'] ?? 0);
+            $tien_truoc_thue = max(0, $tien_truoc_thue);
+            $tien_thue = round($tien_truoc_thue * 0.08);
+            $o['tong_tien'] = $tien_truoc_thue + $tien_thue;
+        }
+        unset($o);
+
         $total = $this->model->getTotalOrdersCount($search, $trang_thai, $from_date, $to_date);
         $total_revenue = $this->model->getTotalRevenue($search, $trang_thai, $from_date, $to_date);
         $totalPages = ceil($total / $limit);
@@ -216,6 +226,12 @@ class AdminController extends Controller
         // Ghi dữ liệu
         if (!empty($orders)) {
             foreach ($orders as $order) {
+                $tong_san_pham = $order['tong_san_pham'] ?? 0;
+                $tien_truoc_thue = $tong_san_pham - ($order['giam_gia_thanh_vien'] ?? 0) + ($order['phi_van_chuyen'] ?? 0) - ($order['giam_gia_voucher'] ?? 0);
+                $tien_truoc_thue = max(0, $tien_truoc_thue);
+                $tien_thue = round($tien_truoc_thue * 0.08);
+                $order['tong_tien'] = $tien_truoc_thue + $tien_thue;
+
                 // Thêm khoảng trắng trước ngày tháng để Excel hiểu là dạng Text, tránh hiển thị lỗi '###'
                 if (!empty($order['created_at'])) {
                     $order['created_at'] = " " . date('d/m/Y H:i:s', strtotime($order['created_at']));
@@ -260,7 +276,19 @@ class AdminController extends Controller
 
         // Ghi dòng tiêu đề
         fputcsv($memory, [
-            'ID', 'Tên SP', 'Slug', 'Giá', 'Giá Cũ', 'Mô Tả', 'Ảnh', 'Danh Mục', 'Cân nặng (g)', 'Tồn kho', 'Lượt bán', 'Trạng thái', 'Ngày Tạo'
+            'ID',
+            'Tên SP',
+            'Slug',
+            'Giá',
+            'Giá Cũ',
+            'Mô Tả',
+            'Ảnh',
+            'Danh Mục',
+            'Cân nặng (g)',
+            'Tồn kho',
+            'Lượt bán',
+            'Trạng thái',
+            'Ngày Tạo'
         ], "\t");
 
         // Ghi dữ liệu
@@ -306,7 +334,11 @@ class AdminController extends Controller
 
         // Ghi dòng tiêu đề
         fputcsv($memory, [
-            'ID', 'Tên Danh Mục', 'Slug', 'Trạng Thái', 'Ngày Tạo'
+            'ID',
+            'Tên Danh Mục',
+            'Slug',
+            'Trạng Thái',
+            'Ngày Tạo'
         ], "\t");
 
         // Ghi dữ liệu
@@ -358,7 +390,17 @@ class AdminController extends Controller
 
         // Ghi dòng tiêu đề
         fputcsv($memory, [
-            'ID', 'Mã Voucher', 'Loại', 'Giá trị', 'Giảm tối đa', 'Đơn tối thiểu', 'Số lượng', 'Đã dùng', 'Ngày bắt đầu', 'Ngày hết hạn', 'Trạng thái'
+            'ID',
+            'Mã Voucher',
+            'Loại',
+            'Giá trị',
+            'Giảm tối đa',
+            'Đơn tối thiểu',
+            'Số lượng',
+            'Đã dùng',
+            'Ngày bắt đầu',
+            'Ngày hết hạn',
+            'Trạng thái'
         ], "\t");
 
         // Ghi dữ liệu
@@ -388,7 +430,17 @@ class AdminController extends Controller
                 }
 
                 fputcsv($memory, [
-                    $voucher['id'], $voucher['ma_voucher'], $voucher['loai_voucher'], $voucher['gia_tri'], $voucher['giam_toi_da'], $voucher['don_toi_thieu'], $voucher['so_luong'], $voucher['da_dung'], $voucher['ngay_bat_dau'], $voucher['ngay_het_han'], $voucher['trang_thai']
+                    $voucher['id'],
+                    $voucher['ma_voucher'],
+                    $voucher['loai_voucher'],
+                    $voucher['gia_tri'],
+                    $voucher['giam_toi_da'],
+                    $voucher['don_toi_thieu'],
+                    $voucher['so_luong'],
+                    $voucher['da_dung'],
+                    $voucher['ngay_bat_dau'],
+                    $voucher['ngay_het_han'],
+                    $voucher['trang_thai']
                 ], "\t");
             }
         }
@@ -1202,7 +1254,7 @@ class AdminController extends Controller
             $id = $_POST['id'] ?? 0;
             $trang_thai = $_POST['trang_thai'] ?? '';
 
-            if ($id > 0 && in_array($trang_thai, ['ChoXacNhan', 'DangGiao', 'HoanThanh', 'Huy'])) {               
+            if ($id > 0 && in_array($trang_thai, ['ChoXacNhan', 'DangGiao', 'HoanThanh', 'Huy'])) {
                 // Nếu admin hủy đơn, cần gửi yêu cầu hủy sang GHN
                 if ($trang_thai === 'Huy') {
                     $order = $this->model->getOrderById($id);
@@ -1221,6 +1273,7 @@ class AdminController extends Controller
                         $userModel = $this->model('UserModel');
                         $userModel->updateUserRank($user_id);
                     }
+
                     echo json_encode(['status' => 'success', 'msg' => 'Cập nhật trạng thái thành công!']);
                 } else {
                     echo json_encode(['status' => 'error', 'msg' => 'Lỗi cập nhật trạng thái.']);
