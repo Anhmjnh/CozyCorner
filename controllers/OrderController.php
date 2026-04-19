@@ -534,6 +534,35 @@ class OrderController extends Controller
         ]);
     }
 
+    // Chức năng Xem và In Hóa Đơn GTGT (Từ link Email hoặc thao tác của Admin)
+    public function printInvoice()
+    {
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
+
+        $order_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        if ($order_id <= 0) {
+            die("Mã hóa đơn không hợp lệ.");
+        }
+
+        $orderModel = $this->model('OrderModel');
+        $order = $orderModel->getOrderById($order_id);
+
+        if (!$order) {
+            die("Không tìm thấy đơn hàng.");
+        }
+
+        // Kiểm tra quyền: Chỉ cho phép admin hoặc chủ đơn hàng (đã đăng nhập) xem
+        $is_admin = isset($_SESSION['admin_id']);
+        $user_id = $_SESSION['user_id'] ?? null;
+        if (!$is_admin && $order['user_id'] !== null && $order['user_id'] !== $user_id) {
+            die("Bạn không có quyền xem hóa đơn này. Vui lòng đăng nhập đúng tài khoản mua hàng!");
+        }
+
+        $order['items'] = $orderModel->getOrderDetails($order_id);
+        require_once __DIR__ . '/../view/order/HoadonGTGT.php';
+    }
+
     // API kiểm tra trạng thái đơn hàng (Dành cho chức năng tự động load QR Code)
     public function check_status()
     {

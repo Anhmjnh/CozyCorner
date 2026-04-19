@@ -204,10 +204,10 @@ require_once __DIR__ . '/includes/admin_header.php';
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th>Sản phẩm</th>
-                        <th style="text-align: center; width: 60px;">SL</th>
-                        <th style="text-align: right; width: 120px;">Đơn giá</th>
-                        <th style="text-align: right; width: 120px;">Thành tiền</th>
+                        <th style="font-size: 15px;">Sản phẩm</th>
+                        <th style="text-align: center; width: 60px; font-size: 15px;">SL</th>
+                        <th style="text-align: right; width: 120px; font-size: 15px;">Đơn giá</th>
+                        <th style="text-align: right; width: 120px; font-size: 15px;">Thành tiền</th>
                     </tr>
                 </thead>
                 <tbody id="detail_items"></tbody>
@@ -274,15 +274,15 @@ require_once __DIR__ . '/includes/admin_header.php';
                             let subtotal = price * parseInt(item.so_luong);
                             tong_san_pham += subtotal;
                             tbody += `<tr>
-                            <td>
+                            <td style="font-size: 15px;">
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <img src="<?= BASE_URL ?>uploads/${item.anh}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid #eee;">
-                                    <span style="font-weight: 500;">${item.ten_sp}</span>
+                                    <img src="<?= BASE_URL ?>uploads/${item.anh}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
+                                    <span style="font-weight: 600; color: #444; font-size: 16px;">${item.ten_sp}</span>
                                 </div>
                             </td>
-                            <td style="text-align: center; font-weight: bold;">${item.so_luong}</td>
-                            <td style="text-align: right; color: #666;">${price.toLocaleString('vi-VN')}đ</td>
-                            <td style="text-align: right; font-weight: bold; color: #333;">${subtotal.toLocaleString('vi-VN')}đ</td>
+                            <td style="text-align: center; font-weight: bold; font-size: 15px;">${item.so_luong}</td>
+                            <td style="text-align: right; color: #666; font-size: 15px;">${price.toLocaleString('vi-VN')}đ</td>
+                            <td style="text-align: right; font-weight: bold; color: #333; font-size: 15px;">${subtotal.toLocaleString('vi-VN')}đ</td>
                         </tr>`;
                         });
                     } else {

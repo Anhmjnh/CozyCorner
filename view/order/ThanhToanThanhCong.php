@@ -131,14 +131,14 @@ if ($isPendingPayment) {
     .info-box h4 {
         margin: 0 0 10px 0;
         color: #333;
-        font-size: 16px;
+        font-size: 18px;
         border-bottom: 1px dashed #ccc;
         padding-bottom: 8px;
     }
 
     .info-box p {
         margin: 0 0 8px 0;
-        font-size: 14px;
+        font-size: 16px;
         color: #555;
         line-height: 1.5;
     }
@@ -152,6 +152,7 @@ if ($isPendingPayment) {
     .product-table th,
     .product-table td {
         padding: 15px;
+        font-size: 16px;
         border-bottom: 1px solid #eee;
     }
 
@@ -159,7 +160,7 @@ if ($isPendingPayment) {
         background: #fafafa;
         color: #555;
         text-align: left;
-        font-size: 14px;
+        font-size: 16px;
         text-transform: uppercase;
     }
 
@@ -353,8 +354,8 @@ if ($isPendingPayment) {
                         <td>
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <img src="<?= BASE_URL ?>uploads/<?= htmlspecialchars($item['anh']) ?>"
-                                    style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
-                                <span style="font-weight: 600; color: #444;"><?= htmlspecialchars($item['ten_sp']) ?></span>
+                                    style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
+                                <span style="font-weight: 600; color: #444; font-size: 16px;"><?= htmlspecialchars($item['ten_sp']) ?></span>
                             </div>
                         </td>
                         <td style="text-align: center; font-weight: bold;"><?= $item['so_luong'] ?></td>

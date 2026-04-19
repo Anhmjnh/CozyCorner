@@ -1255,9 +1255,21 @@ class AdminController extends Controller
             $trang_thai = $_POST['trang_thai'] ?? '';
 
             if ($id > 0 && in_array($trang_thai, ['ChoXacNhan', 'DangGiao', 'HoanThanh', 'Huy'])) {
+                
+                $order = $this->model->getOrderById($id);
+                if (!$order) {
+                    echo json_encode(['status' => 'error', 'msg' => 'Không tìm thấy đơn hàng.']);
+                    exit;
+                }
+
+                // CHẶN SPAM: Nếu trạng thái không đổi thì dừng luôn, không cập nhật hay gửi mail lại
+                if ($order['trang_thai'] === $trang_thai) {
+                    echo json_encode(['status' => 'success', 'msg' => 'Trạng thái đã được cập nhật.']);
+                    exit;
+                }
+
                 // Nếu admin hủy đơn, cần gửi yêu cầu hủy sang GHN
                 if ($trang_thai === 'Huy') {
-                    $order = $this->model->getOrderById($id);
                     if ($order && !empty($order['ghn_order_code'])) {
                         // Không cần require vì đã có trong autoloader hoặc base controller
                         $ghnModel = $this->model('GHNModel');
@@ -1274,7 +1286,38 @@ class AdminController extends Controller
                         $userModel->updateUserRank($user_id);
                     }
 
-                    echo json_encode(['status' => 'success', 'msg' => 'Cập nhật trạng thái thành công!']);
+                    // TRẢ RESPONSE VỀ CHO BROWSER NGAY LẬP TỨC ĐỂ TRÁNH LAG UI
+                    $response = json_encode(['status' => 'success', 'msg' => 'Cập nhật trạng thái thành công!']);
+                    ob_start();
+                    echo $response;
+                    header('Connection: close');
+                    header('Content-Length: ' . ob_get_length());
+                    ob_end_flush();
+                    @ob_flush();
+                    flush();
+                    if (function_exists('fastcgi_finish_request')) {
+                        fastcgi_finish_request();
+                    }
+
+                    // GỬI EMAIL HÓA ĐƠN GTGT KHI ĐƠN HÀNG HOÀN THÀNH (CHẠY NGẦM SAU KHI ĐÃ TRẢ RESPONSE)
+                    if ($trang_thai === 'HoanThanh') {
+                        if ($order && !empty($order['xuat_hoa_don_cong_ty']) && !empty($order['email_nhan_hoa_don'])) {
+                            // Lấy chi tiết tính toán lại tổng tiền để gửi mail chính xác
+                            $tong_san_pham = 0;
+                            $orderDetails = $this->model->getOrderDetailsByOrderId($id);
+                            foreach ($orderDetails as $item) {
+                                $tong_san_pham += (($item['gia'] ?? 0) * ($item['so_luong'] ?? 0));
+                            }
+                            $tien_truoc_thue = $tong_san_pham - ($order['giam_gia_thanh_vien'] ?? 0) + ($order['phi_van_chuyen'] ?? 0) - ($order['giam_gia_voucher'] ?? 0);
+                            $tien_truoc_thue = max(0, $tien_truoc_thue);
+                            $tien_thue = round($tien_truoc_thue * 0.08);
+                            $order['tong_tien_tinh_toan'] = $tien_truoc_thue + $tien_thue;
+    
+                            $this->sendVatInvoiceEmail($order);
+                        }
+                    }
+
+                    exit; // Kết thúc script sau khi xử lý chạy ngầm xong
                 } else {
                     echo json_encode(['status' => 'error', 'msg' => 'Lỗi cập nhật trạng thái.']);
                 }
@@ -1283,6 +1326,54 @@ class AdminController extends Controller
             }
         }
         exit;
+    }
+
+    private function sendVatInvoiceEmail($order)
+    {
+        require_once __DIR__ . '/../libs/PHPMailer/src/Exception.php';
+        require_once __DIR__ . '/../libs/PHPMailer/src/PHPMailer.php';
+        require_once __DIR__ . '/../libs/PHPMailer/src/SMTP.php';
+
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host       = SMTP_HOST;
+            $mail->SMTPAuth   = true;
+            $mail->Username   = SMTP_USERNAME;
+            $mail->Password   = SMTP_PASSWORD;
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port       = SMTP_PORT;
+            $mail->CharSet    = 'UTF-8';
+
+            $mail->setFrom(SMTP_USERNAME, 'COZY CORNER');
+            $mail->addAddress($order['email_nhan_hoa_don'], $order['ten_cong_ty']);
+
+            $mail->isHTML(true);
+            $mail->Subject = "Hóa Đơn Điện Tử GTGT - COZY CORNER - Đơn hàng #ORD" . str_pad($order['id'], 5, '0', STR_PAD_LEFT);
+            
+            // Đường link giả định đến Route xem/in hóa đơn (Tùy thuộc vào Route của bạn)
+            $invoiceLink = BASE_URL . "index.php?url=order/printInvoice&id=" . $order['id'];
+
+            $mail->Body = "
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;'>
+                    <h2 style='color: #2e5932; text-align: center;'>THÔNG BÁO PHÁT HÀNH HÓA ĐƠN ĐIỆN TỬ GTGT</h2>
+                    <p>Kính gửi: <strong>{$order['ten_cong_ty']}</strong>,</p>
+                    <p>Cửa hàng nội thất COZY CORNER xin trân trọng thông báo đã phát hành hóa đơn điện tử cho đơn hàng <strong>#ORD" . str_pad($order['id'], 5, '0', STR_PAD_LEFT) . "</strong> của Quý khách.</p>
+                    <div style='background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;'>
+                        <p style='margin: 5px 0;'><strong>Mã số thuế:</strong> {$order['ma_so_thue']}</p>
+                        <p style='margin: 5px 0;'><strong>Tổng tiền thanh toán:</strong> " . number_format($order['tong_tien_tinh_toan'], 0, ',', '.') . " VNĐ</p>
+                    </div>
+                    <p style='text-align: center; margin: 30px 0;'>
+                        <a href='{$invoiceLink}' style='background: #2e5932; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>XEM VÀ IN HÓA ĐƠN TẠI ĐÂY</a>
+                    </p>
+                    <p style='color: #777; font-size: 13px; text-align: center;'>Đây là email tự động, vui lòng không trả lời email này.</p>
+                </div>
+            ";
+            
+            $mail->send();
+        } catch (\Exception $e) {
+            error_log("Lỗi gửi mail thông báo Hóa đơn GTGT: " . $mail->ErrorInfo);
+        }
     }
 
     // --- API QUẢN LÝ VOUCHER ---

@@ -728,10 +728,10 @@ require_once __DIR__ . '/../../includes/header.php';
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed;">
                 <thead>
                     <tr style="background: #f8fbf9; border-bottom: 2px solid #eee;">
-                        <th style="padding: 12px; text-align: left; color: #355F2E;">Sản phẩm</th>
-                        <th style="padding: 12px; text-align: center; width: 60px; color: #355F2E;">SL</th>
-                        <th style="padding: 12px; text-align: right; width: 120px; color: #355F2E;">Đơn giá</th>
-                        <th style="padding: 12px; text-align: right; width: 120px; color: #355F2E;">Thành tiền</th>
+                        <th style="padding: 12px; text-align: left; color: #355F2E; font-size: 16px;">Sản phẩm</th>
+                        <th style="padding: 12px; text-align: center; width: 60px; color: #355F2E; font-size: 16px;">SL</th>
+                        <th style="padding: 12px; text-align: right; width: 120px; color: #355F2E; font-size: 16px;">Đơn giá</th>
+                        <th style="padding: 12px; text-align: right; width: 120px; color: #355F2E; font-size: 16px;">Thành tiền</th>
                     </tr>
                 </thead>
                 <tbody id="detail_items"></tbody>
@@ -966,15 +966,15 @@ require_once __DIR__ . '/../../includes/header.php';
                             let subtotal = price * parseInt(item.so_luong);
                             tong_san_pham += subtotal;
                             tbody += `<tr>
-                            <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                            <td style="padding: 12px; border-bottom: 1px solid #eee; font-size: 16px;">
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <img src="<?= BASE_URL ?>uploads/${item.anh}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; flex-shrink: 0;">
-                                    <span style="font-weight: 500; color: #333; word-break: break-word;">${item.ten_sp}</span>
+                                    <img src="<?= BASE_URL ?>uploads/${item.anh}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #eee; flex-shrink: 0;">
+                                    <span style="font-weight: 600; color: #444; word-break: break-word; font-size: 16px;">${item.ten_sp}</span>
                                 </div>
                             </td>
-                            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #555;">${item.so_luong}</td>
-                            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; color: #666;">${price.toLocaleString('vi-VN')}đ</td>
-                            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold; color: #333;">${subtotal.toLocaleString('vi-VN')}đ</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #555; font-size: 16px;">${item.so_luong}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; color: #666; font-size: 16px;">${price.toLocaleString('vi-VN')}đ</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold; color: #333; font-size: 16px;">${subtotal.toLocaleString('vi-VN')}đ</td>
                         </tr>`;
                         });
                     } else {
