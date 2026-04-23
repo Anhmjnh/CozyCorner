@@ -6,7 +6,6 @@ require_once __DIR__ . '/VoucherModel.php';
 class ChatbotModel extends Model
 {
     private $apiKey;
-    private $apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
     public function __construct()
     {
@@ -214,11 +213,12 @@ class ChatbotModel extends Model
 
     public function askGemini($userMessage, $chatHistory = [], $user_id = null)
     {
-        if (empty($this->apiKey))
+        if (empty($this->apiKey)) {
             return "Lỗi: Hệ thống chưa được cấu hình API Key của AI.";
+        }
+
         $base_url = defined('BASE_URL') ? BASE_URL : 'http://localhost/cozycorner/';
 
-        // BƯỚC 1: XỬ LÝ THEO NGỮ CẢNH
         if (isset($_SESSION['chatbot_context'])) {
             $context = $_SESSION['chatbot_context'];
             unset($_SESSION['chatbot_context']);
@@ -240,12 +240,11 @@ class ChatbotModel extends Model
             }
         }
 
-        // BƯỚC 2: KIỂM TRA FAQ SQL TĨNH
         $faqAnswer = $this->checkFaqRules($userMessage);
-        if ($faqAnswer !== null)
+        if ($faqAnswer !== null) {
             return $faqAnswer;
+        }
 
-        // BƯỚC 3: NHẬN DIỆN Ý ĐỊNH ĐỘNG
         $storeData = $this->getStoreKnowledge($userMessage, $user_id);
         $intent = $storeData['intent'];
         $knowledge = $storeData['knowledge'];
@@ -256,7 +255,7 @@ class ChatbotModel extends Model
                 $reply = "Dạ, COZY CORNER hiện đang kinh doanh các danh mục sản phẩm sau ạ:\n";
                 while ($cat = $cats->fetch_assoc()) {
                     $link = $base_url . 'index.php?url=product&category=' . $cat['slug'];
-                    $reply .= "- [{$cat['ten_danh_muc']}]({$link})\n";
+                    $reply .= "- [{$cat['ten_danh_muc']}] {$link}\n";
                 }
                 return $reply . "\nBạn muốn xem danh mục nào ạ?";
             }
@@ -264,11 +263,11 @@ class ChatbotModel extends Model
         }
 
         if ($intent === 'ORDER') {
-            if (!$user_id)
-                return "Dạ bạn cần [đăng nhập](" . $base_url . "index.php?url=user/login) để mình kiểm tra đơn hàng nhé!";
-
+            if (!$user_id) {
+                return "Dạ bạn cần đăng nhập tài khoản để mình kiểm tra đơn hàng nhé!";
+            }
             $_SESSION['chatbot_context'] = 'awaiting_order_id';
-            return "Dạ, bạn vui lòng cho mình xin mã đơn hàng (ví dụ: ORD00036) để mình kiểm tra nhé!";
+            return "Dạ, bạn vui lòng cho mình xin mã đơn hàng để mình kiểm tra nhé!";
         }
 
         if ($intent === 'VOUCHER_CHECK') {
@@ -276,75 +275,95 @@ class ChatbotModel extends Model
             return "Dạ, bạn vui lòng nhập mã voucher muốn kiểm tra ạ.";
         }
 
-        // BƯỚC 4: GỌI GEMINI AI
-        $url = $this->apiUrl . '?key=' . $this->apiKey;
-        $systemInstruction = "Bạn là 'Cozy Bot', trợ lý AI của COZY CORNER. Tính cách vui vẻ, lễ phép.\n" .
+        $systemInstruction = "Bạn là trợ lý AI của COZY CORNER. Tính cách vui vẻ, lễ phép.\n" .
             $knowledge . "\nQUY TẮC:\n" .
-            "1. Trả lời đúng trọng tâm. Dùng Markdown (gạch đầu dòng).\n" .
-            "2. Luôn chèn Link dưới định dạng [Tên](URL) nếu có.\n" .
-            "3. Không tự bịa thông tin sản phẩm, nếu không có dữ liệu hãy xin lỗi khéo léo.";
+            "- Trả lời đúng trọng tâm. Dùng Markdown.\n" .
+            "- Luôn chèn Link dưới định dạng văn bản đính kèm liên kết nếu có.\n" .
+            "- Không tự bịa thông tin sản phẩm, nếu không có dữ liệu hãy xin lỗi khéo léo.";
 
         $contents = [];
+        $expectedRole = 'user';
+
         foreach ($chatHistory as $msg) {
-            $contents[] = [
-                "role" => $msg['role'] === 'user' ? 'user' : 'model',
-                "parts" => [["text" => $msg['content']]]
-            ];
+            $currentRole = $msg['role'] === 'user' ? 'user' : 'model';
+
+            if ($currentRole === $expectedRole) {
+                $contents[] = [
+                    "role" => $currentRole,
+                    "parts" => [["text" => $msg['content']]]
+                ];
+                $expectedRole = $currentRole === 'user' ? 'model' : 'user';
+            }
         }
+
+        if (!empty($contents) && end($contents)['role'] === 'user') {
+            array_pop($contents);
+        }
+
         $contents[] = ["role" => "user", "parts" => [["text" => $userMessage]]];
+
+        if (!empty($contents) && $contents[0]['role'] !== 'user') {
+            array_shift($contents);
+        }
 
         $payload = [
             "system_instruction" => ["parts" => [["text" => $systemInstruction]]],
-            "contents" => $contents,
+            "contents" => array_values($contents),
             "generationConfig" => ["temperature" => 0.4, "maxOutputTokens" => 500]
         ];
 
         $jsonData = json_encode($payload, JSON_UNESCAPED_UNICODE);
 
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
-        $response = curl_exec($ch);
-        curl_close($ch);
-        $result = json_decode($response, true);
-
-        if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-            return $result['candidates'][0]['content']['parts'][0]['text'];
-        }
-        return "Xin lỗi, Cozy Bot đang bị quá tải, bạn vui lòng thử lại sau ít phút nhé.";
-    }
-
-    public function generateAIComparison($products) {
-        if (empty($this->apiKey)) return "<p>Hệ thống AI chưa được cấu hình API Key.</p>";
         
-        $prompt = "Bạn là chuyên gia đánh giá sản phẩm gia dụng. Hãy phân tích và so sánh các sản phẩm sau đây để giúp khách hàng đưa ra quyết định mua sắm. Trình bày bằng HTML (chỉ dùng thẻ div, p, ul, li, strong, br). KHÔNG dùng Markdown. Cấu trúc cần có: 1. Ưu điểm nổi bật của từng sản phẩm. 2. Gợi ý lựa chọn (Ai nên mua sản phẩm nào).\n\n";
-        foreach ($products as $p) {
-            $prompt .= "- Sản phẩm: " . $p['ten_sp'] . " | Giá: " . number_format($p['gia']) . "đ | Mô tả: " . $p['mo_ta'] . "\n";
+        $modelsToTry = ['gemini-2.5-flash'];
+        $lastError = "";
+        $errorDetails = [];
+
+        foreach ($modelsToTry as $model) {
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $this->apiKey;
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15); 
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+           if ($httpCode === 200 && $response !== false) {
+                $result = json_decode($response, true);
+                if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
+                    return $result['candidates'][0]['content']['parts'][0]['text'];
+                }
+            } else {
+                // Phân tích mã lỗi gốc từ Google
+                $decodedResponse = json_decode($response, true);
+                $rawError = isset($decodedResponse['error']['message']) ? $decodedResponse['error']['message'] : "Lỗi kết nối HTTP {$httpCode}";
+                
+                error_log("Gemini API Error ({$model}): " . $rawError);
+                
+                // Dịch tự động sang form tiếng Việt 
+                $rawErrorLower = strtolower($rawError);
+                if (strpos($rawErrorLower, 'high demand') !== false || strpos($rawErrorLower, 'overloaded') !== false) {
+                    $friendlyError = ": Hệ thống hiện đang quá tải. Vui lòng thử lại sau.";
+                } elseif (strpos($rawErrorLower, 'quota') !== false || strpos($rawErrorLower, 'exceeded') !== false) {
+                    $friendlyError = " Bạn đã đạt giới hạn sử dụng. Vui lòng thử lại sau hoặc nâng cấp gói dịch vụ để tiếp tục";
+                } else {
+                    $friendlyError = "Lỗi hệ thống : " . $rawError; 
+                }
+
+                $errorDetails[] = $friendlyError;
+                sleep(1); 
+            }
         }
 
-        $url = $this->apiUrl . '?key=' . $this->apiKey;
-        $payload = [
-            "contents" => [["role" => "user", "parts" => [["text" => $prompt]]]],
-            "generationConfig" => ["temperature" => 0.4, "maxOutputTokens" => 800]
-        ];
-
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        $response = curl_exec($ch);
-        curl_close($ch);
-        
-        $result = json_decode($response, true);
-        return $result['candidates'][0]['content']['parts'][0]['text'] ?? "<p>Xin lỗi, AI đang quá tải, không thể đưa ra đánh giá lúc này.</p>";
+        return end($errorDetails);
     }
+   
 
     public function saveMessage($user_id, $session_id, $role, $content)
     {

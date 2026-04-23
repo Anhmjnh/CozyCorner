@@ -35,7 +35,7 @@ class ChatbotController extends Controller
 
             // Rate Limit
             $dailyLimit = 100;
-            $rateLimitSeconds = 5;
+            $rateLimitSeconds = 1;
 
             if ($user_id) {
                 $userModel = $this->model('UserModel');
