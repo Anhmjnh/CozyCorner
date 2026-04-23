@@ -314,7 +314,7 @@ class ChatbotModel extends Model
 
         $jsonData = json_encode($payload, JSON_UNESCAPED_UNICODE);
 
-        
+
         $modelsToTry = ['gemini-2.5-flash'];
         $lastError = "";
         $errorDetails = [];
@@ -327,14 +327,14 @@ class ChatbotModel extends Model
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 15); 
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
 
-           if ($httpCode === 200 && $response !== false) {
+            if ($httpCode === 200 && $response !== false) {
                 $result = json_decode($response, true);
                 if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
                     return $result['candidates'][0]['content']['parts'][0]['text'];
@@ -343,27 +343,36 @@ class ChatbotModel extends Model
                 // Phân tích mã lỗi gốc từ Google
                 $decodedResponse = json_decode($response, true);
                 $rawError = isset($decodedResponse['error']['message']) ? $decodedResponse['error']['message'] : "Lỗi kết nối HTTP {$httpCode}";
-                
+
                 error_log("Gemini API Error ({$model}): " . $rawError);
-                
-                // Dịch tự động sang form tiếng Việt 
+
+                // Dịch tự động sang tiếng Việt 
                 $rawErrorLower = strtolower($rawError);
                 if (strpos($rawErrorLower, 'high demand') !== false || strpos($rawErrorLower, 'overloaded') !== false) {
-                    $friendlyError = ": Hệ thống hiện đang quá tải. Vui lòng thử lại sau.";
+                    //  Server Google Studio AI quá tải
+                    $friendlyError = "Hệ thống hiện đang quá tải. Vui lòng thử lại sau.";
+
+                } elseif (strpos($rawErrorLower, 'rate limit') !== false || strpos($rawErrorLower, 'per minute') !== false || strpos($rawErrorLower, 'retry in') !== false) {
+                    // Vượt giới hạn 5 RPM ( 5 Request/Minute) 
+                    $friendlyError = "Bạn đang thao tác quá nhanh. Vui lòng chờ khoảng 1 phút rồi nhắn lại nhé!";
+
                 } elseif (strpos($rawErrorLower, 'quota') !== false || strpos($rawErrorLower, 'exceeded') !== false) {
-                    $friendlyError = " Bạn đã đạt giới hạn sử dụng. Vui lòng thử lại sau hoặc nâng cấp gói dịch vụ để tiếp tục";
+                    // Hết  lượt sử dụng của 1 ngày :20 RPD (20 Request/Day)
+                    $friendlyError = "Bạn đã đạt giới hạn sử dụng. Vui lòng thử lại vào ngày mai hoặc nâng cấp gói dịch vụ để tiếp tục.";
+
                 } else {
-                    $friendlyError = "Lỗi hệ thống : " . $rawError; 
+                    // Lỗi 4: Các lỗi kết nối mạng, sai định dạng API... khác
+                    $friendlyError = "Lỗi hệ thống: " . $rawError;
                 }
 
                 $errorDetails[] = $friendlyError;
-                sleep(1); 
+                sleep(1);
             }
         }
 
         return end($errorDetails);
     }
-   
+
 
     public function saveMessage($user_id, $session_id, $role, $content)
     {
