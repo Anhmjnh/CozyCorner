@@ -760,18 +760,18 @@ require_once __DIR__ . '/../../includes/header.php';
                     <?php endif; ?>
                 </ul>
 
-                <?php if (!$data['is_guest']): ?>
-                    <div class="voucher-section">
-                        <h4 class="voucher-title">Mã giảm giá / Freeship</h4>
-                        <div class="voucher-input-group">
-                            <input type="text" id="ma_voucher_input" placeholder="Nhập mã..." autocomplete="off">
-                            <button type="button" id="btn-show-vouchers" class="btn-select-voucher"><i
-                                    class="fas fa-ticket-alt"></i> Chọn</button>
-                            <button type="button" id="btn-apply-voucher" class="btn-apply-voucher">Áp dụng</button>
-                        </div>
-                        <div id="voucher-message" class="voucher-message"></div>
+                <div class="voucher-section">
+                    <h4 class="voucher-title">Mã giảm giá / Freeship</h4>
+                    <div class="voucher-input-group">
+                        <input type="text" id="ma_voucher_input" placeholder="Nhập mã..." autocomplete="off">
+                        <?php if (!$data['is_guest']): ?>
+                        <button type="button" id="btn-show-vouchers" class="btn-select-voucher"><i
+                                class="fas fa-ticket-alt"></i> Chọn</button>
+                        <?php endif; ?>
+                        <button type="button" id="btn-apply-voucher" class="btn-apply-voucher">Áp dụng</button>
                     </div>
-                <?php endif; ?>
+                    <div id="voucher-message" class="voucher-message"></div>
+                </div>
 
                 <div class="checkout__totals">
                     <div class="checkout__total-line">
@@ -792,12 +792,10 @@ require_once __DIR__ . '/../../includes/header.php';
                         <span>Phí vận chuyển:</span>
                         <span id="summary-shipping-fee" data-fee="0" style="font-weight: 600;">0đ</span>
                     </div>
-                    <?php if (!$data['is_guest']): ?>
-                        <div class="checkout__total-line highlight-green" id="voucher-discount-line" style="display: none;">
-                            <span>Mã giảm giá:</span>
-                            <span id="summary-voucher-discount">-0đ</span>
-                        </div>
-                    <?php endif; ?>
+                    <div class="checkout__total-line highlight-green" id="voucher-discount-line" style="display: none;">
+                        <span>Mã giảm giá:</span>
+                        <span id="summary-voucher-discount">-0đ</span>
+                    </div>
                     <div id="vat-breakdown" style="border-top: 1px dashed #eaeaea; padding-top: 15px; margin-top: 15px;">
                         <div class="checkout__total-line" style="margin-bottom: 8px;">
                             <span>Tiền hàng trước thuế:</span>

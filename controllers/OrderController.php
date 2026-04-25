@@ -236,12 +236,32 @@ class OrderController extends Controller
             $feeResponse = $ghnModel->calculateFee($to_district_id, $to_ward_code, $tong_can_nang);
             $phi_van_chuyen_thuc_te = (isset($feeResponse['code']) && $feeResponse['code'] == 200) ? $feeResponse['data']['total'] : 0;
 
-            // Khách không có giảm giá thành viên và voucher
+            // Khách không có giảm giá thành viên
             $giam_gia_thanh_vien = 0;
+            
+            $ma_voucher = trim($_POST['ma_voucher'] ?? '');
             $giam_gia_voucher = 0;
             $giam_gia_freeship = 0;
             $tien_giam_ghi_db = 0;
-            $ma_voucher = null;
+            
+            if (!empty($ma_voucher)) {
+                $voucherModel = $this->model('VoucherModel');
+                $checkVoucher = $voucherModel->checkVoucher($ma_voucher);
+                if ($checkVoucher['status'] && $tong_tien >= $checkVoucher['data']['don_toi_thieu']) {
+                    $vData = $checkVoucher['data'];
+                    if ($vData['loai_voucher'] == 'TienMat') {
+                        $giam_gia_voucher = $vData['gia_tri'];
+                    } elseif ($vData['loai_voucher'] == 'PhanTram') {
+                        $giam_gia_voucher = ($tong_tien * $vData['gia_tri']) / 100;
+                        if ($vData['giam_toi_da'] > 0 && $giam_gia_voucher > $vData['giam_toi_da']) $giam_gia_voucher = $vData['giam_toi_da'];
+                    } elseif ($vData['loai_voucher'] == 'FreeShip') {
+                        $giam_gia_freeship = min($phi_van_chuyen_thuc_te, $vData['gia_tri']);
+                    }
+                    $tien_giam_ghi_db = ($vData['loai_voucher'] == 'FreeShip') ? $giam_gia_freeship : $giam_gia_voucher;
+                } else {
+                    $ma_voucher = null;
+                }
+            }
 
             $tien_hang_sau_giam = max(0, $tong_tien - $giam_gia_thanh_vien - $giam_gia_voucher);
             $phi_ship_sau_giam = max(0, $phi_van_chuyen_thuc_te - $giam_gia_freeship);
@@ -263,6 +283,13 @@ class OrderController extends Controller
 
             if (!$order_id) {
                 throw new Exception("Không thể lưu đơn hàng vào cơ sở dữ liệu.");
+            }
+
+            if (!empty($ma_voucher)) {
+                $voucherModel = $this->model('VoucherModel');
+                if (!$voucherModel->incrementVoucherUsage($ma_voucher)) {
+                    throw new Exception("Lỗi cập nhật voucher.");
+                }
             }
 
             $db->commit();
