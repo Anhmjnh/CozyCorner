@@ -19,15 +19,23 @@ class OrderModel extends Model
 
             // 2. Lưu Chi tiết Đơn hàng & Trừ Tồn Kho
             $stmt_detail = $this->conn->prepare("INSERT INTO order_details (order_id, product_id, ten_sp_snapshot, anh_sp_snapshot, so_luong, gia) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt_stock = $this->conn->prepare("UPDATE products SET so_luong_ton = CASE WHEN so_luong_ton <= 0 THEN so_luong_ton WHEN so_luong_ton >= ? THEN so_luong_ton - ? ELSE 0 END, luot_ban = luot_ban + ? WHERE id = ?");
 
             foreach ($cartItems as $item) {
                 $ten_sp = $item['name'] ?? 'Sản phẩm';
                 $anh_sp = $item['anh'] ?? null;
-                // Lưu chi tiết đơn hàng. Trigger `trg_tru_ton_kho_khi_dat_hang` trong database sẽ tự động trừ tồn kho.
-                $stmt_detail->bind_param("iissid", $order_id, $item['product_id'], $ten_sp, $anh_sp, $item['quantity'], $item['price']);
+                $so_luong = $item['quantity'];
+                $product_id = $item['product_id'];
+                
+                $stmt_detail->bind_param("iissid", $order_id, $product_id, $ten_sp, $anh_sp, $so_luong, $item['price']);
                 $stmt_detail->execute();
+                
+                // Trừ tồn kho bằng PHP (thay thế Trigger trg_tru_ton_kho_khi_dat_hang)
+                $stmt_stock->bind_param("iiii", $so_luong, $so_luong, $so_luong, $product_id);
+                $stmt_stock->execute();
             }
             $stmt_detail->close();
+            $stmt_stock->close();
 
             // 3. Xóa các sản phẩm đã mua khỏi Giỏ hàng và xóa luôn giỏ hàng
             if ($cart_id) {
@@ -68,19 +76,32 @@ class OrderModel extends Model
         $affected_rows = $stmt->affected_rows;
         $stmt->close();
 
+        if ($affected_rows > 0) {
+            // Hoàn tồn kho bằng PHP (thay thế Trigger trg_hoan_ton_kho_khi_huy_don)
+            $this->restoreStockForOrder($order_id);
+        }
+
         return $affected_rows > 0;
     }
-    // Hủy các đơn hàng QR quá 10 phút
+
     public function cancelExpiredQROrders()
     {
-        $sql = "UPDATE orders 
-                SET trang_thai = 'Huy' 
-                WHERE trang_thai = 'ChoXacNhan' 
-                AND phuong_thuc_thanh_toan = 'ChuyenKhoan' 
-                AND created_at <= (NOW() - INTERVAL 10 MINUTE)";
+        $stmt_get = $this->conn->query("SELECT id FROM orders WHERE trang_thai = 'ChoXacNhan' AND phuong_thuc_thanh_toan = 'ChuyenKhoan' AND created_at <= (NOW() - INTERVAL 10 MINUTE)");
+        $expired_orders = $stmt_get->fetch_all(MYSQLI_ASSOC);
 
-        $this->conn->query($sql);
-        return $this->conn->affected_rows;
+        if (count($expired_orders) > 0) {
+            $sql = "UPDATE orders 
+                    SET trang_thai = 'Huy' 
+                    WHERE trang_thai = 'ChoXacNhan' 
+                    AND phuong_thuc_thanh_toan = 'ChuyenKhoan' 
+                    AND created_at <= (NOW() - INTERVAL 10 MINUTE)";
+            $this->conn->query($sql);
+            
+            foreach ($expired_orders as $order) {
+                $this->restoreStockForOrder($order['id']);
+            }
+        }
+        return count($expired_orders);
     }
 
 
@@ -133,10 +154,23 @@ class OrderModel extends Model
 
     public function updateOrderStatus($order_id, $trang_thai)
     {
+        // Lấy trạng thái cũ để so sánh
+        $stmt_old = $this->conn->prepare("SELECT trang_thai FROM orders WHERE id = ?");
+        $stmt_old->bind_param("i", $order_id);
+        $stmt_old->execute();
+        $old_status = $stmt_old->get_result()->fetch_assoc()['trang_thai'] ?? '';
+        $stmt_old->close();
+
         $stmt = $this->conn->prepare("UPDATE orders SET trang_thai = ? WHERE id = ?");
         $stmt->bind_param("si", $trang_thai, $order_id);
         $result = $stmt->execute();
         $stmt->close();
+
+        // Nếu trạng thái mới là 'Huy', chạy logic hoàn trả
+        if ($result && $trang_thai === 'Huy' && $old_status !== 'Huy') {
+            $this->restoreStockForOrder($order_id);
+        }
+
         return $result;
     }
 
@@ -168,5 +202,27 @@ class OrderModel extends Model
         $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
         return $orders;
+    }
+
+    public function restoreStockForOrder($order_id)
+    {
+        $stmt_details = $this->conn->prepare("SELECT product_id, so_luong FROM order_details WHERE order_id = ?");
+        $stmt_details->bind_param("i", $order_id);
+        $stmt_details->execute();
+        $details = $stmt_details->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt_details->close();
+
+        if (!empty($details)) {
+            $stmt_restore = $this->conn->prepare("
+                UPDATE products 
+                SET so_luong_ton = CASE WHEN so_luong_ton <= 0 THEN so_luong_ton ELSE so_luong_ton + ? END,
+                    luot_ban = IF(luot_ban >= ?, luot_ban - ?, 0)
+                WHERE id = ?");
+            foreach ($details as $item) {
+                $stmt_restore->bind_param("iiii", $item['so_luong'], $item['so_luong'], $item['so_luong'], $item['product_id']);
+                $stmt_restore->execute();
+            }
+            $stmt_restore->close();
+        }
     }
 }

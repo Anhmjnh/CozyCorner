@@ -9,8 +9,8 @@ Cozy Corner là website thương mại điện tử chuyên cung cấp thiết b
 - Tên dự án: Cozy Corner
 - Công nghệ: PHP (Custom MVC), MySQLi, HTML, CSS, JavaScript
 - Thư viện & API: PHPMailer, GHN API, SePay, Google OAuth, Gemini AI, Chart.js
-- Mục đích: Đồ án
-- Tác giả: Anh Minh
+- Mục đích: Chuyên Đề Tốt Nghiệp
+- Tác giả: Anh Minh, Thành Long,Sơn Lộc, Như Phúc
 
 --------------------------------------------------
 
@@ -128,11 +128,12 @@ Lưu ý:
 - Email: admin
 - Password: 123456
 
-
-
+--------------------------------------------------
+6. DOMAIN 
+-URL:http://cozycorner.infinityfreeapp.com/
 --------------------------------------------------
 
-6. CẤU TRÚC THƯ MỤC
+7. CẤU TRÚC THƯ MỤC
 
 cozycorner/
 - admin/        giao diện quản trị
@@ -149,7 +150,7 @@ cozycorner/
 
 --------------------------------------------------
 
-7. LỖI THƯỜNG GẶP
+8. LỖI THƯỜNG GẶP
 
 - Không kết nối database
 → Sai DB_NAME
@@ -159,18 +160,6 @@ cozycorner/
 
 - Không load CSS
 → Sai BASE_URL
-
---------------------------------------------------
-
-8. ĐỊNH HƯỚNG PHÁT TRIỂN
-
-- Tách API riêng
-- Tích hợp thanh toán online
-- Tối ưu UI/UX
-- Deploy production
-
---------------------------------------------------
-
 9. LICENSE
 
 Dự án phục vụ học tập và nghiên cứu.

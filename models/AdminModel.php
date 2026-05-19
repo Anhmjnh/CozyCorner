@@ -299,7 +299,7 @@ class AdminModel extends Model
         return $stmt->get_result()->fetch_assoc();
     }
 
-    public function updateProduct($id, $ten_sp, $gia, $gia_cu, $category_id, $so_luong, $trang_thai, $anh = null, $mo_ta)
+    public function updateProduct($id, $ten_sp, $gia, $gia_cu, $category_id, $so_luong, $trang_thai, $anh, $mo_ta)
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $ten_sp)));
         $sql = "UPDATE products SET ten_sp = ?, slug = ?, gia = ?, gia_cu = ?, category_id = ?, so_luong_ton = ?, trang_thai = ?, mo_ta = ?" . ($anh ? ", anh = ?" : "") . " WHERE id = ?";
@@ -519,9 +519,42 @@ class AdminModel extends Model
 
     public function updateOrderStatus($id, $trang_thai)
     {
+        // Lấy trạng thái cũ để so sánh
+        $stmt_old = $this->conn->prepare("SELECT trang_thai FROM orders WHERE id = ?");
+        $stmt_old->bind_param("i", $id);
+        $stmt_old->execute();
+        $old_status = $stmt_old->get_result()->fetch_assoc()['trang_thai'] ?? '';
+        $stmt_old->close();
+
         $stmt = $this->conn->prepare("UPDATE orders SET trang_thai = ? WHERE id = ?");
         $stmt->bind_param("si", $trang_thai, $id);
-        return $stmt->execute();
+        $result = $stmt->execute();
+        $stmt->close();
+
+        // Nếu trạng thái mới là 'Huy', chạy logic hoàn trả
+        if ($result && $trang_thai === 'Huy' && $old_status !== 'Huy') {
+            $this->restoreStockForOrder($id);
+        }
+
+        return $result;
+    }
+
+    public function restoreStockForOrder($order_id)
+    {
+        $stmt_details = $this->conn->prepare("SELECT product_id, so_luong FROM order_details WHERE order_id = ?");
+        $stmt_details->bind_param("i", $order_id);
+        $stmt_details->execute();
+        $details = $stmt_details->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt_details->close();
+
+        if (!empty($details)) {
+            $stmt_restore = $this->conn->prepare("UPDATE products SET so_luong_ton = CASE WHEN so_luong_ton <= 0 THEN so_luong_ton ELSE so_luong_ton + ? END, luot_ban = IF(luot_ban >= ?, luot_ban - ?, 0) WHERE id = ?");
+            foreach ($details as $item) {
+                $stmt_restore->bind_param("iiii", $item['so_luong'], $item['so_luong'], $item['so_luong'], $item['product_id']);
+                $stmt_restore->execute();
+            }
+            $stmt_restore->close();
+        }
     }
 
     // --- QUẢN LÝ NGƯỜI DÙNG ---

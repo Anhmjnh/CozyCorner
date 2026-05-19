@@ -10,6 +10,8 @@ class Model
     {
 
         $this->conn = Database::getInstance()->getConnection();
+        // Đảm bảo MySQL trả về thời gian theo múi giờ Việt Nam (+07:00)
+        $this->conn->query("SET time_zone = '+07:00'");
     }
 
 

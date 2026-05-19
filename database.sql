@@ -793,29 +793,6 @@ INSERT INTO `orders` (`id`, `user_id`, `ghn_order_code`, `tong_tien`, `phi_van_c
 (112, 5, 'LHXQDT', 34236.00, 20900.00, 'Đào Công Anh Minh', '0911078383', 'daoconganhminh1902@gmail.com', '123 Âu Cơ, Phường 10, Quận Tân Bình, Hồ Chí Minh', 'HoanThanh', 'COD', '', 1, 'TẬP ĐOÀN VINGROUP - CÔNG TY CP', '0101245486', 'Số 7, Đường Bằng Lăng 1, khu đô thị Vinhomes Riverside, Phường Phúc Lợi, TP Hà Nội', 'daoconganhminh1902@gmail.com', '2026-04-19 07:08:33', 1200, '', 0),
 (113, 5, 'LHXQ46', 34236.00, 20900.00, 'Đào Công Anh Minh', '0911078383', 'daoconganhminh1902@gmail.com', '123 Âu Cơ, Phường 10, Quận Tân Bình, Hồ Chí Minh', 'HoanThanh', 'COD', '', 0, NULL, NULL, NULL, NULL, '2026-04-19 07:23:07', 1200, '', 0);
 
---
--- Bẫy `orders`
---
-DELIMITER $$
-CREATE TRIGGER `trg_hoan_ton_kho_khi_huy_don` AFTER UPDATE ON `orders` FOR EACH ROW BEGIN
-    IF NEW.trang_thai = 'Huy' AND OLD.trang_thai != 'Huy' THEN
-        UPDATE `products` p
-        JOIN `order_details` od ON p.id = od.product_id
-        SET 
-            -- Nếu tồn kho hiện tại <= 0 (được xem là hàng đặt trước) thì không cộng thêm.
-            -- Nếu tồn kho > 0 thì cộng trả lại.
-            p.so_luong_ton = CASE 
-                                WHEN p.so_luong_ton <= 0 THEN p.so_luong_ton
-                                ELSE p.so_luong_ton + od.so_luong
-                             END,
-            -- Giảm lượt bán, đảm bảo không bị số âm
-            p.luot_ban = IF(p.luot_ban >= od.so_luong, p.luot_ban - od.so_luong, 0)
-        WHERE od.order_id = NEW.id;
-    END IF;
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -830,7 +807,7 @@ CREATE TABLE `order_details` (
   `anh_sp_snapshot` varchar(255) DEFAULT NULL,
   `so_luong` int(11) UNSIGNED NOT NULL,
   `gia` decimal(12,2) UNSIGNED NOT NULL
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `order_details`
@@ -944,26 +921,6 @@ INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `ten_sp_snapshot`, 
 (114, 112, 76, 'Thớt gỗ tròn', NULL, 1, 12000.00),
 (115, 113, 76, 'Thớt gỗ tròn', NULL, 1, 12000.00);
 
---
--- Bẫy `order_details`
---
-DELIMITER $$
-CREATE TRIGGER `trg_tru_ton_kho_khi_dat_hang` AFTER INSERT ON `order_details` FOR EACH ROW BEGIN
-    UPDATE `products`
-    SET 
-        -- Nếu tồn kho <= 0 (hàng đặt trước) thì giữ nguyên. 
-        -- Nếu tồn kho > 0 (hàng có sẵn) thì trừ đi, nhưng không để bị âm (tránh lỗi UNSIGNED).
-        `so_luong_ton` = CASE 
-                            WHEN `so_luong_ton` <= 0 THEN `so_luong_ton`
-                            WHEN `so_luong_ton` >= NEW.so_luong THEN `so_luong_ton` - NEW.so_luong
-                            ELSE 0
-                         END,
-        `luot_ban` = `luot_ban` + NEW.so_luong
-    WHERE `id` = NEW.product_id;
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -984,7 +941,7 @@ CREATE TABLE `products` (
   `luot_ban` int(11) UNSIGNED DEFAULT 0,
   `trang_thai` enum('HienThi','An','HetHang') DEFAULT 'HienThi',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `products`
@@ -1410,7 +1367,7 @@ CREATE TABLE `reviews` (
   `rating` int(11) NOT NULL DEFAULT 5,
   `comment` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `reviews`
