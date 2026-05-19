@@ -10,7 +10,7 @@ Cozy Corner là website thương mại điện tử chuyên cung cấp thiết b
 - Công nghệ: PHP (Custom MVC), MySQLi, HTML, CSS, JavaScript
 - Thư viện & API: PHPMailer, GHN API, SePay, Google OAuth, Gemini AI, Chart.js
 - Mục đích: Chuyên Đề Tốt Nghiệp
-- Tác giả: Anh Minh, Thành Long,Sơn Lộc, Như Phúc
+- Tác giả: Anh Minh
 
 --------------------------------------------------
 
